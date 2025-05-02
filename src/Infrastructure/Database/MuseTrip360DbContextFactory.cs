@@ -15,8 +15,7 @@ public class MuseTrip360DbContextFactory : IDesignTimeDbContextFactory<MuseTrip3
 
     var optionsBuilder = new DbContextOptionsBuilder<MuseTrip360DbContext>();
     optionsBuilder.UseNpgsql(
-      configuration.GetConnectionString("DatabaseConnection") ?? "",
-      x => x.UseNetTopologySuite()
+      configuration.GetConnectionString("DatabaseConnection") ?? ""
     );
 
     return new MuseTrip360DbContext(optionsBuilder.Options);

@@ -8,8 +8,8 @@ public class RegisterReq
   public string Email { get; set; } = null!;
   public string Password { get; set; } = null!;
   public string FullName { get; set; } = null!;
-  public string? Phone { get; set; }
-  public string? Avatar { get; set; }
+  public string? PhoneNumber { get; set; }
+  public string? AvatarUrl { get; set; }
 }
 
 public class RegisterResp : BaseResp

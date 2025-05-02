@@ -81,7 +81,7 @@ public class AuthService : IAuthService
         Status = UserStatusEnum.NotVerified,
         AuthType = AuthTypeEnum.Google,
         Username = info.Email,
-        IsAdmin = false,
+        AvatarUrl = info.ProfileUrl,
       };
 
       user = await _userRepo.AddAsync(newUser);
@@ -125,13 +125,10 @@ public class AuthService : IAuthService
     {
       Email = req.Email,
       FullName = req.FullName,
-      Phone = req.Phone,
-      Avatar = req.Avatar,
       HashedPassword = hashedPassword,
       Status = UserStatusEnum.Active,
       AuthType = AuthTypeEnum.Email,
       Username = req.Email,
-      IsAdmin = false,
     };
 
     var userAdded = await _userRepo.AddAsync(newUser) ?? throw new Exception("Cannot create user");
@@ -159,7 +156,7 @@ public class AuthService : IAuthService
     }
 
     var sessionId = Guid.NewGuid();
-    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, user.Status, user.IsAdmin);
+    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, user.Status);
     var accessTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.ACCESS_TOKEN_EXP).ToUnixTimeSeconds();
     var refreshTk = _cryptoService.GenerateRandomToken(JwtConst.REFRESH_TOKEN_LENGTH);
     var refreshTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.REFRESH_TOKEN_EXP).ToUnixTimeSeconds();
@@ -204,7 +201,7 @@ public class AuthService : IAuthService
     }
 
     var sessionId = Guid.NewGuid();
-    var accessTk = GenerateAccessTk(state.Id, sessionId, state.Email, state.Status, state.IsAdmin);
+    var accessTk = GenerateAccessTk(state.Id, sessionId, state.Email, state.Status, false);
     var accessTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.ACCESS_TOKEN_EXP).ToUnixTimeSeconds();
     var refreshTk = _cryptoService.GenerateRandomToken(JwtConst.REFRESH_TOKEN_LENGTH);
     var refreshTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.REFRESH_TOKEN_EXP).ToUnixTimeSeconds();
@@ -240,7 +237,7 @@ public class AuthService : IAuthService
     }
 
     var sessionId = Guid.NewGuid();
-    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, user.Status, user.IsAdmin);
+    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, user.Status, false);
     var accessTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.ACCESS_TOKEN_EXP).ToUnixTimeSeconds();
 
     return SuccessResp.Ok(new RefreshResp
@@ -324,8 +321,7 @@ public class AuthService : IAuthService
         Status = UserStatusEnum.Active,
         AuthType = AuthTypeEnum.Firebase,
         Username = email,
-        Avatar = picture,
-        IsAdmin = false,
+        AvatarUrl = picture,
       };
 
       userDb = await _userRepo.AddAsync(newUser);
@@ -337,7 +333,7 @@ public class AuthService : IAuthService
 
     var sessionId = Guid.NewGuid();
 
-    var accessTk = GenerateAccessTk(userDb.Id, sessionId, userDb.Email, UserStatusEnum.Active, userDb.IsAdmin);
+    var accessTk = GenerateAccessTk(userDb.Id, sessionId, userDb.Email, UserStatusEnum.Active, false);
 
     var accessTkExpAt = DateTimeOffset.UtcNow.AddSeconds(JwtConst.ACCESS_TOKEN_EXP).ToUnixTimeSeconds();
     var refreshTk = _cryptoService.GenerateRandomToken(JwtConst.REFRESH_TOKEN_LENGTH);

@@ -11,9 +11,9 @@ public class UserDto
   public string Username { get; set; } = null!;
   public string FullName { get; set; } = null!;
   public string Email { get; set; } = null!;
-  public string? Phone { get; set; }
-  public string? Avatar { get; set; }
-  public bool IsAdmin { get; set; }
+  public string? PhoneNumber { get; set; }
+  public string? AvatarUrl { get; set; }
+  public DateTime? BirthDate { get; set; }
   public AuthTypeEnum AuthType { get; set; }
   public UserStatusEnum Status { get; set; }
   public DateTime LastLogin { get; set; }
@@ -23,7 +23,7 @@ public class UserBlobDto
 {
   public Guid Id { get; set; }
   public string FullName { get; set; } = null!;
-  public string? Avatar { get; set; }
+  public string? AvatarUrl { get; set; }
   public UserStatusEnum Status { get; set; }
 }
 

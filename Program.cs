@@ -39,7 +39,7 @@ builder.Services.AddDbContext<MuseTrip360DbContext>(options =>
 {
     // log the connection string
     Console.WriteLine($"Connection string: {builder.Configuration.GetConnectionString("DatabaseConnection")}");
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection") ?? "", x => x.UseNetTopologySuite());
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection") ?? "");
 });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection") ?? throw new ArgumentNullException("RedisConnection")));

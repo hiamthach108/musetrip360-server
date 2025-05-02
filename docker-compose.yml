@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: exedb
+      POSTGRES_DB: musetrip360db
     ports:
       - "5432:5432"
     volumes:
