@@ -1,1 +1,1 @@
-# musetrip360-server
+# MuseTrip360 Server

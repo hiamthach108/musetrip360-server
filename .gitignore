@@ -1,0 +1,17 @@
+[Bb]in/
+
+[Oo]bj/
+
+./appsettings.Development.json
+
+.vs/
+
+
+appsettings.Local.json
+
+MuseTrip360.csproj.user
+
+*.sln
+
+*.env
+.fake
