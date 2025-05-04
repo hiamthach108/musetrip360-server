@@ -111,6 +111,7 @@ builder.Services.AddSingleton<IPayOSService, PayOSService>();
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMuseumService, MuseumService>();
 
 var app = builder.Build();
 
