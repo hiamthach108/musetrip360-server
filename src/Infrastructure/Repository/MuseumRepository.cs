@@ -1,19 +1,25 @@
-
 namespace Infrastructure.Repository;
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Application.DTOs.Museum;
 using Database;
 using Domain.Museums;
 
 public interface IMuseumRepository
 {
   Museum? GetById(Guid id);
-  IEnumerable<Museum> GetAllAsync();
+  MuseumList GetAll(MuseumQuery query);
   Task AddAsync(Museum museum);
   Task UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
+}
+
+public class MuseumList
+{
+  public List<Museum> Museums { get; set; } = new List<Museum>();
+  public int Total { get; set; }
 }
 
 public class MuseumRepository : IMuseumRepository
@@ -30,9 +36,22 @@ public class MuseumRepository : IMuseumRepository
     return _context.Museums.Find(id);
   }
 
-  public IEnumerable<Museum> GetAllAsync()
+  public MuseumList GetAll(MuseumQuery query)
   {
-    return _context.Museums.ToList();
+    var queryable = _context.Museums.AsQueryable();
+    if (!string.IsNullOrEmpty(query.SearchQuery))
+    {
+      queryable = queryable.Where(m => m.Name.Contains(query.SearchQuery));
+    }
+
+    var total = queryable.Count();
+    var museums = queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
+
+    return new MuseumList
+    {
+      Museums = museums,
+      Total = total
+    };
   }
 
   public async Task AddAsync(Museum museum)

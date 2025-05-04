@@ -3,21 +3,22 @@ namespace Application.Service;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Application.DTOs.Museums;
+using Application.DTOs.Museum;
 using Domain.Museums;
 using Infrastructure.Repository;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Application.Shared.Type;
 using Database;
+using Application.Shared.Enum;
 
 public interface IMuseumService
 {
-  Task<IActionResult> HandleGetAllAsync();
-  Task<IActionResult> HandleGetByIdAsync(Guid id);
-  Task<IActionResult> HandleCreateAsync(MuseumCreateDto dto);
-  Task<IActionResult> HandleUpdateAsync(Guid id, MuseumUpdateDto dto);
-  Task<IActionResult> HandleDeleteAsync(Guid id);
+  Task<IActionResult> HandleGetAll(MuseumQuery query);
+  Task<IActionResult> HandleGetById(Guid id);
+  Task<IActionResult> HandleCreate(MuseumCreateDto dto);
+  Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
+  Task<IActionResult> HandleDelete(Guid id);
 }
 
 public class MuseumService : BaseService, IMuseumService
@@ -30,14 +31,19 @@ public class MuseumService : BaseService, IMuseumService
     _museumRepository = new MuseumRepository(dbContext);
   }
 
-  public async Task<IActionResult> HandleGetAllAsync()
+  public async Task<IActionResult> HandleGetAll(MuseumQuery query)
   {
-    var museums = _museumRepository.GetAllAsync();
-    var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums);
-    return SuccessResp.Ok(museumDtos);
+    var museums = _museumRepository.GetAll(query);
+    var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums.Museums);
+
+    return SuccessResp.Ok(new
+    {
+      List = museumDtos,
+      Total = museums.Total
+    });
   }
 
-  public async Task<IActionResult> HandleGetByIdAsync(Guid id)
+  public async Task<IActionResult> HandleGetById(Guid id)
   {
     var museum = _museumRepository.GetById(id);
     if (museum == null)
@@ -48,7 +54,7 @@ public class MuseumService : BaseService, IMuseumService
     return SuccessResp.Ok(museumDto);
   }
 
-  public async Task<IActionResult> HandleCreateAsync(MuseumCreateDto dto)
+  public async Task<IActionResult> HandleCreate(MuseumCreateDto dto)
   {
     var payload = ExtractPayload();
     if (payload == null)
@@ -58,11 +64,14 @@ public class MuseumService : BaseService, IMuseumService
 
     var museum = _mapper.Map<Museum>(dto);
     museum.CreatedBy = payload.UserId;
+    museum.Status = MuseumStatusEnum.NotVerified;
     await _museumRepository.AddAsync(museum);
-    return SuccessResp.Created("Museum created successfully");
+
+    var museumDto = _mapper.Map<MuseumDto>(museum);
+    return SuccessResp.Created(museumDto);
   }
 
-  public async Task<IActionResult> HandleUpdateAsync(Guid id, MuseumUpdateDto dto)
+  public async Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto)
   {
     var museum = _museumRepository.GetById(id);
     if (museum == null)
@@ -71,10 +80,12 @@ public class MuseumService : BaseService, IMuseumService
     }
     _mapper.Map(dto, museum);
     await _museumRepository.UpdateAsync(id, museum);
-    return SuccessResp.Ok("Museum updated successfully");
+
+    var museumDto = _mapper.Map<MuseumDto>(museum);
+    return SuccessResp.Ok(museumDto);
   }
 
-  public async Task<IActionResult> HandleDeleteAsync(Guid id)
+  public async Task<IActionResult> HandleDelete(Guid id)
   {
     var museum = _museumRepository.GetById(id);
     if (museum == null)

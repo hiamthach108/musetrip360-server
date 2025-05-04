@@ -1,12 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace Application.DTOs.Museums;
+namespace Application.DTOs.Museum;
 
 using System;
-using Application.Shared.Enum;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
-
-public class MuseumUpdateDto
+public class MuseumCreateDto
 {
   [Required(ErrorMessage = "Name is required")]
   public string Name { get; set; } = null!;
@@ -25,9 +23,5 @@ public class MuseumUpdateDto
   [Phone(ErrorMessage = "Invalid phone number")]
   public string ContactPhone { get; set; } = null!;
 
-  [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5")]
-  public double Rating { get; set; }
-
-  [Required(ErrorMessage = "Status is required")]
-  public string Status { get; set; }
+  public JsonDocument? Metadata { get; set; }
 }

@@ -16,4 +16,4 @@ MuseTrip360.csproj.user
 *.env
 .fake
 
-./firebase.json
+firebase.json

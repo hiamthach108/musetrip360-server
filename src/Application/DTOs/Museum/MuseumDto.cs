@@ -1,9 +1,10 @@
-namespace Application.DTOs.Museums;
+namespace Application.DTOs.Museum;
 
 using System;
 using AutoMapper;
 using Domain.Museums;
-
+using System.Text.Json.Serialization;
+using Application.Shared.Enum;
 
 public class MuseumDto
 {
@@ -15,7 +16,10 @@ public class MuseumDto
   public string ContactPhone { get; set; } = null!;
   public double Rating { get; set; }
   public Guid CreatedBy { get; set; }
-  public string Status { get; set; } = null!;
+
+  [JsonConverter(typeof(JsonStringEnumConverter))]
+  public MuseumStatusEnum Status { get; set; }
+
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
 }

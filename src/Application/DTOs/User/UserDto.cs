@@ -1,5 +1,6 @@
 namespace Application.DTOs.User;
 
+using System.Text.Json.Serialization;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Users;

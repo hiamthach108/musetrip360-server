@@ -444,9 +444,6 @@ namespace MuseTrip360.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -484,7 +481,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
+                    b.HasIndex("CreatedBy");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -570,6 +567,9 @@ namespace MuseTrip360.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -605,6 +605,8 @@ namespace MuseTrip360.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
 
                     b.ToTable("MuseumRequests");
                 });
@@ -1546,7 +1548,7 @@ namespace MuseTrip360.Migrations
                 {
                     b.HasOne("Domain.Users.User", "CreatedByUser")
                         .WithMany("Museums")
-                        .HasForeignKey("CreatedByUserId")
+                        .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1570,6 +1572,17 @@ namespace MuseTrip360.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Museum");
+                });
+
+            modelBuilder.Entity("Domain.Museums.MuseumRequest", b =>
+                {
+                    b.HasOne("Domain.Users.User", "CreatedByUser")
+                        .WithMany("MuseumRequests")
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Domain.Payment.Order", b =>
@@ -1918,6 +1931,8 @@ namespace MuseTrip360.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("MuseumPolicies");
+
+                    b.Navigation("MuseumRequests");
 
                     b.Navigation("Museums");
 

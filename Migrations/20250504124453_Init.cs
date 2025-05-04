@@ -13,27 +13,6 @@ namespace MuseTrip360.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "MuseumRequests",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    MuseumName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    MuseumDescription = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    Location = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ContactEmail = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ContactPhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    SubmittedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Pending"),
-                    Metadata = table.Column<JsonDocument>(type: "jsonb", nullable: true, defaultValueSql: "'{}'::jsonb"),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MuseumRequests", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Permissions",
                 columns: table => new
                 {
@@ -139,6 +118,34 @@ namespace MuseTrip360.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MuseumRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MuseumName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MuseumDescription = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    Location = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ContactEmail = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ContactPhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    SubmittedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Pending"),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    Metadata = table.Column<JsonDocument>(type: "jsonb", nullable: true, defaultValueSql: "'{}'::jsonb"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MuseumRequests", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MuseumRequests_Users_CreatedBy",
+                        column: x => x.CreatedBy,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Museums",
                 columns: table => new
                 {
@@ -151,7 +158,6 @@ namespace MuseTrip360.Migrations
                     Rating = table.Column<float>(type: "real", nullable: false, defaultValue: 0f),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false, defaultValue: "Active"),
-                    CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Metadata = table.Column<JsonDocument>(type: "jsonb", nullable: true, defaultValueSql: "'{}'::jsonb"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
@@ -160,8 +166,8 @@ namespace MuseTrip360.Migrations
                 {
                     table.PrimaryKey("PK_Museums", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Museums_Users_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
+                        name: "FK_Museums_Users_CreatedBy",
+                        column: x => x.CreatedBy,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -945,9 +951,14 @@ namespace MuseTrip360.Migrations
                 column: "MuseumId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Museums_CreatedByUserId",
+                name: "IX_MuseumRequests_CreatedBy",
+                table: "MuseumRequests",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Museums_CreatedBy",
                 table: "Museums",
-                column: "CreatedByUserId");
+                column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Museums_Name",

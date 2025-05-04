@@ -2,6 +2,7 @@ namespace Domain.Museums;
 
 using Application.Shared.Enum;
 using Application.Shared.Type;
+using Domain.Users;
 
 public class MuseumRequest : BaseEntity
 {
@@ -12,4 +13,7 @@ public class MuseumRequest : BaseEntity
   public string ContactPhone { get; set; } = null!;
   public DateTime SubmittedAt { get; set; }
   public RequestStatusEnum Status { get; set; }
+  public Guid CreatedBy { get; set; }
+
+  public User CreatedByUser { get; set; } = null!;
 }

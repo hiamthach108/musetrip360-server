@@ -2,7 +2,7 @@ namespace Application.Controllers;
 
 using System;
 using System.Threading.Tasks;
-using Application.DTOs.Museums;
+using Application.DTOs.Museum;
 using Application.Service;
 using Application.Middlewares;
 using Microsoft.AspNetCore.Mvc;
@@ -23,10 +23,10 @@ public class MuseumController : ControllerBase
 
   [Protected]
   [HttpGet]
-  public async Task<IActionResult> GetAllMuseums()
+  public async Task<IActionResult> GetAllMuseums([FromQuery] MuseumQuery query)
   {
     _logger.LogInformation("Get all museums request received");
-    return await _museumService.HandleGetAllAsync();
+    return await _museumService.HandleGetAll(query);
   }
 
   [Protected]
@@ -34,7 +34,7 @@ public class MuseumController : ControllerBase
   public async Task<IActionResult> GetMuseumById(Guid id)
   {
     _logger.LogInformation("Get museum by id request received");
-    return await _museumService.HandleGetByIdAsync(id);
+    return await _museumService.HandleGetById(id);
   }
 
   [Protected]
@@ -42,7 +42,7 @@ public class MuseumController : ControllerBase
   public async Task<IActionResult> CreateMuseum([FromBody] MuseumCreateDto dto)
   {
     _logger.LogInformation("Create museum request received");
-    return await _museumService.HandleCreateAsync(dto);
+    return await _museumService.HandleCreate(dto);
   }
 
   [Protected]
@@ -50,7 +50,7 @@ public class MuseumController : ControllerBase
   public async Task<IActionResult> UpdateMuseum(Guid id, [FromBody] MuseumUpdateDto dto)
   {
     _logger.LogInformation("Update museum request received");
-    return await _museumService.HandleUpdateAsync(id, dto);
+    return await _museumService.HandleUpdate(id, dto);
   }
 
   [Protected]
@@ -58,6 +58,6 @@ public class MuseumController : ControllerBase
   public async Task<IActionResult> DeleteMuseum(Guid id)
   {
     _logger.LogInformation("Delete museum request received");
-    return await _museumService.HandleDeleteAsync(id);
+    return await _museumService.HandleDelete(id);
   }
 }

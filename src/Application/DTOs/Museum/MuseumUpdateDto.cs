@@ -1,9 +1,11 @@
-using System;
+namespace Application.DTOs.Museum;
+
 using System.ComponentModel.DataAnnotations;
+using System;
+using Application.Shared.Enum;
 
-namespace Application.DTOs.Museums;
 
-public class MuseumCreateDto
+public class MuseumUpdateDto
 {
   [Required(ErrorMessage = "Name is required")]
   public string Name { get; set; } = null!;
@@ -25,8 +27,6 @@ public class MuseumCreateDto
   [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5")]
   public double Rating { get; set; }
 
-  public Guid CreatedBy { get; set; }
-
   [Required(ErrorMessage = "Status is required")]
-  public string Status { get; set; }
+  public MuseumStatusEnum Status { get; set; }
 }
