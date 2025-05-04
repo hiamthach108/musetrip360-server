@@ -1,6 +1,22 @@
+---
+description: 
+globs: src/Application/DTOs/**/*.cs
+alwaysApply: false
+---
+---
+description: Implementation business services following these rules
+globs: .cursor/rules/**/*.mdc
+alwaysApply: true
+---
+
+# Rules
+- The DTO will use AutoMapper to convert data so it will need to register DTO profile.
+- The DTO will keep some fields from model for specific purposes.
+
+# Example
+<example>
 namespace Application.DTOs.User;
 
-using System.Text.Json.Serialization;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Users;
@@ -47,3 +63,4 @@ public class UserProfile : Profile
     CreateMap<UpdateProfileReq, User>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
   }
 }
+</example>

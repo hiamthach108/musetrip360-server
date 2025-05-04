@@ -2,10 +2,10 @@
 
 [Oo]bj/
 
-appsettings.Development.json
+./appsettings.Development.json
 
 .vs/
-
+.vscode/
 
 appsettings.Local.json
 
@@ -14,6 +14,7 @@ MuseTrip360.csproj.user
 *.sln
 
 *.env
-.fake
+.fake/
 
-firebase.json
+*.csproj.user
+./Migrations/*

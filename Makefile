@@ -1,5 +1,5 @@
 start:
-	dotnet watch --launch-profile dev
+	dotnet watch --environment Development
 
 build:
 	dotnet build

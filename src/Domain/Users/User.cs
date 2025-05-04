@@ -33,6 +33,7 @@ public class User : BaseEntity
   public ICollection<TourOnline> TourOnlines { get; set; } = new List<TourOnline>();
   public ICollection<TourGuide> TourGuides { get; set; } = new List<TourGuide>();
   public ICollection<Museum> Museums { get; set; } = new List<Museum>();
+  public ICollection<MuseumRequest> MuseumRequests { get; set; } = new List<MuseumRequest>();
   public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
   public ICollection<Order> Orders { get; set; } = new List<Order>();
   public ICollection<Payment> Payments { get; set; } = new List<Payment>();

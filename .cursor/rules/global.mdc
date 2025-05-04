@@ -1,0 +1,49 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Explicit concise description to ensure the agent knows when to apply the rule
+globs: .cursor/rules/**/*.mdc
+alwaysApply: true
+---
+
+# Rules
+- Before do anything should look up and read the contexts from memory-bank/ first
+- Make sure you're generating files in the right place
+- Don't generate comments in source code by default
+- Keep the project code clean, eliminate all redundant code
+- Use the best solutions and best practices to do the task
+- Summarize what things you've done and what things you have not done yet before you finish the task
+- When implement a seperate feature please don't change any not related files
+- Before you create a new feature please summarize and write down to a markdown file for plan and wait for confirmation and write down the markdown file inside folder memory-bank/
+
+### Global Pattern
+- Core standards: .cursor/rules/*.mdc
+- Language rules: *.cs
+- All entity model will be put in src/Domain/**/*.cs
+- All config values and environment load must be put in [config.go](mdc:config/config.go)
+- Use .Net Core 8.0 for building backend server
+- RabbitMQ for interacting with message queue and asynchronous services communication
+- Redis for caching
+
+### Organizational Folders
+- src/Application/Controllers: the API controller must follow rules in [controller_rule.mdc](mdc:.cursor/rules/controller_rule.mdc)
+- src/Application/Service: Core business logic layer must follow rule in [service_rule.mdc](mdc:.cursor/rules/service_rule.mdc)
+- src/Application/DTOs: Data Transfer Objects must follow rule in [dto_rule.mdc](mdc:.cursor/rules/dto_rule.mdc)
+- src/Application/Middlewares: shared middleware between controllers
+- src/Application/Shared: shared functionalities, enums, types,...
+- src/Core: shared packages and libraries used
+- src/Domain: system entities.
+- src/Infrastructure/Repository: implement repositories here and follow rule in [repository_rule.mdc](mdc:.cursor/rules/repository_rule.mdc)
+
+### Implementation flow
+- When create a new api for model you should follow these steps:
+  1. Create model repository first follow rules in [repository_rule.mdc](mdc:.cursor/rules/repository_rule.mdc)
+  2. Create DTOs for model.
+  3. Create Service based on domain and follow rules in [service_rule.mdc](mdc:.cursor/rules/service_rule.mdc)
+  4. Create Controller based on domain and follow rules in [controller_rule.mdc](mdc:.cursor/rules/controller_rule.mdc)
+
+
+
