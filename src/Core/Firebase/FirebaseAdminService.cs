@@ -13,11 +13,11 @@ public class FirebaseAdminService : IFirebaseAdminService
 {
   private readonly FirebaseApp _app;
 
-  public FirebaseAdminService()
+  public FirebaseAdminService(IConfiguration configuration)
   {
     _app = FirebaseApp.Create(new AppOptions
     {
-      Credential = GoogleCredential.FromFile("firebase.json")
+      Credential = GoogleCredential.FromJson(configuration["FirebaseToken"])
     });
   }
 
