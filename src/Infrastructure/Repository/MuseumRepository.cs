@@ -39,9 +39,9 @@ public class MuseumRepository : IMuseumRepository
   public MuseumList GetAll(MuseumQuery query)
   {
     var queryable = _context.Museums.AsQueryable();
-    if (!string.IsNullOrEmpty(query.SearchQuery))
+    if (!string.IsNullOrEmpty(query.Search))
     {
-      queryable = queryable.Where(m => m.Name.Contains(query.SearchQuery));
+      queryable = queryable.Where(m => m.Name.Contains(query.Search));
     }
 
     var total = queryable.Count();
