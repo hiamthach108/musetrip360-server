@@ -18,6 +18,7 @@ using Application.DTOs.MuseumPolicy;
 public interface IMuseumService
 {
   Task<IActionResult> HandleGetAll(MuseumQuery query);
+  Task<IActionResult> HandleGetAllAdmin(MuseumQuery query);
   Task<IActionResult> HandleGetById(Guid id);
   Task<IActionResult> HandleCreate(MuseumCreateDto dto);
   Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
@@ -55,6 +56,18 @@ public class MuseumService : BaseService, IMuseumService
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
+  {
+    var museums = _museumRepository.GetAll(query);
+    var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums.Museums);
+
+    return SuccessResp.Ok(new
+    {
+      List = museumDtos,
+      Total = museums.Total
+    });
+  }
+
+  public async Task<IActionResult> HandleGetAllAdmin(MuseumQuery query)
   {
     var museums = _museumRepository.GetAll(query);
     var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums.Museums);

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Application.DTOs.Museum;
+using Application.Shared.Enum;
 using Database;
 using Domain.Museums;
 
@@ -11,6 +12,7 @@ public interface IMuseumRepository
 {
   Museum? GetById(Guid id);
   MuseumList GetAll(MuseumQuery query);
+  MuseumList GetAllAdmin(MuseumQuery query);
   Task AddAsync(Museum museum);
   Task UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
@@ -39,9 +41,34 @@ public class MuseumRepository : IMuseumRepository
   public MuseumList GetAll(MuseumQuery query)
   {
     var queryable = _context.Museums.AsQueryable();
+    queryable = queryable.Where(m => m.Status == MuseumStatusEnum.Active);
     if (!string.IsNullOrEmpty(query.Search))
     {
       queryable = queryable.Where(m => m.Name.Contains(query.Search));
+      queryable = queryable.Where(m => m.Description.Contains(query.Search));
+    }
+
+    var total = queryable.Count();
+    var museums = queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
+
+    return new MuseumList
+    {
+      Museums = museums,
+      Total = total
+    };
+  }
+
+  public MuseumList GetAllAdmin(MuseumQuery query)
+  {
+    var queryable = _context.Museums.AsQueryable();
+    if (!string.IsNullOrEmpty(query.Search))
+    {
+      queryable = queryable.Where(m => m.Name.Contains(query.Search));
+    }
+
+    if (query.Status != null)
+    {
+      queryable = queryable.Where(m => m.Status == query.Status);
     }
 
     var total = queryable.Count();
