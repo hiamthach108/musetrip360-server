@@ -6,5 +6,5 @@ using Application.DTOs.Pagination;
 
 public class MuseumQuery : PaginationReq
 {
-  public string? SearchQuery { get; set; }
+  public string? Search { get; set; }
 }
