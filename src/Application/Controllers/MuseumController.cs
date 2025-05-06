@@ -23,12 +23,19 @@ public class MuseumController : ControllerBase
     _museumService = museumService;
   }
 
-  [Protected]
   [HttpGet]
   public async Task<IActionResult> GetAllMuseums([FromQuery] MuseumQuery query)
   {
     _logger.LogInformation("Get all museums request received");
     return await _museumService.HandleGetAll(query);
+  }
+
+  [Protected]
+  [HttpGet("admin")]
+  public async Task<IActionResult> GetAllMuseumsAdmin([FromQuery] MuseumQuery query)
+  {
+    _logger.LogInformation("Get all museums request received");
+    return await _museumService.HandleGetAllAdmin(query);
   }
 
   [Protected]
