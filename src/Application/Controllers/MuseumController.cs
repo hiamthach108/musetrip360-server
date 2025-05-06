@@ -7,6 +7,8 @@ using Application.Service;
 using Application.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 using Application.DTOs.MuseumRequest;
+using Application.DTOs.Pagination;
+using Application.DTOs.MuseumPolicy;
 
 [ApiController]
 [Route("/api/v1/museums")]
@@ -116,5 +118,46 @@ public class MuseumController : ControllerBase
   {
     _logger.LogInformation("Reject museum request received");
     return await _museumService.HandleRejectRequest(id);
+  }
+
+  // MuseumPolicy endpoints
+  [Protected]
+  [HttpGet("policies/museum/{museumId}")]
+  public async Task<IActionResult> GetAllMuseumPolicies(Guid museumId, [FromQuery] PaginationReq query)
+  {
+    _logger.LogInformation("Get all museum policies received");
+    return await _museumService.HandleGetAllPolicies(query, museumId);
+  }
+
+  [Protected]
+  [HttpGet("policies/{id}")]
+  public async Task<IActionResult> GetMuseumPolicyById(Guid id)
+  {
+    _logger.LogInformation("Get museum policy by id received");
+    return await _museumService.HandleGetPolicyById(id);
+  }
+
+  [Protected]
+  [HttpPost("policies")]
+  public async Task<IActionResult> CreateMuseumPolicy([FromBody] MuseumPolicyCreateDto dto)
+  {
+    _logger.LogInformation("Create museum policy received");
+    return await _museumService.HandleCreatePolicy(dto);
+  }
+
+  [Protected]
+  [HttpPut("policies/{id}")]
+  public async Task<IActionResult> UpdateMuseumPolicy(Guid id, [FromBody] MuseumPolicyUpdateDto dto)
+  {
+    _logger.LogInformation("Update museum policy received");
+    return await _museumService.HandleUpdatePolicy(id, dto);
+  }
+
+  [Protected]
+  [HttpDelete("policies/{id}")]
+  public async Task<IActionResult> DeleteMuseumPolicy(Guid id)
+  {
+    _logger.LogInformation("Delete museum policy received");
+    return await _museumService.HandleDeletePolicy(id);
   }
 }

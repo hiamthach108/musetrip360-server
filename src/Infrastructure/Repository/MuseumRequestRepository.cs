@@ -8,11 +8,17 @@ using Application.DTOs.MuseumRequest;
 
 public interface IMuseumRequestRepository
 {
-  Task<MuseumRequest> GetByIdAsync(Guid id);
-  Task<(IEnumerable<MuseumRequest> Requests, int Total)> GetAllAsync(MuseumRequestQuery query);
+  MuseumRequest? GetById(Guid id);
+  MuseumRequestList GetAll(MuseumRequestQuery query);
   Task<MuseumRequest> AddAsync(MuseumRequest request);
   Task<MuseumRequest> UpdateAsync(Guid id, MuseumRequest request);
   Task DeleteAsync(MuseumRequest request);
+}
+
+public class MuseumRequestList
+{
+  public List<MuseumRequest> Requests { get; set; } = new List<MuseumRequest>();
+  public int Total { get; set; }
 }
 
 public class MuseumRequestRepository : IMuseumRequestRepository
@@ -24,14 +30,14 @@ public class MuseumRequestRepository : IMuseumRequestRepository
     _dbContext = dbContext;
   }
 
-  public async Task<MuseumRequest> GetByIdAsync(Guid id)
+  public MuseumRequest? GetById(Guid id)
   {
-    return await _dbContext.MuseumRequests
+    return _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
-        .FirstOrDefaultAsync(r => r.Id == id);
+        .FirstOrDefault(r => r.Id == id);
   }
 
-  public async Task<(IEnumerable<MuseumRequest> Requests, int Total)> GetAllAsync(MuseumRequestQuery query)
+  public MuseumRequestList GetAll(MuseumRequestQuery query)
   {
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
@@ -44,13 +50,17 @@ public class MuseumRequestRepository : IMuseumRequestRepository
           r.MuseumDescription.Contains(query.Search));
     }
 
-    var total = await requests.CountAsync();
+    var total = requests.Count();
 
     requests = requests
         .Skip((query.Page - 1) * query.PageSize)
         .Take(query.PageSize);
 
-    return (await requests.ToListAsync(), total);
+    return new MuseumRequestList
+    {
+      Requests = requests.ToList(),
+      Total = total
+    };
   }
 
   public async Task<MuseumRequest> AddAsync(MuseumRequest request)

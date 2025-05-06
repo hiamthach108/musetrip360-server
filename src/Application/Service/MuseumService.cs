@@ -12,6 +12,8 @@ using Application.Shared.Type;
 using Database;
 using Application.Shared.Enum;
 using Application.DTOs.MuseumRequest;
+using Application.DTOs.Pagination;
+using Application.DTOs.MuseumPolicy;
 
 public interface IMuseumService
 {
@@ -29,18 +31,27 @@ public interface IMuseumService
   Task<IActionResult> HandleDeleteRequest(Guid id);
   Task<IActionResult> HandleApproveRequest(Guid id);
   Task<IActionResult> HandleRejectRequest(Guid id);
+
+  // MuseumPolicy methods
+  Task<IActionResult> HandleGetAllPolicies(PaginationReq query, Guid museumId);
+  Task<IActionResult> HandleGetPolicyById(Guid id);
+  Task<IActionResult> HandleCreatePolicy(MuseumPolicyCreateDto dto);
+  Task<IActionResult> HandleUpdatePolicy(Guid id, MuseumPolicyUpdateDto dto);
+  Task<IActionResult> HandleDeletePolicy(Guid id);
 }
 
 public class MuseumService : BaseService, IMuseumService
 {
   private readonly IMuseumRepository _museumRepository;
   private readonly IMuseumRequestRepository _museumRequestRepository;
+  private readonly IMuseumPolicyRepository _museumPolicyRepository;
 
   public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx)
     : base(dbContext, mapper, httpCtx)
   {
     _museumRepository = new MuseumRepository(dbContext);
     _museumRequestRepository = new MuseumRequestRepository(dbContext);
+    _museumPolicyRepository = new MuseumPolicyRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -110,7 +121,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query)
   {
-    var requests = await _museumRequestRepository.GetAllAsync(query);
+    var requests = _museumRequestRepository.GetAll(query);
     var requestDtos = _mapper.Map<IEnumerable<MuseumRequestDto>>(requests.Requests);
 
     return SuccessResp.Ok(new
@@ -122,7 +133,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleGetRequestById(Guid id)
   {
-    var request = await _museumRequestRepository.GetByIdAsync(id);
+    var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
       return ErrorResp.NotFound("Museum request not found");
@@ -152,7 +163,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleUpdateRequest(Guid id, MuseumRequestUpdateDto dto)
   {
-    var request = await _museumRequestRepository.GetByIdAsync(id);
+    var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
       return ErrorResp.NotFound("Museum request not found");
@@ -172,7 +183,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleDeleteRequest(Guid id)
   {
-    var request = await _museumRequestRepository.GetByIdAsync(id);
+    var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
       return ErrorResp.NotFound("Museum request not found");
@@ -184,7 +195,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleApproveRequest(Guid id)
   {
-    var request = await _museumRequestRepository.GetByIdAsync(id);
+    var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
       return ErrorResp.NotFound("Museum request not found");
@@ -218,7 +229,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleRejectRequest(Guid id)
   {
-    var request = await _museumRequestRepository.GetByIdAsync(id);
+    var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
       return ErrorResp.NotFound("Museum request not found");
@@ -234,5 +245,79 @@ public class MuseumService : BaseService, IMuseumService
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
+  }
+
+  public async Task<IActionResult> HandleGetAllPolicies(PaginationReq query, Guid museumId)
+  {
+    var policies = _museumPolicyRepository.GetAll(query, museumId);
+    var policyDtos = _mapper.Map<IEnumerable<MuseumPolicyDto>>(policies.Policies);
+
+    return SuccessResp.Ok(new
+    {
+      List = policyDtos,
+      Total = policies.Total
+    });
+  }
+
+  public async Task<IActionResult> HandleGetPolicyById(Guid id)
+  {
+    var policy = _museumPolicyRepository.GetById(id);
+    if (policy == null)
+    {
+      return ErrorResp.NotFound("Museum policy not found");
+    }
+    var policyDto = _mapper.Map<MuseumPolicyDto>(policy);
+    return SuccessResp.Ok(policyDto);
+  }
+
+  public async Task<IActionResult> HandleCreatePolicy(MuseumPolicyCreateDto dto)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var museum = _museumRepository.GetById(dto.MuseumId);
+    if (museum == null)
+    {
+      return ErrorResp.NotFound("Museum not found");
+    }
+
+    var policy = _mapper.Map<MuseumPolicy>(dto);
+    policy.CreatedBy = payload.UserId;
+    policy.IsActive = true;
+
+    await _museumPolicyRepository.AddAsync(policy);
+
+    var policyDto = _mapper.Map<MuseumPolicyDto>(policy);
+    return SuccessResp.Created(policyDto);
+  }
+
+  public async Task<IActionResult> HandleUpdatePolicy(Guid id, MuseumPolicyUpdateDto dto)
+  {
+    var policy = _museumPolicyRepository.GetById(id);
+    if (policy == null)
+    {
+      return ErrorResp.NotFound("Museum policy not found");
+    }
+
+    _mapper.Map(dto, policy);
+    await _museumPolicyRepository.UpdateAsync(id, policy);
+
+    var policyDto = _mapper.Map<MuseumPolicyDto>(policy);
+    return SuccessResp.Ok(policyDto);
+  }
+
+  public async Task<IActionResult> HandleDeletePolicy(Guid id)
+  {
+    var policy = _museumPolicyRepository.GetById(id);
+    if (policy == null)
+    {
+      return ErrorResp.NotFound("Museum policy not found");
+    }
+
+    await _museumPolicyRepository.DeleteAsync(policy);
+    return SuccessResp.Ok("Museum policy deleted successfully");
   }
 }
