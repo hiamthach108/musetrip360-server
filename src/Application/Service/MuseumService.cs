@@ -206,7 +206,7 @@ public class MuseumService : BaseService, IMuseumService
       Location = request.Location,
       ContactEmail = request.ContactEmail,
       ContactPhone = request.ContactPhone,
-      Status = MuseumStatusEnum.NotVerified,
+      Status = MuseumStatusEnum.Active,
       CreatedBy = request.CreatedBy
     };
 
