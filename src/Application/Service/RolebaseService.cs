@@ -15,6 +15,7 @@ public interface IRolebaseService
   Task<IActionResult> HandleGetByIdAsync(Guid id);
   Task<IActionResult> HandleCreateAsync(RoleCreateDto dto);
   Task<IActionResult> HandleUpdateAsync(Guid id, RoleUpdateDto dto);
+  Task<IActionResult> HandleUpdateRolePermissionsAsync(Guid id, RolePermissionUpdateDto dto);
 
   // Permission endpoints
   Task<IActionResult> HandleGetAllPermissionsAsync(PermissionQuery query);
@@ -100,6 +101,49 @@ public class RolebaseService : BaseService, IRolebaseService
 
     var role = _mapper.Map<Role>(dto);
     var result = await _roleRepo.UpdateAsync(id, role);
+    return SuccessResp.Ok(_mapper.Map<RoleDto>(result));
+  }
+
+  public async Task<IActionResult> HandleUpdateRolePermissionsAsync(Guid id, RolePermissionUpdateDto dto)
+  {
+    _logger.LogInformation("Updating role {Id} permissions: Adding {AddCount} permissions, Removing {RemoveCount} permissions",
+      id, dto.AddList.Count, dto.RemoveList.Count);
+
+    // Check if role exists
+    var existingRole = _roleRepo.GetById(id);
+    if (existingRole == null)
+    {
+      return ErrorResp.NotFound("Role not found");
+    }
+
+    // Validate permission IDs to add
+    if (dto.AddList != null && dto.AddList.Count > 0)
+    {
+      foreach (var permissionId in dto.AddList)
+      {
+        var permission = _permissionRepo.GetById(permissionId);
+        if (permission == null)
+        {
+          return ErrorResp.BadRequest($"Permission with ID {permissionId} not found");
+        }
+      }
+    }
+
+    // Validate permission IDs to remove
+    if (dto.RemoveList != null && dto.RemoveList.Count > 0)
+    {
+      foreach (var permissionId in dto.RemoveList)
+      {
+        // Check if the permission exists in the role
+        if (!existingRole.Permissions.Any(p => p.Id == permissionId))
+        {
+          return ErrorResp.BadRequest($"Permission with ID {permissionId} is not assigned to this role");
+        }
+      }
+    }
+
+    // Update role permissions
+    var result = await _roleRepo.UpdateRolePermissionsAsync(id, dto.AddList, dto.RemoveList);
     return SuccessResp.Ok(_mapper.Map<RoleDto>(result));
   }
 

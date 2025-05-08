@@ -50,6 +50,14 @@ public class RoleController : ControllerBase
     return await _service.HandleUpdateAsync(id, dto);
   }
 
+  [Protected]
+  [HttpPut("roles/{id}/permissions")]
+  public async Task<IActionResult> UpdateRolePermissions(Guid id, [FromBody] RolePermissionUpdateDto dto)
+  {
+    _logger.LogInformation("Update role permissions request received");
+    return await _service.HandleUpdateRolePermissionsAsync(id, dto);
+  }
+
   // Permission endpoints
   [Protected]
   [HttpGet("permissions")]
@@ -83,5 +91,11 @@ public class RoleController : ControllerBase
     return await _service.HandleUpdatePermissionAsync(id, dto);
   }
 
-
+  [Protected]
+  [HttpDelete("permissions/{id}")]
+  public async Task<IActionResult> DeletePermission(Guid id)
+  {
+    _logger.LogInformation("Delete permission request received");
+    return await _service.HandleDeletePermissionAsync(id);
+  }
 }

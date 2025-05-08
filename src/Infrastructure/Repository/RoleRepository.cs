@@ -13,6 +13,7 @@ public interface IRoleRepository
   Task<Role> UpdateAsync(Guid roleId, Role role);
   Task<Role> DeleteAsync(Role role);
   Role? GetRoleByName(string name);
+  Task<Role?> UpdateRolePermissionsAsync(Guid roleId, ICollection<Guid> permissionIdsToAdd, ICollection<Guid> permissionIdsToRemove);
 }
 
 public class RoleList
@@ -109,6 +110,47 @@ public class RoleRepository : IRoleRepository
     foreach (var permission in role.Permissions)
     {
       existingRole.Permissions.Add(permission);
+    }
+
+    await _dbContext.SaveChangesAsync();
+    return existingRole;
+  }
+
+  public async Task<Role?> UpdateRolePermissionsAsync(Guid roleId, ICollection<Guid> permissionIdsToAdd, ICollection<Guid> permissionIdsToRemove)
+  {
+    var existingRole = await _dbContext.Roles
+        .Include(r => r.Permissions)
+        .FirstOrDefaultAsync(r => r.Id == roleId);
+
+    if (existingRole == null) return null;
+
+    // Remove permissions
+    if (permissionIdsToRemove != null && permissionIdsToRemove.Count > 0)
+    {
+      var permissionsToRemove = existingRole.Permissions
+          .Where(p => permissionIdsToRemove.Contains(p.Id))
+          .ToList();
+
+      foreach (var permission in permissionsToRemove)
+      {
+        existingRole.Permissions.Remove(permission);
+      }
+    }
+
+    // Add permissions
+    if (permissionIdsToAdd != null && permissionIdsToAdd.Count > 0)
+    {
+      var permissionsToAdd = await _dbContext.Permissions
+          .Where(p => permissionIdsToAdd.Contains(p.Id))
+          .ToListAsync();
+
+      foreach (var permission in permissionsToAdd)
+      {
+        if (!existingRole.Permissions.Any(p => p.Id == permission.Id))
+        {
+          existingRole.Permissions.Add(permission);
+        }
+      }
     }
 
     await _dbContext.SaveChangesAsync();
