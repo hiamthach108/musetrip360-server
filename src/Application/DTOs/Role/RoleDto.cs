@@ -16,21 +16,20 @@ public class RoleCreateDto
 {
   public string Name { get; set; } = null!;
   public string Description { get; set; } = null!;
-  public bool IsActive { get; set; } = true;
-  public ICollection<Guid> PermissionIds { get; set; } = new List<Guid>();
+  // public ICollection<Guid> PermissionIds { get; set; } = new List<Guid>();
 }
 
 public class RoleUpdateDto
 {
-  public string Name { get; set; } = null!;
-  public string Description { get; set; } = null!;
-  public bool IsActive { get; set; }
-  public ICollection<Guid> PermissionIds { get; set; } = new List<Guid>();
+  public string? Name { get; set; }
+  public string? Description { get; set; }
+  public bool? IsActive { get; set; }
+  // public ICollection<Guid>? PermissionIds { get; set; }
 }
 
 public class RoleQuery
 {
-  public string? SearchKeyword { get; set; }
+  public string? Search { get; set; }
   public int Page { get; set; } = 0;
   public int PageSize { get; set; } = 10;
 }
@@ -40,8 +39,10 @@ public class RoleProfile : Profile
   public RoleProfile()
   {
     CreateMap<Role, RoleDto>();
-    CreateMap<RoleCreateDto, Role>();
-    CreateMap<RoleUpdateDto, Role>();
+    CreateMap<RoleCreateDto, Role>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<Role, RoleCreateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<RoleUpdateDto, Role>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<Role, RoleUpdateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
     CreateMap<Permission, PermissionDto>();
   }

@@ -49,7 +49,6 @@ public class RoleRepository : IRoleRepository
   public IEnumerable<Role> GetAll()
   {
     return _dbContext.Roles
-        .Include(r => r.Permissions)
         .ToList();
   }
 
@@ -62,19 +61,18 @@ public class RoleRepository : IRoleRepository
 
   public RoleList GetRoleList(RoleQuery query)
   {
-    string searchKeyword = query.SearchKeyword ?? "";
-    int page = query.Page < 0 ? 0 : query.Page;
+    string searchKeyword = query.Search ?? "";
+    int page = query.Page < 1 ? 1 : query.Page;
     int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
     var q = _dbContext.Roles
-        .Include(r => r.Permissions)
         .Where(r => r.Name.Contains(searchKeyword) || r.Description.Contains(searchKeyword))
         .AsQueryable();
 
     var total = q.Count();
 
     var roles = q
-        .Skip(page * pageSize)
+        .Skip((page - 1) * pageSize)
         .Take(pageSize)
         .ToList();
 

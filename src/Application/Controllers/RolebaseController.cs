@@ -1,18 +1,18 @@
+namespace Application.Controllers;
+
 using Application.DTOs.Role;
 using Application.Middlewares;
 using Application.Service;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Application.Controllers;
-
 [ApiController]
 [Route("/api/v1/rolebase")]
-public class RoleController : ControllerBase
+public class RolebaseController : ControllerBase
 {
-  private readonly ILogger<RoleController> _logger;
+  private readonly ILogger<RolebaseController> _logger;
   private readonly IRolebaseService _service;
 
-  public RoleController(ILogger<RoleController> logger, IRolebaseService service)
+  public RolebaseController(ILogger<RolebaseController> logger, IRolebaseService service)
   {
     _logger = logger;
     _service = service;

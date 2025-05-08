@@ -67,7 +67,7 @@ public class UserRepository : IUserRepository
 
   public async Task<UserList> GetUserListAsync(UserQuery query)
   {
-    string searchKeyword = query.SearchKeyword ?? "";
+    string searchKeyword = query.Search ?? "";
     int page = query.Page < 0 ? 0 : query.Page;
     int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 

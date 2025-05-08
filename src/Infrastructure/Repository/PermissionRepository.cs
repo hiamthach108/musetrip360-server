@@ -60,8 +60,8 @@ public class PermissionRepository : IPermissionRepository
 
   public PermissionList GetPermissionList(PermissionQuery query)
   {
-    string searchKeyword = query.SearchKeyword ?? "";
-    int page = query.Page < 0 ? 0 : query.Page;
+    string searchKeyword = query.Search ?? "";
+    int page = query.Page < 1 ? 1 : query.Page;
     int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
     var q = _dbContext.Permissions
@@ -74,7 +74,7 @@ public class PermissionRepository : IPermissionRepository
     var total = q.Count();
 
     var permissions = q
-        .Skip(page * pageSize)
+        .Skip((page - 1) * pageSize)
         .Take(pageSize)
         .ToList();
 

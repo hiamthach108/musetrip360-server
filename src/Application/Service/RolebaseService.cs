@@ -49,7 +49,11 @@ public class RolebaseService : BaseService, IRolebaseService
   {
     _logger.LogInformation("Getting all roles with query: {@Query}", query);
     var result = _roleRepo.GetRoleList(query);
-    return SuccessResp.Ok(result);
+    return SuccessResp.Ok(new
+    {
+      data = _mapper.Map<List<RoleDto>>(result.Roles),
+      total = result.Total
+    });
   }
 
   public async Task<IActionResult> HandleGetByIdAsync(Guid id)
@@ -90,7 +94,7 @@ public class RolebaseService : BaseService, IRolebaseService
     }
 
     // Check if new name conflicts with other roles
-    if (dto.Name != existingRole.Name)
+    if (dto.Name != null && dto.Name != existingRole.Name)
     {
       var roleWithSameName = _roleRepo.GetRoleByName(dto.Name);
       if (roleWithSameName != null)
@@ -99,8 +103,8 @@ public class RolebaseService : BaseService, IRolebaseService
       }
     }
 
-    var role = _mapper.Map<Role>(dto);
-    var result = await _roleRepo.UpdateAsync(id, role);
+    _mapper.Map(dto, existingRole);
+    var result = await _roleRepo.UpdateAsync(id, existingRole);
     return SuccessResp.Ok(_mapper.Map<RoleDto>(result));
   }
 
@@ -152,7 +156,11 @@ public class RolebaseService : BaseService, IRolebaseService
   {
     _logger.LogInformation("Getting all permissions with query: {@Query}", query);
     var result = _permissionRepo.GetPermissionList(query);
-    return SuccessResp.Ok(result);
+    return SuccessResp.Ok(new
+    {
+      data = _mapper.Map<List<PermissionDto>>(result.Permissions),
+      total = result.Total
+    });
   }
 
   public async Task<IActionResult> HandleGetPermissionByIdAsync(Guid id)
@@ -202,8 +210,9 @@ public class RolebaseService : BaseService, IRolebaseService
       }
     }
 
-    var permission = _mapper.Map<Permission>(dto);
-    var result = await _permissionRepo.UpdateAsync(id, permission);
+    _mapper.Map(dto, existingPermission);
+    // Update the permission
+    var result = await _permissionRepo.UpdateAsync(id, existingPermission);
     return SuccessResp.Ok(_mapper.Map<PermissionDto>(result));
   }
 
