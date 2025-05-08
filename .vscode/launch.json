@@ -31,5 +31,32 @@
         "appProject": "${workspaceFolder}/MuseTrip360.csproj"
       }
     },
+    {
+      "name": "netcoredbg",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/bin/Debug/net8.0/MuseTrip360.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "pipeTransport": {
+        "pipeCwd": "${workspaceFolder}",
+        "pipeProgram": "C:\\Windows\\System32\\bash.exe", // Hoặc wsl.exe nếu dùng WSL
+        "pipeArgs": ["-c"],
+        "debuggerPath": "/mnt/c/Users/GIANG/Documents/netcoredbg-win64/netcoredbg/netcoredbg.exe",
+        "debuggerArgs": ["--interpreter=vscode"],
+        "quoteArgs": true
+      },
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "logging": {
+        "moduleLoad": false,
+        "diagnosticsLog": {
+          "protocolMessages": true
+        }
+      }
+    } 
   ]
 }

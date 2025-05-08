@@ -13,7 +13,9 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task<ArtifactList> GetAllAdminAsync(ArtifactAdminQuery query);
         Task AddAsync(Artifact artifact);
         Task UpdateAsync(Guid artifactId, Artifact artifact);
-        Task DeleteAsync(Artifact artifact);
+        Task DeleteAsync(Guid id);
+        Task<bool> IsMuseumExistsAsync(Guid museumId);
+        Task<bool> IsArtifactExistsAsync(Guid artifactId);
     }
     public class ArtifactList
     {
@@ -33,10 +35,14 @@ namespace MuseTrip360.src.Infrastructure.Repository
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Artifact artifact)
+        public async Task DeleteAsync(Guid id)
         {
-            _context.Remove(artifact);
-            await _context.SaveChangesAsync();
+            var artifact = await _context.Artifacts.FindAsync(id);
+            if (artifact != null)
+            {
+                _context.Artifacts.Remove(artifact);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<ArtifactList> GetAllAsync(ArtifactQuery query)
@@ -48,6 +54,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             //get all artifacts with constraints and pagination
             var queryable = await _context.Artifacts
                 .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
+                .Include(a => a.Events)
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();
@@ -70,6 +77,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             var queryable = await _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
                 .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
+                .Include(a => a.Events)
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();
@@ -99,6 +107,16 @@ namespace MuseTrip360.src.Infrastructure.Repository
         public async Task<IEnumerable<Artifact>> GetByMuseumIdAsync(Guid museumId)
         {
             return await _context.Artifacts.Where(a => a.MuseumId == museumId).ToListAsync();
+        }
+
+        public async Task<bool> IsMuseumExistsAsync(Guid museumId)
+        {
+            return await _context.Museums.AnyAsync(m => m.Id == museumId);
+        }
+
+        public async Task<bool> IsArtifactExistsAsync(Guid artifactId)
+        {
+            return await _context.Artifacts.AnyAsync(a => a.Id == artifactId);
         }
     }
 }
