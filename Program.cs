@@ -115,6 +115,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMuseumService, MuseumService>();
 builder.Services.AddScoped<IArtifactService, ArtifactService>();
+builder.Services.AddScoped<IRolebaseService, RolebaseService>();
 
 var app = builder.Build();
 
