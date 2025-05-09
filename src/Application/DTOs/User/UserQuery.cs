@@ -4,5 +4,5 @@ using Application.DTOs.Pagination;
 
 public class UserQuery : PaginationReq
 {
-  public string? SearchKeyword { get; set; }
+  public string? Search { get; set; }
 }

@@ -14,6 +14,8 @@ using Application.Shared.Enum;
 using Application.DTOs.MuseumRequest;
 using Application.DTOs.Pagination;
 using Application.DTOs.MuseumPolicy;
+using Application.Shared.Constant;
+using Domain.Users;
 
 public interface IMuseumService
 {
@@ -46,6 +48,8 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IMuseumRepository _museumRepository;
   private readonly IMuseumRequestRepository _museumRequestRepository;
   private readonly IMuseumPolicyRepository _museumPolicyRepository;
+  private readonly IUserRoleRepository _userRoleRepository;
+  private readonly IRoleRepository _roleRepository;
 
   public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx)
     : base(dbContext, mapper, httpCtx)
@@ -53,6 +57,8 @@ public class MuseumService : BaseService, IMuseumService
     _museumRepository = new MuseumRepository(dbContext);
     _museumRequestRepository = new MuseumRequestRepository(dbContext);
     _museumPolicyRepository = new MuseumPolicyRepository(dbContext);
+    _userRoleRepository = new UserRoleRepository(dbContext);
+    _roleRepository = new RoleRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -163,6 +169,12 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
+    var museum = _museumRepository.GetByName(dto.MuseumName);
+    if (museum != null)
+    {
+      return ErrorResp.BadRequest("Museum already exists");
+    }
+
     var request = _mapper.Map<MuseumRequest>(dto);
     request.CreatedBy = payload.UserId;
     request.Status = RequestStatusEnum.Pending;
@@ -234,7 +246,21 @@ public class MuseumService : BaseService, IMuseumService
       CreatedBy = request.CreatedBy
     };
 
-    await _museumRepository.AddAsync(museum);
+    museum = await _museumRepository.AddAsync(museum);
+
+    // run in thread add museum manager role to the user
+    // create new thread
+    var role = _roleRepository.GetRoleByName(UserConst.ROLE_MUSEUM_MANAGER);
+    if (role != null)
+    {
+      var userRole = new UserRole
+      {
+        UserId = request.CreatedBy,
+        RoleId = role.Id,
+        MuseumId = museum.Id.ToString()
+      };
+      await _userRoleRepository.AddAsync(userRole);
+    }
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
