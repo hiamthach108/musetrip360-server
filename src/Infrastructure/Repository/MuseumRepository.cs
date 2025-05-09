@@ -11,6 +11,9 @@ using Domain.Museums;
 public interface IMuseumRepository
 {
   Museum? GetById(Guid id);
+  IEnumerable<Museum> GetByIds(IEnumerable<Guid> ids);
+  bool IsMuseumExists(Guid id);
+  bool IsMuseumNameExists(string name);
   Museum? GetByName(string name);
   MuseumList GetAll(MuseumQuery query);
   MuseumList GetAllAdmin(MuseumQuery query);
@@ -37,6 +40,21 @@ public class MuseumRepository : IMuseumRepository
   public Museum? GetById(Guid id)
   {
     return _context.Museums.Find(id);
+  }
+
+  public IEnumerable<Museum> GetByIds(IEnumerable<Guid> ids)
+  {
+    return _context.Museums.Where(m => ids.Contains(m.Id));
+  }
+
+  public bool IsMuseumExists(Guid id)
+  {
+    return _context.Museums.Any(m => m.Id == id);
+  }
+
+  public bool IsMuseumNameExists(string name)
+  {
+    return _context.Museums.Any(m => m.Name == name);
   }
 
   public Museum? GetByName(string name)

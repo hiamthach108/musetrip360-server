@@ -39,6 +39,14 @@ public class MuseumController : ControllerBase
   }
 
   [Protected]
+  [HttpGet("user")]
+  public async Task<IActionResult> GetUserMuseums()
+  {
+    _logger.LogInformation("Get user museums request received");
+    return await _museumService.HandleGetUserMuseums();
+  }
+
+  [Protected]
   [HttpGet("{id}")]
   public async Task<IActionResult> GetMuseumById(Guid id)
   {
@@ -77,6 +85,14 @@ public class MuseumController : ControllerBase
   {
     _logger.LogInformation("Get all museum requests received");
     return await _museumService.HandleGetAllRequests(query);
+  }
+
+  [Protected]
+  [HttpGet("requests/user")]
+  public async Task<IActionResult> GetAllMuseumRequestsByUserId([FromQuery] MuseumRequestQuery query)
+  {
+    _logger.LogInformation("Get all museum requests by user id received");
+    return await _museumService.HandleGetAllRequestsByUserId(query);
   }
 
   [Protected]
