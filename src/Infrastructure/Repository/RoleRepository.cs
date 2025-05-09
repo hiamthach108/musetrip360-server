@@ -86,7 +86,6 @@ public class RoleRepository : IRoleRepository
   public Role? GetRoleByName(string name)
   {
     return _dbContext.Roles
-        .Include(r => r.Permissions)
         .FirstOrDefault(r => r.Name == name);
   }
 

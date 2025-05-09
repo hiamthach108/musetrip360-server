@@ -11,9 +11,10 @@ using Domain.Museums;
 public interface IMuseumRepository
 {
   Museum? GetById(Guid id);
+  Museum? GetByName(string name);
   MuseumList GetAll(MuseumQuery query);
   MuseumList GetAllAdmin(MuseumQuery query);
-  Task AddAsync(Museum museum);
+  Task<Museum> AddAsync(Museum museum);
   Task UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
 }
@@ -36,6 +37,11 @@ public class MuseumRepository : IMuseumRepository
   public Museum? GetById(Guid id)
   {
     return _context.Museums.Find(id);
+  }
+
+  public Museum? GetByName(string name)
+  {
+    return _context.Museums.FirstOrDefault(m => m.Name == name);
   }
 
   public MuseumList GetAll(MuseumQuery query)
@@ -81,10 +87,11 @@ public class MuseumRepository : IMuseumRepository
     };
   }
 
-  public async Task AddAsync(Museum museum)
+  public async Task<Museum> AddAsync(Museum museum)
   {
-    await _context.Museums.AddAsync(museum);
+    var result = await _context.Museums.AddAsync(museum);
     await _context.SaveChangesAsync();
+    return result.Entity;
   }
 
   public async Task UpdateAsync(Guid id, Museum museum)
