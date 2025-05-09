@@ -190,8 +190,8 @@ MuseTrip360 is built as a microservices-inspired, containerized application with
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/musetrip360.git
-   cd musetrip360
+   git clone https://github.com/hiamthach108/musetrip360-server.git
+   cd musetrip360-server
    ```
 
 2. Start the services using Docker Compose:
