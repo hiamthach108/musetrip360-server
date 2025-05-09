@@ -21,6 +21,7 @@ public interface IMuseumService
 {
   Task<IActionResult> HandleGetAll(MuseumQuery query);
   Task<IActionResult> HandleGetAllAdmin(MuseumQuery query);
+  Task<IActionResult> HandleGetUserMuseums();
   Task<IActionResult> HandleGetById(Guid id);
   Task<IActionResult> HandleCreate(MuseumCreateDto dto);
   Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
@@ -28,6 +29,7 @@ public interface IMuseumService
 
   // MuseumRequest endpoints
   Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query);
+  Task<IActionResult> HandleGetAllRequestsByUserId(MuseumRequestQuery query);
   Task<IActionResult> HandleGetRequestById(Guid id);
   Task<IActionResult> HandleCreateRequest(MuseumRequestCreateDto dto);
   Task<IActionResult> HandleUpdateRequest(Guid id, MuseumRequestUpdateDto dto);
@@ -83,6 +85,21 @@ public class MuseumService : BaseService, IMuseumService
       List = museumDtos,
       Total = museums.Total
     });
+  }
+
+  public async Task<IActionResult> HandleGetUserMuseums()
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+    var userRoles = _userRoleRepository.GetAllByUserId(payload.UserId);
+    var museumIds = userRoles.Select(r => r.MuseumId).Where(id => Guid.TryParse(id, out _)).ToList();
+    var museumIdsGuid = museumIds.Select(id => Guid.Parse(id)).ToList();
+    var museums = _museumRepository.GetByIds(museumIdsGuid);
+    var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums);
+    return SuccessResp.Ok(museumDtos);
   }
 
   public async Task<IActionResult> HandleGetById(Guid id)
@@ -150,6 +167,24 @@ public class MuseumService : BaseService, IMuseumService
     });
   }
 
+  public async Task<IActionResult> HandleGetAllRequestsByUserId(MuseumRequestQuery query)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var requests = _museumRequestRepository.GetByUserId(payload.UserId, query);
+    var requestDtos = _mapper.Map<IEnumerable<MuseumRequestDto>>(requests.Requests);
+
+    return SuccessResp.Ok(new
+    {
+      List = requestDtos,
+      Total = requests.Total
+    });
+  }
+
   public async Task<IActionResult> HandleGetRequestById(Guid id)
   {
     var request = _museumRequestRepository.GetById(id);
@@ -169,10 +204,10 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var museum = _museumRepository.GetByName(dto.MuseumName);
-    if (museum != null)
+    var isMuseumNameExists = _museumRepository.IsMuseumNameExists(dto.MuseumName);
+    if (isMuseumNameExists)
     {
-      return ErrorResp.BadRequest("Museum already exists");
+      return ErrorResp.BadRequest("Museum name already exists");
     }
 
     var request = _mapper.Map<MuseumRequest>(dto);

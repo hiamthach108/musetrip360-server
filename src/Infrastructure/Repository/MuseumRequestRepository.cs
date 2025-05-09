@@ -10,6 +10,7 @@ public interface IMuseumRequestRepository
 {
   MuseumRequest? GetById(Guid id);
   MuseumRequestList GetAll(MuseumRequestQuery query);
+  MuseumRequestList GetByUserId(Guid userId, MuseumRequestQuery query);
   Task<MuseumRequest> AddAsync(MuseumRequest request);
   Task<MuseumRequest> UpdateAsync(Guid id, MuseumRequest request);
   Task DeleteAsync(MuseumRequest request);
@@ -41,6 +42,33 @@ public class MuseumRequestRepository : IMuseumRequestRepository
   {
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
+        .AsQueryable();
+
+    if (!string.IsNullOrEmpty(query.Search))
+    {
+      requests = requests.Where(r =>
+          r.MuseumName.Contains(query.Search) ||
+          r.MuseumDescription.Contains(query.Search));
+    }
+
+    var total = requests.Count();
+
+    requests = requests
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize);
+
+    return new MuseumRequestList
+    {
+      Requests = requests.ToList(),
+      Total = total
+    };
+  }
+
+  public MuseumRequestList GetByUserId(Guid userId, MuseumRequestQuery query)
+  {
+    var requests = _dbContext.MuseumRequests
+        .Include(r => r.CreatedByUser)
+        .Where(r => r.CreatedBy == userId)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(query.Search))
