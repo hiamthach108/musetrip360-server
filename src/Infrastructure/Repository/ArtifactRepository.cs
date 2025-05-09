@@ -96,7 +96,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
 
         public async Task UpdateAsync(Guid artifactId, Artifact artifact)
         {
-            var existingArtifact = GetByIdAsync(artifactId);
+            var existingArtifact = await GetByIdAsync(artifactId);
             if (existingArtifact != null)
             {
                 _context.Entry(existingArtifact).CurrentValues.SetValues(artifact);
