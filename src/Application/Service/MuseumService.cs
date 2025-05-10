@@ -77,7 +77,7 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleGetAllAdmin(MuseumQuery query)
   {
-    var museums = _museumRepository.GetAll(query);
+    var museums = _museumRepository.GetAllAdmin(query);
     var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums.Museums);
 
     return SuccessResp.Ok(new

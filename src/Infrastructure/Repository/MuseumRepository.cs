@@ -66,6 +66,7 @@ public class MuseumRepository : IMuseumRepository
   {
     var queryable = _context.Museums.AsQueryable();
     queryable = queryable.Where(m => m.Status == MuseumStatusEnum.Active);
+    queryable = queryable.OrderByDescending(m => m.UpdatedAt);
     if (!string.IsNullOrEmpty(query.Search))
     {
       queryable = queryable.Where(m => m.Name.Contains(query.Search));
@@ -85,6 +86,7 @@ public class MuseumRepository : IMuseumRepository
   public MuseumList GetAllAdmin(MuseumQuery query)
   {
     var queryable = _context.Museums.AsQueryable();
+    queryable = queryable.OrderByDescending(m => m.UpdatedAt);
     if (!string.IsNullOrEmpty(query.Search))
     {
       queryable = queryable.Where(m => m.Name.Contains(query.Search));
