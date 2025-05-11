@@ -78,7 +78,7 @@ public class AuthService : IAuthService
       {
         Email = info.Email,
         FullName = info.FullName ?? "Guest",
-        Status = UserStatusEnum.NotVerified,
+        Status = UserStatusEnum.Active,
         AuthType = AuthTypeEnum.Google,
         Username = info.Email,
         AvatarUrl = info.ProfileUrl,
@@ -165,6 +165,10 @@ public class AuthService : IAuthService
     // // cache refresh token
     var redisKey = $"users:{user.Id}:refresh_token:{refreshTk}";
     await _cacheService.Set(redisKey, userDto, TimeSpan.FromSeconds(JwtConst.REFRESH_TOKEN_EXP));
+
+    // update user last login
+    user.LastLogin = DateTime.UtcNow;
+    await _userRepo.UpdateAsync(user.Id, user);
 
     return SuccessResp.Ok(new LoginEmailResp
     {

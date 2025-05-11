@@ -21,7 +21,7 @@ public class UserController : ControllerBase
   }
 
   [Protected]
-  [HttpGet("admin")]
+  [HttpGet("")]
   public async Task<IActionResult> Get([FromQuery] UserQuery query)
   {
     _logger.LogInformation("Get all users request received");

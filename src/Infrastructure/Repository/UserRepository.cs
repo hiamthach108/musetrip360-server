@@ -68,7 +68,7 @@ public class UserRepository : IUserRepository
   public async Task<UserList> GetUserListAsync(UserQuery query)
   {
     string searchKeyword = query.Search ?? "";
-    int page = query.Page < 0 ? 0 : query.Page;
+    int page = query.Page < 1 ? 1 : query.Page;
     int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
     var q = _dbContext.Users
@@ -78,7 +78,7 @@ public class UserRepository : IUserRepository
     var total = q.Count();
 
     var users = q
-      .Skip(page * pageSize)
+      .Skip((page - 1) * pageSize)
       .Take(pageSize)
       .ToList();
 

@@ -70,14 +70,6 @@ public class MuseumController : ControllerBase
     return await _museumService.HandleUpdate(id, dto);
   }
 
-  [Protected]
-  [HttpDelete("{id}")]
-  public async Task<IActionResult> DeleteMuseum(Guid id)
-  {
-    _logger.LogInformation("Delete museum request received");
-    return await _museumService.HandleDelete(id);
-  }
-
   // MuseumRequest endpoints
   [Protected]
   [HttpGet("requests")]
@@ -128,7 +120,7 @@ public class MuseumController : ControllerBase
   }
 
   [Protected]
-  [HttpPatch("requests/{id}/approve")]
+  [HttpPut("requests/{id}/approve")]
   public async Task<IActionResult> ApproveMuseumRequest(Guid id)
   {
     _logger.LogInformation("Approve museum request received");
@@ -136,7 +128,7 @@ public class MuseumController : ControllerBase
   }
 
   [Protected]
-  [HttpPatch("requests/{id}/reject")]
+  [HttpPut("requests/{id}/reject")]
   public async Task<IActionResult> RejectMuseumRequest(Guid id)
   {
     _logger.LogInformation("Reject museum request received");
