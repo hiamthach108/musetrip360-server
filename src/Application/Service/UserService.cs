@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Repository;
 using Application.DTOs.UserRole;
 using Application.DTOs.Role;
+using Infrastructure.Cache;
 
 public interface IUserService
 {
@@ -24,6 +25,7 @@ public interface IUserService
 
   // UserRoles
   Task<IActionResult> HandleGetUserPrivileges();
+  Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId);
   Task<IActionResult> HandleGetUserRoles(Guid userId);
   Task<IActionResult> HandleAddUserRole(UserRoleFormDto body);
   Task<IActionResult> HandleDeleteUserRole(UserRoleFormDto body);
@@ -35,13 +37,15 @@ public class UserService : BaseService, IUserService
   private readonly IUserRoleRepository _userRoleRepo;
   private readonly IRoleRepository _roleRepo;
   private readonly IMuseumRepository _museumRepo;
+  private readonly ICacheService _cacheSvc;
 
-  public UserService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx) : base(dbContext, mapper, httpCtx)
+  public UserService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx, ICacheService cacheSvc) : base(dbContext, mapper, httpCtx)
   {
     _userRepo = new UserRepository(dbContext);
     _userRoleRepo = new UserRoleRepository(dbContext);
     _roleRepo = new RoleRepository(dbContext);
     _museumRepo = new MuseumRepository(dbContext);
+    _cacheSvc = cacheSvc;
   }
 
   public async Task<IActionResult> HandleCreateAsync(UserCreateDto dto)
@@ -200,20 +204,8 @@ public class UserService : BaseService, IUserService
       return ErrorResp.NotFound("User not found");
     }
 
-    var roles = _userRoleRepo.GetAllByUserId(user.Id);
-
-    var privileges = new List<string>();
-
-    foreach (var role in roles)
-    {
-      var scope = role.MuseumId ?? "system";
-      foreach (var permission in role.Role.Permissions)
-      {
-        privileges.Add($"{scope}.{permission.Name}");
-      }
-    }
-
-    return SuccessResp.Ok(new { Privileges = privileges, Roles = _mapper.Map<IEnumerable<RoleDto>>(roles.Select(r => r.Role)) });
+    var privileges = await GetUserPrivileges(user.Id);
+    return SuccessResp.Ok(privileges);
   }
 
   public async Task<IActionResult> HandleGetUserRoles(Guid userId)
@@ -322,5 +314,33 @@ public class UserService : BaseService, IUserService
     await _userRoleRepo.DeleteAsync(userRole);
 
     return SuccessResp.Ok("User role deleted successfully");
+  }
+
+  public async Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId)
+  {
+    // get from cache first
+    var cacheKey = $"users:{userId}:privileges";
+    var privilegeCache = await _cacheSvc.Get<Dictionary<string, bool>>(cacheKey);
+    if (privilegeCache != null)
+    {
+      return privilegeCache;
+    }
+
+    var roles = _userRoleRepo.GetAllByUserId(userId);
+
+    var privileges = new Dictionary<string, bool>();
+
+    foreach (var role in roles)
+    {
+      var scope = role.MuseumId ?? "system";
+      foreach (var permission in role.Role.Permissions)
+      {
+        privileges.Add($"{scope}.{permission.Name}", true);
+      }
+    }
+
+    await _cacheSvc.Set(cacheKey, privileges, TimeSpan.FromMinutes(15));
+
+    return privileges;
   }
 }

@@ -17,3 +17,5 @@ MuseTrip360.csproj.user
 .fake
 
 firebase.json
+
+data/
