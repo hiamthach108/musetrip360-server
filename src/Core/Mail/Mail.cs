@@ -20,8 +20,8 @@ public class MailService : IMailService
   {
     _smtpServer = "smtp.gmail.com";
     _smtpPort = 587;
-    _smtpUsername = configuration["SMTPEmail"] ?? "smtp_email";
-    _smtpPassword = configuration["SMTPPassword"] ?? "smtp_password";
+    _smtpUsername = configuration["SMTP:Email"] ?? "smtp_email";
+    _smtpPassword = configuration["SMTP:Password"] ?? "smtp_password";
   }
 
   public async Task SendEmailAsync(string email, string subject, string message)
