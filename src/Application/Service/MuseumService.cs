@@ -52,8 +52,9 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IMuseumPolicyRepository _museumPolicyRepository;
   private readonly IUserRoleRepository _userRoleRepository;
   private readonly IRoleRepository _roleRepository;
+  private readonly IUserService _userSvc;
 
-  public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx)
+  public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx, IUserService userSvc)
     : base(dbContext, mapper, httpCtx)
   {
     _museumRepository = new MuseumRepository(dbContext);
@@ -61,6 +62,7 @@ public class MuseumService : BaseService, IMuseumService
     _museumPolicyRepository = new MuseumPolicyRepository(dbContext);
     _userRoleRepository = new UserRoleRepository(dbContext);
     _roleRepository = new RoleRepository(dbContext);
+    _userSvc = userSvc;
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -77,6 +79,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleGetAllAdmin(MuseumQuery query)
   {
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var museums = _museumRepository.GetAllAdmin(query);
     var museumDtos = _mapper.Map<IEnumerable<MuseumDto>>(museums.Museums);
 

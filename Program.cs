@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Application.Middlewares;
 using Application.Service;
 using Core.Cloudinary;
 using Core.Crypto;
@@ -126,6 +127,7 @@ app.UseSwaggerUI();
 // app.UseStaticFiles();
 app.UseRouting();
 app.UseCors(CORS);
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();

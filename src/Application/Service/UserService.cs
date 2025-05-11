@@ -25,10 +25,13 @@ public interface IUserService
 
   // UserRoles
   Task<IActionResult> HandleGetUserPrivileges();
-  Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId);
   Task<IActionResult> HandleGetUserRoles(Guid userId);
   Task<IActionResult> HandleAddUserRole(UserRoleFormDto body);
   Task<IActionResult> HandleDeleteUserRole(UserRoleFormDto body);
+
+
+  Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId);
+  Task<bool> ValidatePermission(string museumId, List<string> permissions);
 }
 
 public class UserService : BaseService, IUserService
@@ -342,5 +345,41 @@ public class UserService : BaseService, IUserService
     await _cacheSvc.Set(cacheKey, privileges, TimeSpan.FromMinutes(15));
 
     return privileges;
+  }
+
+  public async Task<bool> ValidatePermission(string museumId, List<string> permissions)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return false;
+    }
+
+    // check if user is super admin
+    var superAdminKey = $"users:{payload.UserId}:superadmin";
+    var superAdminCache = await _cacheSvc.Get<bool?>(superAdminKey);
+    if (superAdminCache != null)
+    {
+      return superAdminCache.Value;
+    }
+
+    var isSuperAdmin = _userRoleRepo.IsSuperAdmin(payload.UserId);
+    await _cacheSvc.Set(superAdminKey, isSuperAdmin, TimeSpan.FromMinutes(15));
+    if (isSuperAdmin)
+    {
+      return true;
+    }
+
+    var privileges = await GetUserPrivileges(payload.UserId);
+
+    foreach (var permission in permissions)
+    {
+      if (privileges.ContainsKey(permission))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
