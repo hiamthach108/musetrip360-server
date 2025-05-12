@@ -9,6 +9,7 @@ public class ConversationUser : BaseEntity
   public Guid UserId { get; set; }
   public Guid LastMessageId { get; set; }
   public DateTime LastMessageAt { get; set; }
+  public DateTime LastMessageReadAt { get; set; }
 
   public Conversation Conversation { get; set; } = null!;
   public User User { get; set; } = null!;

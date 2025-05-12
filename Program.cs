@@ -110,6 +110,7 @@ builder.Services.AddSingleton<ICloudinaryService, CloudinaryService>();
 builder.Services.AddSingleton<IFirebaseAdminService, FirebaseAdminService>();
 builder.Services.AddSingleton<IMailService, MailService>();
 builder.Services.AddSingleton<IPayOSService, PayOSService>();
+builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -117,6 +118,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IMuseumService, MuseumService>();
 builder.Services.AddScoped<IArtifactService, ArtifactService>();
 builder.Services.AddScoped<IRolebaseService, RolebaseService>();
+builder.Services.AddScoped<IMessagingService, MessagingService>();
 
 var app = builder.Build();
 
@@ -131,6 +133,7 @@ app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
+app.UseWebSockets();
 app.MapHub<ChatHub>("/chat").RequireCors(CORS);
 app.MapControllers();
 
