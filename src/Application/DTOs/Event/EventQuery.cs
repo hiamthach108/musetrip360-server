@@ -13,13 +13,7 @@ public class EventQuery : PaginationReq, IValidatableObject
     public string? Location { get; set; }
 
     public string? EventType { get; set; }
-
-    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
-    [DataType(DataType.Date)]
     public DateTime? StartTime { get; set; }
-
-    [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
-    [DataType(DataType.Date)]
     public DateTime? EndTime { get; set; }
 
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

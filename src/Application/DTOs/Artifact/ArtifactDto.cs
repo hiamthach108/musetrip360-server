@@ -26,24 +26,8 @@ public class ArtifactProfile : Profile
         CreateMap<Artifact, ArtifactDto>()
         .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ArtifactCreateDto, Artifact>()
-        .ForMember(dest => dest.Id, opt => opt.Ignore())
-        .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-        .ForMember(dest => dest.MuseumId, opt => opt.Ignore())
-        .ForMember(dest => dest.Rating, opt => opt.Ignore())
-        .ForMember(dest => dest.IsActive, opt => opt.Ignore())
-        .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-        .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-        .ForMember(dest => dest.Events, opt => opt.Ignore())
         .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ArtifactUpdateDto, Artifact>()
-        .ForMember(dest => dest.Id, opt => opt.Ignore())
-        .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-        .ForMember(dest => dest.MuseumId, opt => opt.Ignore())
-        .ForMember(dest => dest.Rating, opt => opt.Ignore())
-        .ForMember(dest => dest.IsActive, opt => opt.Ignore())
-        .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-        .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-        .ForMember(dest => dest.Events, opt => opt.Ignore())
         .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
     }
 }

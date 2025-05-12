@@ -1,4 +1,6 @@
 using Application.Shared.Enum;
+using AutoMapper;
+using Domain.Events;
 
 public class EventDto
 {
@@ -21,4 +23,16 @@ public class EventDto
     //   public ICollection<TourOnlineDto> TourOnlines { get; set; } = null!;
     //   public ICollection<TourGuideDto> TourGuides { get; set; } = null!;
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
+    public class EventProfile : Profile
+    {
+        public EventProfile()
+        {
+            CreateMap<Event, EventDto>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<EventCreateDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));  
+            CreateMap<EventUpdateDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+        }
+    }
 }
