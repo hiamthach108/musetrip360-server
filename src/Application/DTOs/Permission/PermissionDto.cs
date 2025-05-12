@@ -17,7 +17,6 @@ public class PermissionCreateDto
   public string Name { get; set; } = null!;
   public string Description { get; set; } = null!;
   public string? ResourceGroup { get; set; }
-  public bool IsActive { get; set; } = true;
 }
 
 public class PermissionUpdateDto

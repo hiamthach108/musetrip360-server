@@ -42,6 +42,7 @@ public class MuseumRequestRepository : IMuseumRequestRepository
   {
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
+        .OrderByDescending(r => r.UpdatedAt)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(query.Search))
@@ -69,6 +70,7 @@ public class MuseumRequestRepository : IMuseumRequestRepository
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
         .Where(r => r.CreatedBy == userId)
+        .OrderByDescending(r => r.UpdatedAt)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(query.Search))

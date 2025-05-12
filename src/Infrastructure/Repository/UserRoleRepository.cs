@@ -1,5 +1,6 @@
 namespace Infrastructure.Repository;
 
+using Application.Shared.Constant;
 using Database;
 using Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ public interface IUserRoleRepository
   UserRole? GetUserRole(Guid userId, Guid roleId, string? museumId);
   IEnumerable<UserRole> GetAllAsync();
   IEnumerable<UserRole> GetAllByUserId(Guid userId);
+  bool IsSuperAdmin(Guid userId);
 }
 
 public class UserRoleRepository : IUserRoleRepository
@@ -53,5 +55,10 @@ public class UserRoleRepository : IUserRoleRepository
   {
     return _dbContext.UserRoles
       .FirstOrDefault(ur => ur.UserId == userId && ur.RoleId == roleId && ur.MuseumId == museumId);
+  }
+
+  public bool IsSuperAdmin(Guid userId)
+  {
+    return _dbContext.UserRoles.Any(ur => ur.UserId == userId && ur.Role.Name == UserConst.ROLE_SUPERADMIN);
   }
 }
