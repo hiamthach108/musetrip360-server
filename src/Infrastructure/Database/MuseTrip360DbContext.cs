@@ -224,6 +224,7 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.Capacity).IsRequired();
       e.Property(x => x.AvailableSlots).IsRequired();
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(EventStatusEnum.Draft);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.Museum).WithMany(x => x.Events).HasForeignKey(x => x.MuseumId);

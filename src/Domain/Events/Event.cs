@@ -21,7 +21,7 @@ public class Event : BaseEntity
   public DateTime BookingDeadline { get; set; }
   public Guid MuseumId { get; set; }
   public Guid CreatedBy { get; set; }
-
+  public EventStatusEnum Status { get; set; }
 
   public Museum Museum { get; set; } = null!;
   public User CreatedByUser { get; set; } = null!;
