@@ -13,6 +13,8 @@ namespace Infrastructure.Repository
         Task AddAsync(Event eventItem);
         Task UpdateAsync(Guid id, Event eventItem);
         Task DeleteAsync(Guid id);
+        Task<bool> IsEventExistsAsync(Guid id);
+        Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId);
     }
 
     public class EventList
@@ -134,6 +136,11 @@ namespace Infrastructure.Repository
             .FirstOrDefaultAsync(e => e.Id == id);
         }
 
+        public async Task<bool> IsEventExistsAsync(Guid id)
+        {
+            return await _context.Events.AnyAsync(e => e.Id == id);
+        }
+
         public async Task UpdateAsync(Guid id, Event eventItem)
         {
             var existingEvent = await GetEventById(id);
@@ -142,6 +149,11 @@ namespace Infrastructure.Repository
                 _context.Entry(existingEvent).CurrentValues.SetValues(eventItem);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId)
+        {
+            return await _context.Events.Where(e => e.MuseumId == museumId).ToListAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Application.Shared.Enum;
 
 public class EventUpdateDto
@@ -15,4 +16,5 @@ public class EventUpdateDto
     public int? Capacity { get; set; }
     public int? AvailableSlots { get; set; }
     public DateTime? BookingDeadline { get; set; }
+    public JsonDocument? Metadata { get; set; }
 }

@@ -3,6 +3,7 @@ using Application.Shared.Type;
 using AutoMapper;
 using Database;
 using Domain.Artifacts;
+using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Application.DTOs.Artifact;
 using MuseTrip360.src.Infrastructure.Repository;
@@ -26,6 +27,7 @@ public interface IArtifactService
 public class ArtifactService : BaseService, IArtifactService
 {
     private readonly IArtifactRepository _artifactRepository;
+    private readonly IMuseumRepository _museumRepository;
 
     public ArtifactService(
         MuseTrip360DbContext dbContext,
@@ -34,6 +36,7 @@ public class ArtifactService : BaseService, IArtifactService
         : base(dbContext, mapper, httpContextAccessor)
     {
         _artifactRepository = new ArtifactRepository(dbContext);
+        _museumRepository = new MuseumRepository(dbContext);
     }
 
     public async Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto)
@@ -47,7 +50,7 @@ public class ArtifactService : BaseService, IArtifactService
                 return ErrorResp.Unauthorized("Invalid token");
             }
             // check if the museum is exists
-            var isMuseumExists = await _artifactRepository.IsMuseumExistsAsync(museumId);
+            var isMuseumExists = _museumRepository.IsMuseumExists(museumId);
             if (!isMuseumExists)
             {
                 return ErrorResp.NotFound("Museum not found");
@@ -168,7 +171,7 @@ public class ArtifactService : BaseService, IArtifactService
         }
     }
 
-    public async Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto)
+     public async Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto)
     {
         try
         {
