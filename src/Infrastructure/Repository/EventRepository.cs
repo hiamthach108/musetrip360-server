@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Application.Shared.Enum;
 using Database;
 using Domain.Events;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,10 @@ namespace Infrastructure.Repository
         Task DeleteAsync(Guid id);
         Task<bool> IsEventExistsAsync(Guid id);
         Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId);
+        Task<IEnumerable<Event>> GetDraftEventOrganizerAsync(Guid userId);
+        Task<IEnumerable<Event>> GetSubmittedEventOrganizerAsync(Guid userId);
+        Task<IEnumerable<Event>> GetExpiredEventOrganizerAsync(Guid userId);
+        Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId);
     }
 
     public class EventList
@@ -51,10 +56,11 @@ namespace Infrastructure.Repository
         {
             // fetch all events that match the query
             var queryable = await _context.Events
-            .Where(e => string.IsNullOrEmpty(query.Title) || e.Title.Contains(query.Title))
-            .Where(e => string.IsNullOrEmpty(query.Description) || e.Description.Contains(query.Description))
+            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.Status == null || e.Status == query.Status)
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
@@ -70,10 +76,11 @@ namespace Infrastructure.Repository
 
             // count all events that match the query
             var total = await _context.Events
-            .Where(e => string.IsNullOrEmpty(query.Title) || e.Title.Contains(query.Title))
-            .Where(e => string.IsNullOrEmpty(query.Description) || e.Description.Contains(query.Description))
+            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.Status == null || e.Status == query.Status)
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
@@ -94,8 +101,8 @@ namespace Infrastructure.Repository
         {
             // fetch all events that match the query
             var queryable = await _context.Events
-            .Where(e => string.IsNullOrEmpty(query.Title) || e.Title.Contains(query.Title))
-            .Where(e => string.IsNullOrEmpty(query.Description) || e.Description.Contains(query.Description))
+            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
             .Include(e => e.Artifacts)
@@ -111,8 +118,8 @@ namespace Infrastructure.Repository
 
             // count all events that match the query
             var total = await _context.Events
-            .Where(e => string.IsNullOrEmpty(query.Title) || e.Title.Contains(query.Title))
-            .Where(e => string.IsNullOrEmpty(query.Description) || e.Description.Contains(query.Description))
+            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
@@ -154,6 +161,26 @@ namespace Infrastructure.Repository
         public async Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId)
         {
             return await _context.Events.Where(e => e.MuseumId == museumId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetDraftEventOrganizerAsync(Guid userId)
+        {
+            return await _context.Events.Where(e => e.Status == EventStatusEnum.Draft && e.CreatedBy == userId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetSubmittedEventOrganizerAsync(Guid userId)
+        {
+            return await _context.Events.Where(e => e.Status == EventStatusEnum.Pending || e.Status == EventStatusEnum.Published || e.Status == EventStatusEnum.Cancelled && e.CreatedBy == userId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetExpiredEventOrganizerAsync(Guid userId)
+        {
+            return await _context.Events.Where(e => e.Status == EventStatusEnum.Expired && e.CreatedBy == userId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId)
+        {
+            return await _context.Events.Where(e => e.CreatedBy == userId).ToListAsync();
         }
     }
 }

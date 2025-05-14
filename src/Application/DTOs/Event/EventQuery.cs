@@ -3,11 +3,9 @@ using Application.DTOs.Pagination;
 
 public class EventQuery : PaginationReq, IValidatableObject
 {
-    [MaxLength(100)]
-    public string? Title { get; set; }
-
+    public Guid? MuseumId { get; set; }
     [MaxLength(1000)]
-    public string? Description { get; set; }
+    public string? Search { get; set; }
 
     [MaxLength(100)]
     public string? Location { get; set; }
