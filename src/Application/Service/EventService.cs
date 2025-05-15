@@ -219,9 +219,9 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 }
             // }
 
-            if (eventItem.Status != EventStatusEnum.Pending)
+            if (eventItem.Status != EventStatusEnum.Pending && eventItem.Status != EventStatusEnum.Draft)
             {
-                return ErrorResp.BadRequest("Event is not in pending status");
+                return ErrorResp.BadRequest("Event is not in pending or draft status");
             }
 
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Cancelled;
@@ -518,10 +518,10 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.CreatedBy != payload.UserId)
-            {
-                return ErrorResp.Unauthorized("You are not the authorized for this event");
-            }
+            // if (eventItem.CreatedBy != payload.UserId)
+            // {
+            //     return ErrorResp.Unauthorized("You are not the authorized for this event");
+            // }
 
             if (eventItem.Status != EventStatusEnum.Draft && eventItem.Status != EventStatusEnum.Pending)
             {
@@ -554,10 +554,10 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.CreatedBy != payload.UserId)
-            {
-                return ErrorResp.Unauthorized("You are not the authorized for this event");
-            }
+            // if (eventItem.CreatedBy != payload.UserId)
+            // {
+            //     return ErrorResp.Unauthorized("You are not the authorized for this event");
+            // }
 
             if (eventItem.Status != EventStatusEnum.Draft && eventItem.Status != EventStatusEnum.Pending)
             {
