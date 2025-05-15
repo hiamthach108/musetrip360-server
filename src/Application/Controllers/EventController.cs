@@ -6,10 +6,14 @@ using Application.Middlewares;
 public class EventController : ControllerBase
 {
     private readonly IEventService _eventService;
+    private readonly IAdminEventService _adminEventService;
+    private readonly IOrganizerEventService _organizerEventService;
 
-    public EventController(IEventService eventService)
+    public EventController(IEventService eventService, IAdminEventService adminEventService, IOrganizerEventService organizerEventService)
     {
         _eventService = eventService;
+        _adminEventService = adminEventService;
+        _organizerEventService = organizerEventService;
     }
 
     [HttpGet]
@@ -28,75 +32,96 @@ public class EventController : ControllerBase
     [HttpGet("admin")]
     public async Task<IActionResult> GetAllAdmin([FromQuery] EventAdminQuery query)
     {
-        return await _eventService.HandleGetAllAdmin(query);
+        return await _adminEventService.HandleGetAllAdmin(query);
     }
 
-    [HttpGet("/api/v1/museums/{museumId}/events")]
+    [HttpGet("museums/{museumId}")]
     public async Task<IActionResult> GetByMuseumId(Guid museumId)
     {
         return await _eventService.HandleGetEventsByMuseumId(museumId);
     }
 
     [Protected]
-    [HttpPost("/api/v1/museums/{museumId}/events/request")]
+    [HttpPost("museums/{museumId}/request")]
     public async Task<IActionResult> Create(Guid museumId, EventCreateDto dto)
     {
-        return await _eventService.HandleCreateByOrganizer(museumId, dto);
+        return await _organizerEventService.HandleCreateDraft(museumId, dto);
+    }
+
+    [Protected]
+    [HttpPost("admin/museums/{museumId}")]
+    public async Task<IActionResult> CreateAdmin(Guid museumId, EventCreateAdminDto dto)
+    {
+        return await _adminEventService.HandleCreateAdmin(museumId, dto);
     }
 
     [Protected]
     [HttpPatch("{id}/evaluate")]
     public async Task<IActionResult> Evaluate(Guid id, bool isApproved)
     {
-        return await _eventService.HandleEvaluateEvent(id, isApproved);
+        return await _adminEventService.HandleEvaluateEvent(id, isApproved);
+    }
+
+    [Protected]
+    [HttpPut("admin/{id}")]
+    public async Task<IActionResult> UpdateAdmin(Guid id, EventUpdateDto dto)
+    {
+        return await _adminEventService.HandleUpdateAdmin(id, dto);
+    }
+
+    [Protected]
+    [HttpDelete("admin/{id}")]
+    public async Task<IActionResult> DeleteAdmin(Guid id)
+    {
+        return await _adminEventService.HandleDeleteAdmin(id);
     }
 
     [Protected]
     [HttpPatch("{id}/submit")]
     public async Task<IActionResult> Submit(Guid id)
     {
-        return await _eventService.HandleSubmitEvent(id);
+        return await _organizerEventService.HandleSubmitEvent(id);
     }
 
     [Protected]
     [HttpGet("draft")]
     public async Task<IActionResult> GetDraft()
     {
-        return await _eventService.HandleGetDraftEventByOrganizer();
+        return await _organizerEventService.HandleGetDraft();
     }
 
     [Protected]
     [HttpGet("submitted")]
     public async Task<IActionResult> GetSubmitted()
     {
-        return await _eventService.HandleGetSubmmittedEventByOrganizer();
+        return await _organizerEventService.HandleGetSubmitted();
     }
 
     [Protected]
     [HttpGet("expired")]
     public async Task<IActionResult> GetExpired()
     {
-        return await _eventService.HandleGetExpiredEventByOrganizer();
+        return await _organizerEventService.HandleGetExpired();
     }
 
     [Protected]
     [HttpGet("owner")]
     public async Task<IActionResult> GetAllByOrganizer()
     {
-        return await _eventService.HandleGetAllEventByOrganizer();
+        return await _organizerEventService.HandleGetAllByOrganizer();
     }
 
     [Protected]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, EventUpdateDto dto)
     {
-        return await _eventService.HandleUpdate(id, dto);
+        return await _organizerEventService.HandleUpdate(id, dto);
     }
 
     [Protected]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        return await _eventService.HandleDelete(id);
+        return await _organizerEventService.HandleDelete(id);
     }
 }

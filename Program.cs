@@ -119,6 +119,9 @@ builder.Services.AddScoped<IMuseumService, MuseumService>();
 builder.Services.AddScoped<IArtifactService, ArtifactService>();
 builder.Services.AddScoped<IRolebaseService, RolebaseService>();
 builder.Services.AddScoped<IMessagingService, MessagingService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IAdminEventService, AdminEventService>();
+builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
 
 var app = builder.Build();
 

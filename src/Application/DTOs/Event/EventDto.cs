@@ -17,6 +17,7 @@ public class EventDto
     public DateTime BookingDeadline { get; set; }
     public Guid MuseumId { get; set; }
     public Guid CreatedBy { get; set; }
+    public EventStatusEnum Status { get; set; }
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -34,6 +35,8 @@ public class EventDto
             CreateMap<EventCreateDto, Event>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));  
             CreateMap<EventUpdateDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<EventCreateAdminDto, Event>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
     }

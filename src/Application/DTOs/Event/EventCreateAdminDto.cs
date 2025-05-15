@@ -2,32 +2,27 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Application.Shared.Enum;
 
-public class EventCreateDto : IValidatableObject
+public class EventCreateAdminDto : IValidatableObject
 {
     [Required]
     [MaxLength(100)]
     public string Title { get; set; } = null!;
-    [Required]
     [MaxLength(1000)]
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
     [Required]
     public EventTypeEnum EventType { get; set; }
-    [Required]
-    public DateTime StartTime { get; set; }
-    [Required]
-    public DateTime EndTime { get; set; }
-    [Required]
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
     [MaxLength(100)]
-    public string Location { get; set; } = null!;
-    [Required]
+    public string? Location { get; set; }
     [Range(0, int.MaxValue)]
-    public int Capacity { get; set; }
-    [Required]
+    public int? Capacity { get; set; }
     [Range(0, int.MaxValue)]
-    public int AvailableSlots { get; set; }
-    [Required]
-    public DateTime BookingDeadline { get; set; }
+    public int? AvailableSlots { get; set; }
+    public DateTime? BookingDeadline { get; set; }
     public JsonDocument? Metadata { get; set; }
+    [Required]
+    public EventStatusEnum Status { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -39,17 +34,9 @@ public class EventCreateDto : IValidatableObject
         {
             yield return new ValidationResult("Booking deadline must be in the future");
         }
-        if (StartTime >= EndTime)
+        if (StartTime.HasValue && EndTime.HasValue && StartTime.Value >= EndTime.Value)
         {
             yield return new ValidationResult("Start time must be before end time");
-        }
-        if (AvailableSlots > Capacity)
-        {
-            yield return new ValidationResult("Available slots cannot be greater than capacity");
-        }
-        if (BookingDeadline >= StartTime)
-        {
-            yield return new ValidationResult("Booking deadline must be before start time");
         }
     }
 }
