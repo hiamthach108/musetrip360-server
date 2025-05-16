@@ -79,7 +79,7 @@ public class MuseTrip360DbContext : DbContext
     return base.SaveChangesAsync(cancellationToken);
   }
 
-  public static readonly ValueConverter<DateTime, DateTime> UtcConverter = 
+  public static readonly ValueConverter<DateTime, DateTime> UtcConverter =
     new ValueConverter<DateTime, DateTime>(
       v => v.ToUniversalTime(),
       v => TimeZoneInfo.ConvertTimeFromUtc(v, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) // Khi đọc → chuyển về giờ VN
@@ -89,6 +89,20 @@ public class MuseTrip360DbContext : DbContext
   {
     base.OnModelCreating(builder);
 
+    foreach (var entityType in builder.Model.GetEntityTypes())
+    {
+      foreach (var property in entityType.GetProperties())
+      {
+        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+        {
+          property.SetValueConverter(
+            new ValueConverter<DateTime, DateTime>(
+              v => v.ToUniversalTime(),
+              v => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7)
+            ));
+        }
+      }
+    }
 
     builder.Entity<User>(e =>
     {
