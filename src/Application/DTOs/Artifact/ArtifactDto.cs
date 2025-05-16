@@ -17,7 +17,6 @@ public class ArtifactDto
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    public IEnumerable<EventDto> Events { get; set; } = null!;
 }
 public class ArtifactProfile : Profile
 {

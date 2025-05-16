@@ -16,10 +16,7 @@ namespace Infrastructure.Repository
         Task DeleteAsync(Guid id);
         Task<bool> IsEventExistsAsync(Guid id);
         Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId);
-        Task<IEnumerable<Event>> GetDraftEventOrganizerAsync(Guid userId);
-        Task<IEnumerable<Event>> GetSubmittedEventOrganizerAsync(Guid userId);
-        Task<IEnumerable<Event>> GetExpiredEventOrganizerAsync(Guid userId);
-        Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId);
+        Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
     }
 
     public class EventList
@@ -55,7 +52,7 @@ namespace Infrastructure.Repository
         public async Task<EventList> GetAllAdminAsync(EventAdminQuery query)
         {
             // fetch all events that match the query
-            var queryable = await _context.Events
+            var queryable = _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
             .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
@@ -64,35 +61,19 @@ namespace Infrastructure.Repository
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .Where(e => query.StartBookingDeadline == null || e.BookingDeadline >= query.StartBookingDeadline) 
+            .Where(e => query.StartBookingDeadline == null || e.BookingDeadline >= query.StartBookingDeadline)
             .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync();
+            .Include(e => e.TicketAddons);
 
-            // count all events that match the query
-            var total = await _context.Events
-            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
-            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => query.EventType == null || e.EventType == query.EventType)
-            .Where(e => query.Status == null || e.Status == query.Status)
-            // time range available is e.Start before query end or query Start before e.End is available
-            .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
-            .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .Where(e => query.StartBookingDeadline == null || e.BookingDeadline >= query.StartBookingDeadline) 
-            .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .CountAsync();
+            var total = queryable.Count();
+            var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
 
             return new EventList
             {
-                Events = queryable,
+                Events = events,
                 Total = total
             };
         }
@@ -100,35 +81,25 @@ namespace Infrastructure.Repository
         public async Task<EventList> GetAllAsync(EventQuery query)
         {
             // fetch all events that match the query
-            var queryable = await _context.Events
+            var queryable = _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
             .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
-            .Include(e => e.Artifacts)
-            .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons)
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync();
+            .Include(e => e.Artifacts)
+            .Include(e => e.TourOnlines)
+            .Include(e => e.TourGuides)
+            .Include(e => e.TicketAddons);
 
-            // count all events that match the query
-            var total = await _context.Events
-            .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
-            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => query.EventType == null || e.EventType == query.EventType)
-            .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
-            .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .CountAsync();
+            var total = queryable.Count();
+            var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
 
             return new EventList
             {
-                Events = queryable,
+                Events = events,
                 Total = total
             };
         }
@@ -160,27 +131,23 @@ namespace Infrastructure.Repository
 
         public async Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId)
         {
-            return await _context.Events.Where(e => e.MuseumId == museumId).ToListAsync();
+            return await _context.Events.Where(e => e.MuseumId == museumId)
+            .Include(e => e.Artifacts)
+            .Include(e => e.TourOnlines)
+            .Include(e => e.TourGuides)
+            .Include(e => e.TicketAddons)
+            .ToListAsync();
         }
 
-        public async Task<IEnumerable<Event>> GetDraftEventOrganizerAsync(Guid userId)
+        public async Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status)
         {
-            return await _context.Events.Where(e => e.Status == EventStatusEnum.Draft && e.CreatedBy == userId).ToListAsync();
-        }
-
-        public async Task<IEnumerable<Event>> GetSubmittedEventOrganizerAsync(Guid userId)
-        {
-            return await _context.Events.Where(e => e.Status == EventStatusEnum.Pending || e.Status == EventStatusEnum.Published || e.Status == EventStatusEnum.Cancelled && e.CreatedBy == userId).ToListAsync();
-        }
-
-        public async Task<IEnumerable<Event>> GetExpiredEventOrganizerAsync(Guid userId)
-        {
-            return await _context.Events.Where(e => e.Status == EventStatusEnum.Expired && e.CreatedBy == userId).ToListAsync();
-        }
-
-        public async Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId)
-        {
-            return await _context.Events.Where(e => e.CreatedBy == userId).ToListAsync();
+            return await _context.Events
+            .Where(e => e.CreatedBy == userId && (status == null || e.Status == status))
+            .Include(e => e.Artifacts)
+            .Include(e => e.TourOnlines)
+            .Include(e => e.TourGuides)
+            .Include(e => e.TicketAddons)
+            .ToListAsync();
         }
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Application.Service;
 using Application.Middlewares;
+using Application.Shared.Enum;
 [Route("api/v1/events")]
 [ApiController]
 public class EventController : ControllerBase
@@ -91,31 +92,10 @@ public class EventController : ControllerBase
     }
 
     [Protected]
-    [HttpGet("draft")]
-    public async Task<IActionResult> GetDraft()
+    [HttpGet("assigned")]
+    public async Task<IActionResult> GetAllByOrganizer([FromQuery] EventStatusEnum? status)
     {
-        return await _organizerEventService.HandleGetDraft();
-    }
-
-    [Protected]
-    [HttpGet("submitted")]
-    public async Task<IActionResult> GetSubmitted()
-    {
-        return await _organizerEventService.HandleGetSubmitted();
-    }
-
-    [Protected]
-    [HttpGet("expired")]
-    public async Task<IActionResult> GetExpired()
-    {
-        return await _organizerEventService.HandleGetExpired();
-    }
-
-    [Protected]
-    [HttpGet("owner")]
-    public async Task<IActionResult> GetAllByOrganizer()
-    {
-        return await _organizerEventService.HandleGetAllByOrganizer();
+        return await _organizerEventService.HandleGetAllByOrganizer(status);
     }
 
     [Protected]
@@ -132,13 +112,13 @@ public class EventController : ControllerBase
         return await _organizerEventService.HandleDelete(id);
     }
     [Protected]
-    [HttpPost("admin/{id}/add-artifacts")]
+    [HttpPost("{id}/add-artifacts")]
     public async Task<IActionResult> AddArtifacts(Guid id, List<Guid> artifactIds)
     {
         return await _adminEventService.HandleAddArtifactToEvent(id, artifactIds);
     }
     [Protected]
-    [HttpPost("admin/{id}/remove-artifacts")]
+    [HttpPost("{id}/remove-artifacts")]
     public async Task<IActionResult> RemoveArtifacts(Guid id, List<Guid> artifactIds)
     {
         return await _adminEventService.HandleRemoveArtifactFromEvent(id, artifactIds);

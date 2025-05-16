@@ -36,10 +36,7 @@ public interface IOrganizerEventService : IEventService
 {
     Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto);
     Task<IActionResult> HandleSubmitEvent(Guid id);
-    Task<IActionResult> HandleGetDraft();
-    Task<IActionResult> HandleGetSubmitted();
-    Task<IActionResult> HandleGetExpired();
-    Task<IActionResult> HandleGetAllByOrganizer();
+    Task<IActionResult> HandleGetAllByOrganizer(EventStatusEnum? status);
     Task<IActionResult> HandleUpdate(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDelete(Guid id);
 }
@@ -173,7 +170,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdMuseumIdStatus(artifactIds, eventItem.MuseumId, true);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", \n", artifactList.MissingIds));
+                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", ", artifactList.MissingIds));
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -374,7 +371,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", \n", artifactList.MissingIds));
+                return ErrorResp.BadRequest($"Some artifacts not found: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -472,10 +469,10 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.CreatedBy != payload.UserId)
-            {
-                return ErrorResp.Unauthorized("You are not the owner of this event");
-            }
+            // if (eventItem.CreatedBy != payload.UserId)
+            // {
+            //     return ErrorResp.Unauthorized("You are not the owner of this event");
+            // }
 
             if (eventItem.Status != EventStatusEnum.Draft)
             {
@@ -492,7 +489,7 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
         }
     }
 
-    public async Task<IActionResult> HandleGetDraft()
+    public async Task<IActionResult> HandleGetAllByOrganizer(EventStatusEnum? status)
     {
         try
         {
@@ -502,67 +499,7 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
                 return ErrorResp.Unauthorized("Invalid token");
             }
 
-            var events = await _eventRepository.GetDraftEventOrganizerAsync(payload.UserId);
-            var eventDtos = _mapper.Map<List<EventDto>>(events);
-            return SuccessResp.Ok(eventDtos);
-        }
-        catch (Exception e)
-        {
-            return ErrorResp.InternalServerError(e.Message);
-        }
-    }
-
-    public async Task<IActionResult> HandleGetSubmitted()
-    {
-        try
-        {
-            var payload = ExtractPayload();
-            if (payload == null)
-            {
-                return ErrorResp.Unauthorized("Invalid token");
-            }
-
-            var events = await _eventRepository.GetSubmittedEventOrganizerAsync(payload.UserId);
-            var eventDtos = _mapper.Map<List<EventDto>>(events);
-            return SuccessResp.Ok(eventDtos);
-        }
-        catch (Exception e)
-        {
-            return ErrorResp.InternalServerError(e.Message);
-        }
-    }
-
-    public async Task<IActionResult> HandleGetExpired()
-    {
-        try
-        {
-            var payload = ExtractPayload();
-            if (payload == null)
-            {
-                return ErrorResp.Unauthorized("Invalid token");
-            }
-
-            var events = await _eventRepository.GetExpiredEventOrganizerAsync(payload.UserId);
-            var eventDtos = _mapper.Map<List<EventDto>>(events);
-            return SuccessResp.Ok(eventDtos);
-        }
-        catch (Exception e)
-        {
-            return ErrorResp.InternalServerError(e.Message);
-        }
-    }
-
-    public async Task<IActionResult> HandleGetAllByOrganizer()
-    {
-        try
-        {
-            var payload = ExtractPayload();
-            if (payload == null)
-            {
-                return ErrorResp.Unauthorized("Invalid token");
-            }
-
-            var events = await _eventRepository.GetAllEventByOrganizerAsync(payload.UserId);
+            var events = await _eventRepository.GetAllEventByOrganizerAsync(payload.UserId, status);
             var eventDtos = _mapper.Map<List<EventDto>>(events);
             return SuccessResp.Ok(eventDtos);
         }

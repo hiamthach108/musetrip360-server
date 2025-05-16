@@ -56,44 +56,32 @@ namespace MuseTrip360.src.Infrastructure.Repository
 
         public async Task<ArtifactList> GetAllAsync(ArtifactQuery query)
         {
-            //count all artifacts with constraints
-            var total = await _context.Artifacts
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .CountAsync();
             //get all artifacts with constraints and pagination
-            var queryable = await _context.Artifacts
+            var queryable = _context.Artifacts
                 .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .Include(a => a.Events)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToListAsync();
+                .Include(a => a.Events);
             //return the artifacts and the total
+            var total = queryable.Count();
+            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList
             {
-                Artifacts = queryable,
+                Artifacts = artifacts,
                 Total = total
             };
         }
 
         public async Task<ArtifactList> GetAllAdminAsync(ArtifactAdminQuery query)
         {
-            //count all artifacts with constraints
-            var total = await _context.Artifacts
-                .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .CountAsync();
             //get all artifacts with constraints and pagination
-            var queryable = await _context.Artifacts
+            var queryable = _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .Include(a => a.Events)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToListAsync();
+                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
             //return the artifacts and the total
+            var total = queryable.Count();
+            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList
             {
-                Artifacts = queryable,
+                Artifacts = artifacts,
                 Total = total
             };
         }
@@ -149,7 +137,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             return new ArtifactListResultWithMissingIds
             {
                 Artifacts = foundArtifacts,
-                IsAllFound = true,
+                IsAllFound = missingIds.Count == 0,
                 MissingIds = missingIds
             };
         }
@@ -174,7 +162,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             return new ArtifactListResultWithMissingIds
             {
                 Artifacts = foundArtifacts,
-                IsAllFound = true,
+                IsAllFound = missingIds.Count == 0,
                 MissingIds = missingIds
             };
         }
