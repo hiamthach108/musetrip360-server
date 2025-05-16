@@ -63,6 +63,13 @@ public class EventController : ControllerBase
     }
 
     [Protected]
+    [HttpPatch("admin/{id}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        return await _adminEventService.HandleCancelEvent(id);
+    }
+
+    [Protected]
     [HttpPut("admin/{id}")]
     public async Task<IActionResult> UpdateAdmin(Guid id, EventUpdateDto dto)
     {

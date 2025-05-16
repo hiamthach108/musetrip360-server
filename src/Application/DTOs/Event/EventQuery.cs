@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Application.DTOs.Pagination;
+using Application.Shared.Enum;
 
 public class EventQuery : PaginationReq, IValidatableObject
 {
@@ -9,8 +11,7 @@ public class EventQuery : PaginationReq, IValidatableObject
 
     [MaxLength(100)]
     public string? Location { get; set; }
-
-    public string? EventType { get; set; }
+    public EventTypeEnum? EventType { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
 

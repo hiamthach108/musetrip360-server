@@ -28,6 +28,7 @@ public interface IAdminEventService : IEventService
     Task<IActionResult> HandleUpdateAdmin(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDeleteAdmin(Guid id);
     Task<IActionResult> HandleCreateAdmin(Guid museumId, EventCreateAdminDto dto);
+    Task<IActionResult> HandleCancelEvent(Guid id);
 }
 
 // Organizer, operations
@@ -218,7 +219,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 return ErrorResp.BadRequest("Event is not in pending or draft status");
             }
 
-            eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Cancelled;
+            eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
             await _eventRepository.UpdateAsync(id, eventItem);
             return SuccessResp.Ok("Event evaluated successfully");
         }
@@ -382,6 +383,37 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             await _eventRepository.UpdateAsync(eventId, eventItem);
             return SuccessResp.Ok("Artifacts removed from event successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleCancelEvent(Guid id)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized access");
+            }
+
+            var eventItem = await _eventRepository.GetEventById(id);
+            if (eventItem == null)
+            {
+                return ErrorResp.NotFound("Event not found");
+            }
+
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
+
+            eventItem.Status = EventStatusEnum.Cancelled;
+            await _eventRepository.UpdateAsync(id, eventItem);
+            return SuccessResp.Ok("Event cancelled successfully");
         }
         catch (Exception e)
         {

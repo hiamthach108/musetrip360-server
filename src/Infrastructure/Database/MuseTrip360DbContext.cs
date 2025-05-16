@@ -14,6 +14,7 @@ using Domain.Payment;
 using Domain.Tours;
 using Domain.Messaging;
 using Domain.Reviews;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 public class MuseTrip360DbContext : DbContext
 {
@@ -77,6 +78,12 @@ public class MuseTrip360DbContext : DbContext
     }
     return base.SaveChangesAsync(cancellationToken);
   }
+
+  public static readonly ValueConverter<DateTime, DateTime> UtcConverter = 
+    new ValueConverter<DateTime, DateTime>(
+      v => v.ToUniversalTime(),
+      v => TimeZoneInfo.ConvertTimeFromUtc(v, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")) // Khi đọc → chuyển về giờ VN
+  );
 
   protected override void OnModelCreating(ModelBuilder builder)
   {
@@ -219,11 +226,12 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Title).IsRequired().HasMaxLength(100);
       e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
       e.Property(x => x.EventType).HasConversion<string>().HasDefaultValue(EventTypeEnum.SpecialEvent);
-      e.Property(x => x.StartTime).IsRequired();
-      e.Property(x => x.EndTime).IsRequired();
+      e.Property(x => x.StartTime).HasConversion(UtcConverter).IsRequired();
+      e.Property(x => x.EndTime).HasConversion(UtcConverter).IsRequired();
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.Capacity).IsRequired();
       e.Property(x => x.AvailableSlots).IsRequired();
+      e.Property(x => x.BookingDeadline).HasConversion(UtcConverter).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(EventStatusEnum.Draft);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();

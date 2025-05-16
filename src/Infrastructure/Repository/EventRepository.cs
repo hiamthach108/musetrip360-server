@@ -57,9 +57,9 @@ namespace Infrastructure.Repository
             // fetch all events that match the query
             var queryable = await _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Status == null || e.Status == query.Status)
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
@@ -77,9 +77,9 @@ namespace Infrastructure.Repository
             // count all events that match the query
             var total = await _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Status == null || e.Status == query.Status)
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
@@ -102,9 +102,9 @@ namespace Infrastructure.Repository
             // fetch all events that match the query
             var queryable = await _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
@@ -119,9 +119,9 @@ namespace Infrastructure.Repository
             // count all events that match the query
             var total = await _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search) || e.EventType.ToString().Contains(query.Search))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
-            .Where(e => string.IsNullOrEmpty(query.EventType) || e.EventType.ToString().Contains(query.EventType))
+            .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .CountAsync();
