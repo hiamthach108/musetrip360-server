@@ -1,4 +1,5 @@
-﻿using Database;
+﻿using System.Diagnostics.Eventing.Reader;
+using Database;
 using Domain.Artifacts;
 using Microsoft.EntityFrameworkCore;
 using MuseTrip360.src.Application.DTOs.Artifact;
@@ -16,11 +17,19 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task DeleteAsync(Guid id);
         Task<bool> IsMuseumExistsAsync(Guid museumId);
         Task<bool> IsArtifactExistsAsync(Guid artifactId);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId);
     }
     public class ArtifactList
     {
         public IEnumerable<Artifact> Artifacts { get; set; } = [];
         public int Total { get; set; }
+    }
+    public class ArtifactListResultWithMissingIds
+    {
+        public IEnumerable<Artifact> Artifacts { get; set; } = [];
+        public bool IsAllFound { get; set; }
+        public IEnumerable<Guid> MissingIds { get; set; } = [];
     }
     public class ArtifactRepository : IArtifactRepository
     {
@@ -117,6 +126,57 @@ namespace MuseTrip360.src.Infrastructure.Repository
         public async Task<bool> IsArtifactExistsAsync(Guid artifactId)
         {
             return await _context.Artifacts.AnyAsync(a => a.Id == artifactId);
+        }
+
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status)
+        {
+            var foundArtifacts = await _context.Artifacts
+                .Where(a => a.MuseumId == museumId)
+                .Where(a => a.IsActive == status)
+                .Where(a => artifactIds.Contains(a.Id))
+                .ToListAsync();
+
+            var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
+            var missingIds = new List<Guid>();
+            foreach (var artifactId in artifactIds)
+            {
+                if (!foundIds.Contains(artifactId))
+                {
+                    missingIds.Add(artifactId);
+                }
+            }
+
+            return new ArtifactListResultWithMissingIds
+            {
+                Artifacts = foundArtifacts,
+                IsAllFound = true,
+                MissingIds = missingIds
+            };
+        }
+
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId)
+        {
+            var foundArtifacts = await _context.Artifacts
+                .Where(a => a.Events.Any(e => e.Id == eventId))
+                .Where(a => artifactIds.Contains(a.Id))
+                .ToListAsync();
+
+            var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
+            var missingIds = new List<Guid>();
+            foreach (var artifactId in artifactIds)
+            {
+                if (!foundIds.Contains(artifactId))
+                {
+                    missingIds.Add(artifactId);
+                }
+            }
+
+            return new ArtifactListResultWithMissingIds
+            {
+                Artifacts = foundArtifacts,
+                IsAllFound = true,
+                MissingIds = missingIds
+            };
         }
     }
 }

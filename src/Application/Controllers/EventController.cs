@@ -124,4 +124,16 @@ public class EventController : ControllerBase
     {
         return await _organizerEventService.HandleDelete(id);
     }
+    [Protected]
+    [HttpPost("admin/{id}/add-artifacts")]
+    public async Task<IActionResult> AddArtifacts(Guid id, List<Guid> artifactIds)
+    {
+        return await _adminEventService.HandleAddArtifactToEvent(id, artifactIds);
+    }
+    [Protected]
+    [HttpPost("admin/{id}/remove-artifacts")]
+    public async Task<IActionResult> RemoveArtifacts(Guid id, List<Guid> artifactIds)
+    {
+        return await _adminEventService.HandleRemoveArtifactFromEvent(id, artifactIds);
+    }
 }

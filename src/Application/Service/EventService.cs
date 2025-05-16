@@ -22,7 +22,8 @@ public interface IEventService
 public interface IAdminEventService : IEventService
 {
     Task<IActionResult> HandleGetAllAdmin(EventAdminQuery query);
-    Task<IActionResult> HandleAddArtifactToEventSameMuseum(Guid eventId, List<Guid> artifactIds);
+    Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, List<Guid> artifactIds);
+    Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, List<Guid> artifactIds);
     Task<IActionResult> HandleEvaluateEvent(Guid id, bool isApproved);
     Task<IActionResult> HandleUpdateAdmin(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDeleteAdmin(Guid id);
@@ -124,11 +125,11 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 }
                 // if (!payload.IsAdmin)
                 // {
-                    //check owner
-                    if (museum.CreatedBy != payload.UserId)
-                    {
-                        return ErrorResp.Unauthorized("You are not the owner of this museum");
-                    }
+                //check owner
+                if (museum.CreatedBy != payload.UserId)
+                {
+                    return ErrorResp.Unauthorized("You are not the owner of this museum");
+                }
                 // }
             }
 
@@ -142,7 +143,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleAddArtifactToEventSameMuseum(Guid eventId, List<Guid> artifactIds)
+    public async Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, List<Guid> artifactIds)
     {
         try
         {
@@ -160,28 +161,21 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             // if (!payload.IsAdmin)
             // {
-                //check owner
-                if (eventItem.CreatedBy != payload.UserId)
-                {
-                    return ErrorResp.Unauthorized("You are not the owner of this event");
-                }
+            //check owner
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
             // }
 
-            foreach (var artifactId in artifactIds)
+            // get artifacts that are in the same museum and active
+            var artifactList = await _artifactRepository.GetArtifactByListIdMuseumIdStatus(artifactIds, eventItem.MuseumId, true);
+            if (!artifactList.IsAllFound)
             {
-                var artifact = await _artifactRepository.GetByIdAsync(artifactId);
-                if (artifact == null)
-                {
-                    return ErrorResp.NotFound("Some artifacts not found");
-                }
-                if (artifact.MuseumId != eventItem.MuseumId)
-                {
-                    return ErrorResp.BadRequest("Some artifacts are not in the same museum");
-                }
-                if (!artifact.IsActive)
-                {
-                    return ErrorResp.BadRequest("Some artifacts are not active");
-                }
+                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", \n", artifactList.MissingIds));
+            }
+            foreach (var artifact in artifactList.Artifacts)
+            {
                 eventItem.Artifacts.Add(artifact);
             }
 
@@ -212,11 +206,11 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             // if (!payload.IsAdmin)
             // {
-                //check owner
-                if (eventItem.CreatedBy != payload.UserId)
-                {
-                    return ErrorResp.Unauthorized("You are not the owner of this event");
-                }
+            //check owner
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
             // }
 
             if (eventItem.Status != EventStatusEnum.Pending && eventItem.Status != EventStatusEnum.Draft)
@@ -252,11 +246,11 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             // if (!payload.IsAdmin)
             // {
-                //check owner
-                if (eventItem.CreatedBy != payload.UserId)
-                {
-                    return ErrorResp.Unauthorized("You are not the owner of this event");
-                }
+            //check owner
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
             // }
 
             var mappedEvent = _mapper.Map(dto, eventItem);
@@ -287,11 +281,11 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             // if (!payload.IsAdmin)
             // {
-                //check owner
-                if (eventItem.CreatedBy != payload.UserId)
-                {
-                    return ErrorResp.Unauthorized("You are not the owner of this event");
-                }
+            //check owner
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
             // }
 
             await _eventRepository.DeleteAsync(id);
@@ -321,11 +315,11 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 
             // if (!payload.IsAdmin)
             // {
-                //check owner
-                if (museum.CreatedBy != payload.UserId)
-                {
-                    return ErrorResp.Unauthorized("You are not the owner of this museum");
-                }
+            //check owner
+            if (museum.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this museum");
+            }
             // }
 
             var eventItem = _mapper.Map<Event>(dto);
@@ -344,6 +338,50 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             await _eventRepository.AddAsync(eventItem);
             var eventDto = _mapper.Map<EventDto>(eventItem);
             return SuccessResp.Created(eventDto);
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, List<Guid> artifactIds)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized access");
+            }
+
+            var eventItem = await _eventRepository.GetEventById(eventId);
+            if (eventItem == null)
+            {
+                return ErrorResp.NotFound("Event not found");
+            }
+
+            // if (!payload.IsAdmin)
+            // {
+            //check owner
+            if (eventItem.CreatedBy != payload.UserId)
+            {
+                return ErrorResp.Unauthorized("You are not the owner of this event");
+            }
+            // }
+
+            var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
+            if (!artifactList.IsAllFound)
+            {
+                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", \n", artifactList.MissingIds));
+            }
+            foreach (var artifact in artifactList.Artifacts)
+            {
+                eventItem.Artifacts.Remove(artifact);
+            }
+
+            await _eventRepository.UpdateAsync(eventId, eventItem);
+            return SuccessResp.Ok("Artifacts removed from event successfully");
         }
         catch (Exception e)
         {
