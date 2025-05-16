@@ -14,6 +14,7 @@ using Domain.Payment;
 using Domain.Tours;
 using Domain.Messaging;
 using Domain.Reviews;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 public class MuseTrip360DbContext : DbContext
 {
@@ -82,6 +83,20 @@ public class MuseTrip360DbContext : DbContext
   {
     base.OnModelCreating(builder);
 
+    foreach (var entityType in builder.Model.GetEntityTypes())
+    {
+      foreach (var property in entityType.GetProperties())
+      {
+        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+        {
+          property.SetValueConverter(
+            new ValueConverter<DateTime, DateTime>(
+              v => v.ToUniversalTime(),
+              v => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7)
+            ));
+        }
+      }
+    }
 
     builder.Entity<User>(e =>
     {
@@ -224,6 +239,7 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.Capacity).IsRequired();
       e.Property(x => x.AvailableSlots).IsRequired();
+      e.Property(x => x.BookingDeadline).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(EventStatusEnum.Draft);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();

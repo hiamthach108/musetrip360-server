@@ -1,4 +1,7 @@
+using System.Text.Json;
 using Application.Shared.Enum;
+using AutoMapper;
+using Domain.Events;
 
 public class EventDto
 {
@@ -14,6 +17,8 @@ public class EventDto
     public DateTime BookingDeadline { get; set; }
     public Guid MuseumId { get; set; }
     public Guid CreatedBy { get; set; }
+    public EventStatusEnum Status { get; set; }
+    public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
@@ -21,4 +26,18 @@ public class EventDto
     //   public ICollection<TourOnlineDto> TourOnlines { get; set; } = null!;
     //   public ICollection<TourGuideDto> TourGuides { get; set; } = null!;
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
+    public class EventProfile : Profile
+    {
+        public EventProfile()
+        {
+            CreateMap<Event, EventDto>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<EventCreateDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));  
+            CreateMap<EventUpdateDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<EventCreateAdminDto, Event>()
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+        }
+    }
 }
