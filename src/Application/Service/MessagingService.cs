@@ -1,6 +1,7 @@
 namespace Application.Service;
 
 using Application.DTOs.Chat;
+using Application.DTOs.Notification;
 using Application.Shared.Type;
 using AutoMapper;
 using Core.Realtime;
@@ -17,13 +18,19 @@ public interface IMessagingService
   Task<IActionResult> HandleCreateConversation(CreateConversation req);
   Task<IActionResult> HandleCreateMessage(CreateMessage req);
   Task<IActionResult> HandleUpdateLastSeen(Guid conversationId);
-  Task<IActionResult> HandleJoinConversation(Guid converstationId);
+  Task<IActionResult> HandleJoinConversation(Guid conversationId);
+
+  // Notification
+  Task<IActionResult> HandleGetUserNotification(NotificationQuery query);
+  Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req);
+
 }
 
 public class MessagingService : BaseService, IMessagingService
 {
   private readonly IConversationRepository _conversationRepo;
   private readonly IMessageRepository _messageRepo;
+  private readonly INotificationRepository _notificationRepo;
   private readonly IRealtimeService _realtimeSvc;
 
   public MessagingService(
@@ -36,6 +43,7 @@ public class MessagingService : BaseService, IMessagingService
     _conversationRepo = new ConversationRepository(dbContext);
     _messageRepo = new MessageRepository(dbContext);
     _realtimeSvc = realtimeService;
+    _notificationRepo = new NotificationRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleCreateConversation(CreateConversation req)
@@ -185,7 +193,7 @@ public class MessagingService : BaseService, IMessagingService
     );
   }
 
-  public async Task<IActionResult> HandleJoinConversation(Guid converstationId)
+  public async Task<IActionResult> HandleJoinConversation(Guid conversationId)
   {
     var payload = ExtractPayload();
     if (payload == null)
@@ -193,10 +201,10 @@ public class MessagingService : BaseService, IMessagingService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var userConversation = _conversationRepo.GetConversationUser(converstationId, payload.UserId);
+    var userConversation = _conversationRepo.GetConversationUser(conversationId, payload.UserId);
     if (userConversation == null)
     {
-      await _conversationRepo.AddUsersToConversation(converstationId, new List<Guid> { payload.UserId });
+      await _conversationRepo.AddUsersToConversation(conversationId, new List<Guid> { payload.UserId });
 
       return SuccessResp.Ok(
         new { message = "Joined conversation" }
@@ -227,5 +235,37 @@ public class MessagingService : BaseService, IMessagingService
     return SuccessResp.Ok(
       new { message = "Last seen updated" }
     );
+  }
+
+  public async Task<IActionResult> HandleGetUserNotification(NotificationQuery query)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notifications = _notificationRepo.GetUserNotifications(query, payload.UserId);
+
+    var dtos = _mapper.Map<IEnumerable<NotificationDto>>(notifications.Notifications);
+
+    return SuccessResp.Ok(new
+    {
+      list = dtos,
+      total = notifications.Total
+    });
+  }
+
+  public async Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notification = await _notificationRepo.UpdateReadStatus(req.NotificationId, req.IsRead);
+
+    return SuccessResp.Ok(_mapper.Map<NotificationDto>(notification));
   }
 }
