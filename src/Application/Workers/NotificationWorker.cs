@@ -31,7 +31,8 @@ public class NotificationWorker : BackgroundService
     // run task in background and subscribe to the queue
     var result = await _queueSubscriber.Subscribe(QueueConst.Notification, async (message) =>
     {
-      // Create a new scope for each message processing
+      // Create a new scope for each message processing to ensure that the DbContext is disposed of properly
+      // and to avoid any potential memory leaks
       using var scope = _scopeFactory.CreateScope();
       var messagingService = scope.ServiceProvider.GetRequiredService<IMessagingService>();
 
@@ -43,7 +44,7 @@ public class NotificationWorker : BackgroundService
           throw new Exception("Failed to deserialize notification");
         }
 
-        // push the notification to the queue
+        // call to messaging service to handle the notification
         var data = await messagingService.HandleCreateNotification(notification);
 
         if (data == null)
