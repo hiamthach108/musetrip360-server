@@ -33,13 +33,13 @@ public class ArtifactController : ControllerBase
     {
         return await _artifactService.HandleGetById(id);
     }
-    [HttpGet("museum/{museumId}/artifacts")]
+    [HttpGet("/api/v1/museums/{museumId}/artifacts")]
     public async Task<IActionResult> GetByMuseumId(Guid museumId)
     {
         return await _artifactService.HandleGetByMuseumId(museumId);
     }
     [Protected]
-    [HttpPost("{museumId}")]
+    [HttpPost("/api/v1/museums/{museumId}/artifacts")]
     public async Task<IActionResult> Create(Guid museumId, ArtifactCreateDto dto)
     {
         return await _artifactService.HandleCreate(museumId, dto);

@@ -1,4 +1,5 @@
-﻿using Database;
+﻿using System.Diagnostics.Eventing.Reader;
+using Database;
 using Domain.Artifacts;
 using Microsoft.EntityFrameworkCore;
 using MuseTrip360.src.Application.DTOs.Artifact;
@@ -16,11 +17,19 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task DeleteAsync(Guid id);
         Task<bool> IsMuseumExistsAsync(Guid museumId);
         Task<bool> IsArtifactExistsAsync(Guid artifactId);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId);
     }
     public class ArtifactList
     {
         public IEnumerable<Artifact> Artifacts { get; set; } = [];
         public int Total { get; set; }
+    }
+    public class ArtifactListResultWithMissingIds
+    {
+        public IEnumerable<Artifact> Artifacts { get; set; } = [];
+        public bool IsAllFound { get; set; }
+        public IEnumerable<Guid> MissingIds { get; set; } = [];
     }
     public class ArtifactRepository : IArtifactRepository
     {
@@ -47,44 +56,32 @@ namespace MuseTrip360.src.Infrastructure.Repository
 
         public async Task<ArtifactList> GetAllAsync(ArtifactQuery query)
         {
-            //count all artifacts with constraints
-            var total = await _context.Artifacts
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .CountAsync();
             //get all artifacts with constraints and pagination
-            var queryable = await _context.Artifacts
+            var queryable = _context.Artifacts
                 .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .Include(a => a.Events)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToListAsync();
+                .Include(a => a.Events);
             //return the artifacts and the total
+            var total = queryable.Count();
+            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList
             {
-                Artifacts = queryable,
+                Artifacts = artifacts,
                 Total = total
             };
         }
 
         public async Task<ArtifactList> GetAllAdminAsync(ArtifactAdminQuery query)
         {
-            //count all artifacts with constraints
-            var total = await _context.Artifacts
-                .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .CountAsync();
             //get all artifacts with constraints and pagination
-            var queryable = await _context.Artifacts
+            var queryable = _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
-                .Include(a => a.Events)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .ToListAsync();
+                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
             //return the artifacts and the total
+            var total = queryable.Count();
+            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList
             {
-                Artifacts = queryable,
+                Artifacts = artifacts,
                 Total = total
             };
         }
@@ -117,6 +114,57 @@ namespace MuseTrip360.src.Infrastructure.Repository
         public async Task<bool> IsArtifactExistsAsync(Guid artifactId)
         {
             return await _context.Artifacts.AnyAsync(a => a.Id == artifactId);
+        }
+
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status)
+        {
+            var foundArtifacts = await _context.Artifacts
+                .Where(a => a.MuseumId == museumId)
+                .Where(a => a.IsActive == status)
+                .Where(a => artifactIds.Contains(a.Id))
+                .ToListAsync();
+
+            var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
+            var missingIds = new List<Guid>();
+            foreach (var artifactId in artifactIds)
+            {
+                if (!foundIds.Contains(artifactId))
+                {
+                    missingIds.Add(artifactId);
+                }
+            }
+
+            return new ArtifactListResultWithMissingIds
+            {
+                Artifacts = foundArtifacts,
+                IsAllFound = missingIds.Count == 0,
+                MissingIds = missingIds
+            };
+        }
+
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId)
+        {
+            var foundArtifacts = await _context.Artifacts
+                .Where(a => a.Events.Any(e => e.Id == eventId))
+                .Where(a => artifactIds.Contains(a.Id))
+                .ToListAsync();
+
+            var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
+            var missingIds = new List<Guid>();
+            foreach (var artifactId in artifactIds)
+            {
+                if (!foundIds.Contains(artifactId))
+                {
+                    missingIds.Add(artifactId);
+                }
+            }
+
+            return new ArtifactListResultWithMissingIds
+            {
+                Artifacts = foundArtifacts,
+                IsAllFound = missingIds.Count == 0,
+                MissingIds = missingIds
+            };
         }
     }
 }

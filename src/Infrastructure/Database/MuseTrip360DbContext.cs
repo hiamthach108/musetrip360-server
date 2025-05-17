@@ -14,6 +14,7 @@ using Domain.Payment;
 using Domain.Tours;
 using Domain.Messaging;
 using Domain.Reviews;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 public class MuseTrip360DbContext : DbContext
 {
@@ -82,6 +83,20 @@ public class MuseTrip360DbContext : DbContext
   {
     base.OnModelCreating(builder);
 
+    foreach (var entityType in builder.Model.GetEntityTypes())
+    {
+      foreach (var property in entityType.GetProperties())
+      {
+        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+        {
+          property.SetValueConverter(
+            new ValueConverter<DateTime, DateTime>(
+              v => v.ToUniversalTime(),
+              v => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7)
+            ));
+        }
+      }
+    }
 
     builder.Entity<User>(e =>
     {
@@ -224,6 +239,8 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.Capacity).IsRequired();
       e.Property(x => x.AvailableSlots).IsRequired();
+      e.Property(x => x.BookingDeadline).IsRequired();
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(EventStatusEnum.Draft);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.Museum).WithMany(x => x.Events).HasForeignKey(x => x.MuseumId);
@@ -391,6 +408,9 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.Property(x => x.Name).IsRequired(false).HasMaxLength(100);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.IsBot).IsRequired().HasDefaultValue(false);
+      e.Property(x => x.LastMessageId).IsRequired(false);
+      e.HasOne(x => x.LastMessage).WithMany(x => x.Conversations).HasForeignKey(x => x.LastMessageId);
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Conversations).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -400,6 +420,7 @@ public class MuseTrip360DbContext : DbContext
     builder.Entity<ConversationUser>(e =>
     {
       e.HasKey(x => new { x.ConversationId, x.UserId });
+
       e.HasOne(x => x.Conversation).WithMany(x => x.ConversationUsers).HasForeignKey(x => x.ConversationId);
       e.HasOne(x => x.User).WithMany(x => x.ConversationUsers).HasForeignKey(x => x.UserId);
       e.HasOne(x => x.LastMessage).WithMany(x => x.ConversationUsers).HasForeignKey(x => x.LastMessageId);
