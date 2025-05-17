@@ -1,5 +1,6 @@
 namespace Application.DTOs.Notification;
 
+using System.Text.Json;
 using Application.DTOs.Pagination;
 using Application.Shared.Enum;
 using AutoMapper;
@@ -14,6 +15,7 @@ public class NotificationDto
   public NotificationTargetEnum Target { get; set; }
   public DateTime CreatedAt { get; set; }
   public Guid UserId { get; set; }
+  public JsonDocument? Metadata { get; set; }
 }
 
 public class NotificationQuery : PaginationReq
@@ -33,5 +35,7 @@ public class NotificationProfile : Profile
   {
     CreateMap<Notification, NotificationDto>();
     CreateMap<NotificationQuery, Notification>();
+
+    CreateMap<CreateNotificationDto, Notification>();
   }
 }

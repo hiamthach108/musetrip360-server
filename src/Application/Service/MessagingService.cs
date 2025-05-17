@@ -1,7 +1,9 @@
 namespace Application.Service;
 
+using System.Runtime.CompilerServices;
 using Application.DTOs.Chat;
 using Application.DTOs.Notification;
+using Application.Shared.Enum;
 using Application.Shared.Type;
 using AutoMapper;
 using Core.Realtime;
@@ -23,7 +25,8 @@ public interface IMessagingService
   // Notification
   Task<IActionResult> HandleGetUserNotification(NotificationQuery query);
   Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req);
-
+  Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req);
+  Task<NotificationDto> PushNewNotification(Notification notification);
 }
 
 public class MessagingService : BaseService, IMessagingService
@@ -267,5 +270,30 @@ public class MessagingService : BaseService, IMessagingService
     var notification = await _notificationRepo.UpdateReadStatus(req.NotificationId, req.IsRead);
 
     return SuccessResp.Ok(_mapper.Map<NotificationDto>(notification));
+  }
+
+  public async Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notification = _mapper.Map<Notification>(req);
+    notification.UserId = payload.UserId;
+    notification.Target = NotificationTargetEnum.All;
+    // notification.ReadAt = DateTime.MinValue;
+
+    var result = await _notificationRepo.CreateNotification(notification);
+
+    return SuccessResp.Ok(_mapper.Map<NotificationDto>(result));
+  }
+
+  public async Task<NotificationDto> PushNewNotification(Notification notification)
+  {
+    var result = await _notificationRepo.CreateNotification(notification);
+
+    return _mapper.Map<NotificationDto>(result);
   }
 }

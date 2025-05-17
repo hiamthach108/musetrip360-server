@@ -1,6 +1,7 @@
 namespace Application.Controllers;
 
 using Application.DTOs.Chat;
+using Application.DTOs.Notification;
 using Application.Middlewares;
 using Application.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -65,6 +66,30 @@ public class MessagingController : ControllerBase
   {
     _logger.LogInformation("Join conversation request received");
     return await _service.HandleJoinConversation(conversationId);
+  }
+
+  [Protected]
+  [HttpPost("notifications/system")]
+  public async Task<IActionResult> CreateSystemNotification([FromBody] CreateNotificationDto req)
+  {
+    _logger.LogInformation("Create notification request received");
+    return await _service.HandleCreateSystemNotification(req);
+  }
+
+  [Protected]
+  [HttpGet("notifications")]
+  public async Task<IActionResult> GetNotifications([FromQuery] NotificationQuery query)
+  {
+    _logger.LogInformation("Get notifications request received");
+    return await _service.HandleGetUserNotification(query);
+  }
+
+  [Protected]
+  [HttpPut("notifications/{notificationId}/read")]
+  public async Task<IActionResult> UpdateNotificationReadStatus([FromBody] NotificationUpdateReadStatusReq req)
+  {
+    _logger.LogInformation("Update notification read status request received");
+    return await _service.HandleUpdateNotificationReadStatus(req);
   }
 }
 
