@@ -35,7 +35,7 @@ public class RabbitMqPublisher : IQueuePublisher, IDisposable
       var body = Encoding.UTF8.GetBytes(json);
       // _channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: null, body: body);
       await _channel.BasicPublishAsync("", queueName, body, cancellationToken);
-      _logger.LogInformation($"[x] Sent message to {queueName}: {json}");
+      _logger.LogInformation($"Sent message to {queueName}: {json}");
       return QueueOperationResult.Ok();
     }
     catch (Exception ex)

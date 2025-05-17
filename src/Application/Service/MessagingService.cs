@@ -1,11 +1,12 @@
 namespace Application.Service;
 
-using System.Runtime.CompilerServices;
 using Application.DTOs.Chat;
 using Application.DTOs.Notification;
+using Application.Shared.Constant;
 using Application.Shared.Enum;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Queue;
 using Core.Realtime;
 using Database;
 using Domain.Messaging;
@@ -26,7 +27,8 @@ public interface IMessagingService
   Task<IActionResult> HandleGetUserNotification(NotificationQuery query);
   Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req);
   Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req);
-  Task<NotificationDto> PushNewNotification(Notification notification);
+  Task<QueueOperationResult> PushNewNotification(CreateNotificationDto notification);
+  Task<NotificationDto> HandleCreateNotification(CreateNotificationDto req);
 }
 
 public class MessagingService : BaseService, IMessagingService
@@ -35,18 +37,21 @@ public class MessagingService : BaseService, IMessagingService
   private readonly IMessageRepository _messageRepo;
   private readonly INotificationRepository _notificationRepo;
   private readonly IRealtimeService _realtimeSvc;
+  private readonly IQueuePublisher _queuePub;
 
   public MessagingService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
-    IRealtimeService realtimeService
+    IRealtimeService realtimeService,
+    IQueuePublisher queuePublisher
   ) : base(dbContext, mapper, httpCtx)
   {
     _conversationRepo = new ConversationRepository(dbContext);
     _messageRepo = new MessageRepository(dbContext);
     _realtimeSvc = realtimeService;
     _notificationRepo = new NotificationRepository(dbContext);
+    _queuePub = queuePublisher;
   }
 
   public async Task<IActionResult> HandleCreateConversation(CreateConversation req)
@@ -255,7 +260,8 @@ public class MessagingService : BaseService, IMessagingService
     return SuccessResp.Ok(new
     {
       list = dtos,
-      total = notifications.Total
+      total = notifications.Total,
+      totalUnread = notifications.TotalUnread
     });
   }
 
@@ -290,8 +296,15 @@ public class MessagingService : BaseService, IMessagingService
     return SuccessResp.Ok(_mapper.Map<NotificationDto>(result));
   }
 
-  public async Task<NotificationDto> PushNewNotification(Notification notification)
+  public async Task<QueueOperationResult> PushNewNotification(CreateNotificationDto notification)
   {
+    return await _queuePub.Publish(QueueConst.Notification, notification);
+  }
+
+  public async Task<NotificationDto> HandleCreateNotification(CreateNotificationDto req)
+  {
+    var notification = _mapper.Map<Notification>(req);
+
     var result = await _notificationRepo.CreateNotification(notification);
 
     return _mapper.Map<NotificationDto>(result);

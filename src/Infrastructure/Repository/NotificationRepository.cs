@@ -17,6 +17,7 @@ public class NotificationList
 {
   public IEnumerable<Notification> Notifications { get; set; } = [];
   public int Total { get; set; }
+  public int TotalUnread { get; set; }
 }
 
 public class NotificationRepository : INotificationRepository
@@ -41,7 +42,7 @@ public class NotificationRepository : INotificationRepository
       q = q.Where(n => n.IsRead == query.IsRead.Value);
 
     var total = q.Count();
-
+    var totalUnread = q.Where(n => !n.IsRead).Count();
     var notifications = q
       .OrderByDescending(n => n.CreatedAt)
       .Skip((page - 1) * pageSize)
@@ -51,7 +52,8 @@ public class NotificationRepository : INotificationRepository
     return new NotificationList
     {
       Notifications = notifications,
-      Total = total
+      Total = total,
+      TotalUnread = totalUnread
     };
   }
 

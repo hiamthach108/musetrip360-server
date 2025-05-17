@@ -85,11 +85,32 @@ public class MessagingController : ControllerBase
   }
 
   [Protected]
-  [HttpPut("notifications/{notificationId}/read")]
+  [HttpPut("notifications/read")]
   public async Task<IActionResult> UpdateNotificationReadStatus([FromBody] NotificationUpdateReadStatusReq req)
   {
     _logger.LogInformation("Update notification read status request received");
     return await _service.HandleUpdateNotificationReadStatus(req);
+  }
+
+  [Protected]
+  [HttpPost("notifications/test")]
+  public async Task<IActionResult> TestNotification([FromBody] CreateNotificationDto req)
+  {
+    _logger.LogInformation("Test notification request received");
+
+    await _service.PushNewNotification(new CreateNotificationDto
+    {
+      Title = req.Title,
+      Message = req.Message,
+      Type = req.Type,
+      UserId = req.UserId,
+      Metadata = req.Metadata
+    });
+
+    return Ok(new
+    {
+      message = "Test notification sent successfully"
+    });
   }
 }
 

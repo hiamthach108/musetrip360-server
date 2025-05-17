@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Application.Middlewares;
 using Application.Service;
+using Application.Workers;
 using Core.Cloudinary;
 using Core.Crypto;
 using Core.Firebase;
@@ -126,6 +127,9 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
+
+// Workers
+builder.Services.AddHostedService<NotificationWorker>();
 
 var app = builder.Build();
 

@@ -1,6 +1,6 @@
 namespace Application.Shared.Constant;
 
-public static class Queue
+public static class QueueConst
 {
   public const string Notification = "notification-mq";
   public const string PushNotification = "push-notification-mq";
