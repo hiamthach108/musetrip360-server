@@ -77,6 +77,9 @@ public class EventController : ControllerBase
         return await _adminEventService.HandleUpdateAdmin(id, dto);
     }
 
+    //<summary>
+    // Delete an event by id
+    //</summary>
     [Protected]
     [HttpDelete("admin/{id}")]
     public async Task<IActionResult> DeleteAdmin(Guid id)

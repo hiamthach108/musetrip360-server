@@ -78,6 +78,11 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "MuseTrip360 API", Version = "v1" });
 
+    // Add XML documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+
     // Add a bearer token to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
