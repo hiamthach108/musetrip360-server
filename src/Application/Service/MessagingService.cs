@@ -1,8 +1,12 @@
 namespace Application.Service;
 
 using Application.DTOs.Chat;
+using Application.DTOs.Notification;
+using Application.Shared.Constant;
+using Application.Shared.Enum;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Queue;
 using Core.Realtime;
 using Database;
 using Domain.Messaging;
@@ -17,25 +21,37 @@ public interface IMessagingService
   Task<IActionResult> HandleCreateConversation(CreateConversation req);
   Task<IActionResult> HandleCreateMessage(CreateMessage req);
   Task<IActionResult> HandleUpdateLastSeen(Guid conversationId);
-  Task<IActionResult> HandleJoinConversation(Guid converstationId);
+  Task<IActionResult> HandleJoinConversation(Guid conversationId);
+
+  // Notification
+  Task<IActionResult> HandleGetUserNotification(NotificationQuery query);
+  Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req);
+  Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req);
+  Task<QueueOperationResult> PushNewNotification(CreateNotificationDto notification);
+  Task<NotificationDto> HandleCreateNotification(CreateNotificationDto req);
 }
 
 public class MessagingService : BaseService, IMessagingService
 {
   private readonly IConversationRepository _conversationRepo;
   private readonly IMessageRepository _messageRepo;
+  private readonly INotificationRepository _notificationRepo;
   private readonly IRealtimeService _realtimeSvc;
+  private readonly IQueuePublisher _queuePub;
 
   public MessagingService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
-    IRealtimeService realtimeService
+    IRealtimeService realtimeService,
+    IQueuePublisher queuePublisher
   ) : base(dbContext, mapper, httpCtx)
   {
     _conversationRepo = new ConversationRepository(dbContext);
     _messageRepo = new MessageRepository(dbContext);
     _realtimeSvc = realtimeService;
+    _notificationRepo = new NotificationRepository(dbContext);
+    _queuePub = queuePublisher;
   }
 
   public async Task<IActionResult> HandleCreateConversation(CreateConversation req)
@@ -185,7 +201,7 @@ public class MessagingService : BaseService, IMessagingService
     );
   }
 
-  public async Task<IActionResult> HandleJoinConversation(Guid converstationId)
+  public async Task<IActionResult> HandleJoinConversation(Guid conversationId)
   {
     var payload = ExtractPayload();
     if (payload == null)
@@ -193,10 +209,10 @@ public class MessagingService : BaseService, IMessagingService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var userConversation = _conversationRepo.GetConversationUser(converstationId, payload.UserId);
+    var userConversation = _conversationRepo.GetConversationUser(conversationId, payload.UserId);
     if (userConversation == null)
     {
-      await _conversationRepo.AddUsersToConversation(converstationId, new List<Guid> { payload.UserId });
+      await _conversationRepo.AddUsersToConversation(conversationId, new List<Guid> { payload.UserId });
 
       return SuccessResp.Ok(
         new { message = "Joined conversation" }
@@ -227,5 +243,70 @@ public class MessagingService : BaseService, IMessagingService
     return SuccessResp.Ok(
       new { message = "Last seen updated" }
     );
+  }
+
+  public async Task<IActionResult> HandleGetUserNotification(NotificationQuery query)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notifications = _notificationRepo.GetUserNotifications(query, payload.UserId);
+
+    var dtos = _mapper.Map<IEnumerable<NotificationDto>>(notifications.Notifications);
+
+    return SuccessResp.Ok(new
+    {
+      list = dtos,
+      total = notifications.Total,
+      totalUnread = notifications.TotalUnread
+    });
+  }
+
+  public async Task<IActionResult> HandleUpdateNotificationReadStatus(NotificationUpdateReadStatusReq req)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notification = await _notificationRepo.UpdateReadStatus(req.NotificationId, req.IsRead);
+
+    return SuccessResp.Ok(_mapper.Map<NotificationDto>(notification));
+  }
+
+  public async Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var notification = _mapper.Map<Notification>(req);
+    notification.UserId = payload.UserId;
+    notification.Target = NotificationTargetEnum.All;
+    // notification.ReadAt = DateTime.MinValue;
+
+    var result = await _notificationRepo.CreateNotification(notification);
+
+    return SuccessResp.Ok(_mapper.Map<NotificationDto>(result));
+  }
+
+  public async Task<QueueOperationResult> PushNewNotification(CreateNotificationDto notification)
+  {
+    return await _queuePub.Publish(QueueConst.Notification, notification);
+  }
+
+  public async Task<NotificationDto> HandleCreateNotification(CreateNotificationDto req)
+  {
+    var notification = _mapper.Map<Notification>(req);
+
+    var result = await _notificationRepo.CreateNotification(notification);
+
+    return _mapper.Map<NotificationDto>(result);
   }
 }
