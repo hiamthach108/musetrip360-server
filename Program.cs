@@ -7,6 +7,7 @@ using Core.Firebase;
 using Core.Jwt;
 using Core.Mail;
 using Core.Payos;
+using Core.Queue;
 using Core.Realtime;
 using Database;
 using Infrastructure.Cache;
@@ -111,6 +112,9 @@ builder.Services.AddSingleton<IFirebaseAdminService, FirebaseAdminService>();
 builder.Services.AddSingleton<IMailService, MailService>();
 builder.Services.AddSingleton<IPayOSService, PayOSService>();
 builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
+builder.Services.AddSingleton<RabbitMQConnection, RabbitMQConnection>();
+builder.Services.AddSingleton<IQueuePublisher, RabbitMqPublisher>();
+builder.Services.AddSingleton<IQueueSubscriber, RabbitMqSubscriber>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
