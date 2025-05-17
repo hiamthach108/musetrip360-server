@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Worker Pattern Guide
+
+## Overview
+Workers in this application are background services that handle asynchronous processing of tasks, typically through message queues. They follow the BackgroundService pattern from .NET Core.
+
+## NotificationWorker
+The [NotificationWorker](mdc:src/Application/Workers/NotificationWorker.cs) is responsible for processing notification messages from a queue and sending them through the messaging service.
+
+### Key Components
+- Implements `BackgroundService` for long-running background tasks
+- Uses `IQueueSubscriber` for message queue subscription
+- Utilizes scoped services through `IServiceScopeFactory`
+- Processes messages from the notification queue defined in `QueueConst`
+
+### Message Processing Flow
+1. Subscribes to the notification queue
+2. For each message:
+   - Creates a new service scope
+   - Deserializes the message into dto type
+   - Call to service to handle
+   - Logs success or failure
+
+### Error Handling
+- Implements comprehensive error handling for:
+  - Message deserialization failures
+  - Notification processing failures
+  - Queue subscription failures
+- All errors are logged with appropriate context
+
+### Best Practices
+1. Always use scoped services within message handlers
+2. Implement proper error handling and logging
+3. Use dependency injection for service dependencies
+4. Follow the single responsibility principle
+5. Ensure proper disposal of resources
+
+## Common Patterns
+When creating new workers:
+1. Inherit from `BackgroundService`
+2. Inject required services through constructor
+3. Override `ExecuteAsync` for main processing logic
+4. Use scoped services for database operations
+5. Implement proper error handling and logging
+6. Use queue constants for queue names
+7. Handle cancellation tokens appropriately
+
+## Related Components
+- [IMessagingService](mdc:src/Application/Service/IMessagingService.cs) - Handles notification processing
+- [IQueueSubscriber](mdc:src/Core/Queue/IQueueSubscriber.cs) - Queue subscription interface
