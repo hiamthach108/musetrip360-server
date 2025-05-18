@@ -46,6 +46,45 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=musetrip360_elastic
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-u", "elastic:musetrip360_elastic", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elastic
+
+  ## Get access token for Kibana: docker-compose exec elastic bin/elasticsearch-service-tokens create elastic/kibana kibana_token
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.0
+    environment:
+      - ELASTICSEARCH_URL=http://elastic:9200
+      # - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYV90b2tlbjpVdlY1QUdoMlFReXhDcWZWb1k3UEZB
+    ports:
+      - "5601:5601"
+    depends_on:
+      elastic:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elastic
 
   # api:
   #   build:
@@ -69,3 +108,8 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  elasticsearch_data:
+
+networks:
+  elastic:
+    driver: bridge
