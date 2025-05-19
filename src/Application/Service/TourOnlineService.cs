@@ -14,7 +14,7 @@ public interface ITourOnlineService
 
 public interface IAdminTourOnlineService : ITourOnlineService
 {
-    Task<IActionResult> CreateAsync(TourOnlineCreateDto tourOnline);
+    Task<IActionResult> CreateAsync(Guid museumId, TourOnlineCreateDto tourOnline);
     Task<IActionResult> UpdateAsync(Guid id, TourOnlineUpdateDto tourOnline);
     Task<IActionResult> DeleteAsync(Guid id);
     Task<IActionResult> ActivateAsync(Guid id);
@@ -56,6 +56,10 @@ public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMap
     }
 }
 
+public class TourOnlineService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), ITourOnlineService
+{
+}
+
 public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), IAdminTourOnlineService
 {
     public async Task<IActionResult> ActivateAsync(Guid id)
@@ -69,6 +73,7 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             }
             tour.IsActive = true;
             await _tourOnlineRepository.UpdateAsync(tour);
+            var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
         }
         catch (Exception e)
@@ -77,13 +82,20 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
         }
     }
 
-    public async Task<IActionResult> CreateAsync(TourOnlineCreateDto tourOnline)
+    public async Task<IActionResult> CreateAsync(Guid museumId, TourOnlineCreateDto tourOnline)
     {
         try
         {
+            var museum = _museumRepository.GetById(museumId);
+            if (museum == null)
+            {
+                return ErrorResp.NotFound("Museum not found");
+            }
             var tour = _mapper.Map<TourOnline>(tourOnline);
+            tour.MuseumId = museumId;
             await _tourOnlineRepository.CreateAsync(tour);
-            return SuccessResp.Ok(tour);
+            var tourDto = _mapper.Map<TourOnlineDto>(tour);
+            return SuccessResp.Created(tourDto);
         }
         catch (Exception e)
         {
@@ -102,6 +114,7 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             }
             tour.IsActive = false;
             await _tourOnlineRepository.UpdateAsync(tour);
+            var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
         }
         catch (Exception e)
@@ -131,7 +144,7 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
     {
         try
         {
-            var tours = await _tourOnlineRepository.GetAllAsync(query);
+            var tours = await _tourOnlineRepository.GetAllAdminAsync(query);
             var tourDtos = _mapper.Map<List<TourOnlineDto>>(tours.Tours);
             return SuccessResp.Ok(new { List = tourDtos, Total = tours.Total });
         }
@@ -166,6 +179,7 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             }
             _mapper.Map(tourOnline, tour);
             await _tourOnlineRepository.UpdateAsync(tour);
+            var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
         }
         catch (Exception e)

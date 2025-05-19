@@ -5,7 +5,7 @@ using Domain.Tours;
 /// <summary>
 /// Controller for managing online tours and virtual museum experiences
 /// </summary>
-[Route("api/tour-online")]
+[Route("api/v1/tour-onlines")]
 [ApiController]
 [Produces("application/json")]
 public class TourOnlineController : ControllerBase
@@ -50,7 +50,7 @@ public class TourOnlineController : ControllerBase
     /// <returns>A list of online tours for the specified museum</returns>
     /// <response code="200">Returns the list of online tours</response>
     [Protected]
-    [HttpGet("museum/{museumId}")]
+    [HttpGet("museums/{museumId}")]
 
     public async Task<IActionResult> GetByMuseumId([FromRoute] Guid museumId)
     {
@@ -60,14 +60,15 @@ public class TourOnlineController : ControllerBase
     /// <summary>
     /// Create a new online tour
     /// </summary>
+    /// <param name="museumId">The unique identifier of the museum to create the tour for</param>
     /// <param name="tourOnline">The online tour creation data</param>
     /// <returns>The created online tour</returns>
     /// <response code="201">Returns the newly created online tour</response>
     [Protected]
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] TourOnlineCreateDto tourOnline)
+    [HttpPost("museums/{museumId}")]
+    public async Task<IActionResult> Create([FromRoute] Guid museumId, [FromBody] TourOnlineCreateDto tourOnline)
     {
-        return await _adminTourOnlineService.CreateAsync(tourOnline);
+        return await _adminTourOnlineService.CreateAsync(museumId, tourOnline);
     }
 
     /// <summary>
@@ -103,7 +104,7 @@ public class TourOnlineController : ControllerBase
     /// <returns>The activated online tour</returns>
     /// <response code="200">Returns the activated online tour</response>
     [Protected]
-    [HttpPut("activate/{id}")]
+    [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate([FromRoute] Guid id)
     {
         return await _adminTourOnlineService.ActivateAsync(id);
@@ -116,7 +117,7 @@ public class TourOnlineController : ControllerBase
     /// <returns>The deactivated online tour</returns>
     /// <response code="200">Returns the deactivated online tour</response>
     [Protected]
-    [HttpPut("deactivate/{id}")]
+    [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate([FromRoute] Guid id)
     {
         return await _adminTourOnlineService.DeactivateAsync(id);

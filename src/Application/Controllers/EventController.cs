@@ -64,24 +64,21 @@ public class EventController : ControllerBase
     }
 
     [Protected]
-    [HttpPatch("admin/{id}/cancel")]
+    [HttpPatch("{id}/cancel")]
     public async Task<IActionResult> Cancel(Guid id)
     {
         return await _adminEventService.HandleCancelEvent(id);
     }
 
     [Protected]
-    [HttpPut("admin/{id}")]
+    [HttpPut("{id}/admin")]
     public async Task<IActionResult> UpdateAdmin(Guid id, EventUpdateDto dto)
     {
         return await _adminEventService.HandleUpdateAdmin(id, dto);
     }
 
-    //<summary>
-    // Delete an event by id
-    //</summary>
     [Protected]
-    [HttpDelete("admin/{id}")]
+    [HttpDelete("{id}/admin")]
     public async Task<IActionResult> DeleteAdmin(Guid id)
     {
         return await _adminEventService.HandleDeleteAdmin(id);

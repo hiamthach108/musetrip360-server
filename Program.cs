@@ -127,7 +127,8 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
-
+builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
+builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

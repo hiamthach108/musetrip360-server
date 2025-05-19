@@ -83,21 +83,6 @@ public class MuseTrip360DbContext : DbContext
   {
     base.OnModelCreating(builder);
 
-    foreach (var entityType in builder.Model.GetEntityTypes())
-    {
-      foreach (var property in entityType.GetProperties())
-      {
-        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
-        {
-          property.SetValueConverter(
-            new ValueConverter<DateTime, DateTime>(
-              v => v.ToUniversalTime(),
-              v => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7)
-            ));
-        }
-      }
-    }
-
     builder.Entity<User>(e =>
     {
       e.HasKey(x => x.Id);
