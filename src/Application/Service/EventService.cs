@@ -37,9 +37,9 @@ public interface IAdminEventService : IEventService
 // Organizer, operations
 public interface IOrganizerEventService : IEventService
 {
-    Task<IActionResult> HandleCreateDraft(Guid userId, Guid museumId, EventCreateDto dto);
+    Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto);
     Task<IActionResult> HandleSubmitEvent(Guid id);
-    Task<IActionResult> HandleGetAllByOrganizer(Guid userId, EventStatusEnum? status);
+    Task<IActionResult> HandleGetAllByOrganizer(EventStatusEnum? status);
     Task<IActionResult> HandleUpdate(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDelete(Guid id);
 }
@@ -378,10 +378,15 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 // Organizer implementation
 public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IOrganizerEventService
 {
-    public async Task<IActionResult> HandleCreateDraft(Guid userId, Guid museumId, EventCreateDto dto)
+    public async Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto)
     {
         try
         {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
             var isMuseumExists = _museumRepository.IsMuseumExists(museumId);
             if (!isMuseumExists)
             {
@@ -389,7 +394,7 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
             }
 
             var eventItem = _mapper.Map<Event>(dto);
-            eventItem.CreatedBy = userId;
+            eventItem.CreatedBy = payload.UserId;
             eventItem.MuseumId = museumId;
             eventItem.Status = EventStatusEnum.Draft;
 
@@ -428,11 +433,16 @@ public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper,
         }
     }
 
-    public async Task<IActionResult> HandleGetAllByOrganizer(Guid userId, EventStatusEnum? status)
+    public async Task<IActionResult> HandleGetAllByOrganizer(EventStatusEnum? status)
     {
         try
         {
-            var events = await _eventRepository.GetAllEventByOrganizerAsync(userId, status);
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            var events = await _eventRepository.GetAllEventByOrganizerAsync(payload.UserId, status);
             var eventDtos = _mapper.Map<List<EventDto>>(events);
             return SuccessResp.Ok(eventDtos);
         }

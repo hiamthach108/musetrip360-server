@@ -48,8 +48,7 @@ public class EventController : ControllerBase
     [HttpPost("museums/{museumId}/request")]
     public async Task<IActionResult> Create(Guid museumId, EventCreateDto dto)
     {
-        var payload = HttpContext.Items["payload"] as Payload;
-        return await _organizerEventService.HandleCreateDraft(payload!.UserId, museumId, dto);
+        return await _organizerEventService.HandleCreateDraft(museumId, dto);
     }
 
     [Protected]
@@ -98,8 +97,7 @@ public class EventController : ControllerBase
     [HttpGet("assigned")]
     public async Task<IActionResult> GetAllByOrganizer([FromQuery] EventStatusEnum? status)
     {
-        var payload = HttpContext.Items["payload"] as Payload;
-        return await _organizerEventService.HandleGetAllByOrganizer(payload!.UserId, status);
+        return await _organizerEventService.HandleGetAllByOrganizer(status);
     }
 
     [Protected]
