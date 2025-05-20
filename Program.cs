@@ -134,7 +134,8 @@ builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
-
+builder.Services.AddScoped<ITourContentService, TourContentService>();
+builder.Services.AddScoped<IAdminTourContentService, AdminTourContentService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 

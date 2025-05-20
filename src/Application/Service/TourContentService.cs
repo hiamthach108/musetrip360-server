@@ -41,6 +41,10 @@ public abstract class BaseTourContentService(MuseTrip360DbContext dbContext, IMa
         try
         {
             var tourContent = await _tourContentRepository.GetTourContentById(id);
+            if (tourContent == null)
+            {
+                return ErrorResp.NotFound("Tour content not found");
+            }
             var tourContentDto = _mapper.Map<TourContentDto>(tourContent);
             return SuccessResp.Ok(tourContentDto);
         }
@@ -49,6 +53,9 @@ public abstract class BaseTourContentService(MuseTrip360DbContext dbContext, IMa
             return ErrorResp.InternalServerError(e.Message);
         }
     }
+}
+public class TourContentService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourContentService(dbContext, mapper, httpContextAccessor), ITourContentService
+{
 }
 public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourContentService(dbContext, mapper, httpContextAccessor), IAdminTourContentService
 {
@@ -59,7 +66,7 @@ public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper map
             var tourContent = await _tourContentRepository.GetTourContentById(id);
             if (tourContent == null)
             {
-            return ErrorResp.NotFound("Tour content not found");
+                return ErrorResp.NotFound("Tour content not found");
             }
             tourContent.IsActive = true;
             await _tourContentRepository.UpdateTourContent(id, tourContent);
@@ -108,6 +115,11 @@ public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper map
     {
         try
         {
+            var tourContent = await _tourContentRepository.GetTourContentById(id);
+            if (tourContent == null)
+            {
+                return ErrorResp.NotFound("Tour content not found");
+            }
             await _tourContentRepository.DeleteTourContent(id);
             return SuccessResp.Ok("Tour content deleted successfully");
         }
@@ -135,7 +147,12 @@ public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper map
     {
         try
         {
-            var tourContentMapped = _mapper.Map<TourContent>(tourContent);
+            var tourContentExisted = await _tourContentRepository.GetTourContentById(id);
+            if (tourContentExisted == null)
+            {
+                return ErrorResp.NotFound("Tour content not found");
+            }
+            var tourContentMapped = _mapper.Map(tourContent, tourContentExisted);
             await _tourContentRepository.UpdateTourContent(id, tourContentMapped);
             return SuccessResp.Ok(tourContentMapped);
         }
