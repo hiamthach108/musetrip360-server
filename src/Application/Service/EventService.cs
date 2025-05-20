@@ -146,7 +146,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdMuseumIdStatus(artifactIds, eventItem.MuseumId, true);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest("Some artifacts not found: " + string.Join(", ", artifactList.MissingIds));
+                return ErrorResp.BadRequest("Some artifacts are not active or not found: " + string.Join(", ", artifactList.MissingIds));
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -273,7 +273,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some artifacts not found: {string.Join(", ", artifactList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some artifacts are not active or not found: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -322,7 +322,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourOnlineList = await _tourOnlineRepository.GetActiveTourOnlineByListIdMuseumId(tourOnlineIds, eventItem.MuseumId);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
@@ -352,7 +352,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdEventId(tourOnlineIds, eventId);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
