@@ -119,25 +119,25 @@ public class EventController : ControllerBase
     }
     [Protected]
     [HttpPut("{id}/add-artifacts")]
-    public async Task<IActionResult> AddArtifacts(Guid id, List<Guid> artifactIds)
+    public async Task<IActionResult> AddArtifacts(Guid id, IEnumerable<Guid> artifactIds)
     {
         return await _adminEventService.HandleAddArtifactToEvent(id, artifactIds);
     }
     [Protected]
     [HttpPut("{id}/remove-artifacts")]
-    public async Task<IActionResult> RemoveArtifacts(Guid id, List<Guid> artifactIds)
+    public async Task<IActionResult> RemoveArtifacts(Guid id, IEnumerable<Guid> artifactIds)
     {
         return await _adminEventService.HandleRemoveArtifactFromEvent(id, artifactIds);
     }
     [Protected]
     [HttpPut("{id}/add-tour-onlines")]
-    public async Task<IActionResult> AddTourOnlines(Guid id, List<Guid> tourOnlineIds)
+    public async Task<IActionResult> AddTourOnlines(Guid id, IEnumerable<Guid> tourOnlineIds)
     {
         return await _adminEventService.HandleAddTourOnlineToEvent(id, tourOnlineIds);
     }
     [Protected]
     [HttpPut("{id}/remove-tour-onlines")]
-    public async Task<IActionResult> RemoveTourOnlines(Guid id, List<Guid> tourOnlineIds)
+    public async Task<IActionResult> RemoveTourOnlines(Guid id, IEnumerable<Guid> tourOnlineIds)
     {
         return await _adminEventService.HandleRemoveTourOnlineFromEvent(id, tourOnlineIds);
     }

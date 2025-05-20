@@ -23,15 +23,15 @@ public interface IEventService
 public interface IAdminEventService : IEventService
 {
     Task<IActionResult> HandleGetAllAdmin(EventAdminQuery query);
-    Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, List<Guid> artifactIds);
-    Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, List<Guid> artifactIds);
+    Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, IEnumerable<Guid> artifactIds);
+    Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, IEnumerable<Guid> artifactIds);
     Task<IActionResult> HandleEvaluateEvent(Guid id, bool isApproved);
     Task<IActionResult> HandleUpdateAdmin(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDeleteAdmin(Guid id);
     Task<IActionResult> HandleCreateAdmin(Guid userId, Guid museumId, EventCreateAdminDto dto);
     Task<IActionResult> HandleCancelEvent(Guid id);
-    Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, List<Guid> tourOnlineIds);
-    Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, List<Guid> tourOnlineIds);
+    Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
+    Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
 }
 
 // Organizer, operations
@@ -132,7 +132,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, List<Guid> artifactIds)
+    public async Task<IActionResult> HandleAddArtifactToEvent(Guid eventId, IEnumerable<Guid> artifactIds)
     {
         try
         {
@@ -259,7 +259,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, List<Guid> artifactIds)
+    public async Task<IActionResult> HandleRemoveArtifactFromEvent(Guid eventId, IEnumerable<Guid> artifactIds)
     {
         try
         {
@@ -309,7 +309,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, List<Guid> tourOnlineIds)
+    public async Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds)
     {
         try
         {
@@ -338,7 +338,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, List<Guid> tourOnlineIds)
+    public async Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds)
     {
         try
         {

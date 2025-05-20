@@ -12,8 +12,8 @@ public interface ITourOnlineRepository
     Task UpdateAsync(TourOnline tourOnline);
     Task DeleteAsync(Guid id);
     Task<bool> IsTourOnlineExists(Guid id);
-    Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(List<Guid> tourOnlineIds, Guid museumId);
-    Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(List<Guid> tourOnlineIds, Guid eventId);
+    Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(IEnumerable<Guid> tourOnlineIds, Guid museumId);
+    Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId);
 }
 public class TourOnlineList
 {
@@ -42,12 +42,11 @@ public class TourOnlineRepository : ITourOnlineRepository
     public async Task DeleteAsync(Guid id)
     {
         var tourOnline = await _context.TourOnlines.FindAsync(id);
-        if (tourOnline == null)
+        if (tourOnline != null)
         {
-            throw new Exception("Tour online not found");
+            tourOnline.IsActive = false;
+            await UpdateAsync(tourOnline);
         }
-        _context.TourOnlines.Remove(tourOnline);
-        await _context.SaveChangesAsync();
     }
 
     public async Task<TourOnlineList> GetAllAsync(TourOnlineQuery query)
@@ -99,12 +98,11 @@ public class TourOnlineRepository : ITourOnlineRepository
     public async Task UpdateAsync(TourOnline tourOnline)
     {
         var existTourOnline = await GetByIdAsync(tourOnline.Id);
-        if (existTourOnline == null)
+        if (existTourOnline != null)
         {
-            throw new Exception("Tour online not found");
+            _context.Entry(existTourOnline).CurrentValues.SetValues(tourOnline);
+            await _context.SaveChangesAsync();
         }
-        _context.Entry(existTourOnline).CurrentValues.SetValues(tourOnline);
-        await _context.SaveChangesAsync();
     }
 
     public async Task<bool> IsTourOnlineExists(Guid id)
@@ -112,10 +110,11 @@ public class TourOnlineRepository : ITourOnlineRepository
         return await _context.TourOnlines.AnyAsync(t => t.Id == id);
     }
 
-    public async Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(List<Guid> tourOnlineIds, Guid museumId)
+    public async Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(IEnumerable<Guid> tourOnlineIds, Guid museumId)
     {
+        var tourOnlineIdsList = tourOnlineIds.ToList(); // Convert to list once for multiple uses
         var queryable = _context.TourOnlines
-        .Where(t => tourOnlineIds.Contains(t.Id))
+        .Where(t => tourOnlineIdsList.Contains(t.Id))
         .Where(t => t.MuseumId == museumId)
         .Where(t => t.IsActive == true);
 
@@ -125,15 +124,16 @@ public class TourOnlineRepository : ITourOnlineRepository
         return new TourOnlineListResultWithMissingIds
         {
             Tours = tours,
-            IsAllFound = tourOnlineIds.Count == total,
-            MissingIds = tourOnlineIds.Except(tours.Select(t => t.Id)).ToList()
+            IsAllFound = tourOnlineIdsList.Count == total,
+            MissingIds = tourOnlineIdsList.Except(tours.Select(t => t.Id)).ToList()
         };
     }
 
-    public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(List<Guid> tourOnlineIds, Guid eventId)
+    public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId)
     {
+        var tourOnlineIdsList = tourOnlineIds.ToList(); // Convert to list once for multiple uses
         var queryable = _context.TourOnlines
-        .Where(t => tourOnlineIds.Contains(t.Id))
+        .Where(t => tourOnlineIdsList.Contains(t.Id))
         .Where(t => t.Events.Any(e => e.Id == eventId));
 
         var total = await queryable.CountAsync();
@@ -142,8 +142,8 @@ public class TourOnlineRepository : ITourOnlineRepository
         return new TourOnlineListResultWithMissingIds
         {
             Tours = tours,
-            IsAllFound = tourOnlineIds.Count == total,
-            MissingIds = tourOnlineIds.Except(tours.Select(t => t.Id)).ToList()
+            IsAllFound = tourOnlineIdsList.Count == total,
+            MissingIds = tourOnlineIdsList.Except(tours.Select(t => t.Id)).ToList()
         };
     }
 }
