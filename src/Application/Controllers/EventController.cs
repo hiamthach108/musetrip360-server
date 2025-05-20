@@ -56,9 +56,7 @@ public class EventController : ControllerBase
     [HttpPost("admin/museums/{museumId}")]
     public async Task<IActionResult> CreateAdmin(Guid museumId, EventCreateAdminDto dto)
     {
-        var payload = HttpContext.Items["payload"] as Payload;
-        //check admin
-        return await _adminEventService.HandleCreateAdmin(payload!.UserId, museumId, dto);
+        return await _adminEventService.HandleCreateAdmin(museumId, dto);
     }
 
     [Protected]

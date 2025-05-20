@@ -28,7 +28,7 @@ public interface IAdminEventService : IEventService
     Task<IActionResult> HandleEvaluateEvent(Guid id, bool isApproved);
     Task<IActionResult> HandleUpdateAdmin(Guid id, EventUpdateDto dto);
     Task<IActionResult> HandleDeleteAdmin(Guid id);
-    Task<IActionResult> HandleCreateAdmin(Guid userId, Guid museumId, EventCreateAdminDto dto);
+    Task<IActionResult> HandleCreateAdmin(Guid museumId, EventCreateAdminDto dto);
     Task<IActionResult> HandleCancelEvent(Guid id);
     Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
     Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
@@ -226,10 +226,15 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
-    public async Task<IActionResult> HandleCreateAdmin(Guid userId, Guid museumId, EventCreateAdminDto dto)
+    public async Task<IActionResult> HandleCreateAdmin(Guid museumId, EventCreateAdminDto dto)
     {
         try
         {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
             var museum = _museumRepository.GetById(museumId);
             if (museum == null)
             {
@@ -246,7 +251,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             {
                 eventItem.Location = "";
             }
-            eventItem.CreatedBy = userId;
+            eventItem.CreatedBy = payload.UserId;
             eventItem.MuseumId = museumId;
 
             await _eventRepository.AddAsync(eventItem);
