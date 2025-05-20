@@ -16,7 +16,7 @@ public interface IArtifactService
     Task<IActionResult> HandleGetAllAdmin(ArtifactAdminQuery query);
     Task<IActionResult> HandleGetById(Guid id);
     Task<IActionResult> HandleGetByMuseumId(Guid museumId);
-    Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto);
+    Task<IActionResult> HandleCreate(Guid userId, Guid museumId, ArtifactCreateDto dto);
     Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto);
     Task<IActionResult> HandleDelete(Guid id);
     // Task<IActionResult> HandleRate(Guid id, int rating);
@@ -39,16 +39,10 @@ public class ArtifactService : BaseService, IArtifactService
         _museumRepository = new MuseumRepository(dbContext);
     }
 
-    public async Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto)
+    public async Task<IActionResult> HandleCreate(Guid userId, Guid museumId, ArtifactCreateDto dto)
     {
         try
         {
-            // Check if the user is authenticated
-            var payload = ExtractPayload();
-            if (payload == null)
-            {
-                return ErrorResp.Unauthorized("Invalid token");
-            }
             // check if the museum is exists
             var isMuseumExists = _museumRepository.IsMuseumExists(museumId);
             if (!isMuseumExists)
@@ -57,7 +51,7 @@ public class ArtifactService : BaseService, IArtifactService
             }
             // map the dto to the artifact
             var artifact = _mapper.Map<Artifact>(dto);
-            artifact.CreatedBy = payload.UserId;
+            artifact.CreatedBy = userId;
             artifact.MuseumId = museumId;
             // create the artifact
             await _artifactRepository.AddAsync(artifact);

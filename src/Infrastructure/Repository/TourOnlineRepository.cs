@@ -12,11 +12,19 @@ public interface ITourOnlineRepository
     Task UpdateAsync(TourOnline tourOnline);
     Task DeleteAsync(Guid id);
     Task<bool> IsTourOnlineExists(Guid id);
+    Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(List<Guid> tourOnlineIds, Guid museumId);
+    Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(List<Guid> tourOnlineIds, Guid eventId);
 }
 public class TourOnlineList
 {
     public IEnumerable<TourOnline> Tours { get; set; } = [];
     public int Total { get; set; }
+}
+public class TourOnlineListResultWithMissingIds
+{
+    public IEnumerable<TourOnline> Tours { get; set; } = [];
+    public bool IsAllFound { get; set; }
+    public List<Guid> MissingIds { get; set; } = [];
 }
 public class TourOnlineRepository : ITourOnlineRepository
 {
@@ -102,5 +110,40 @@ public class TourOnlineRepository : ITourOnlineRepository
     public async Task<bool> IsTourOnlineExists(Guid id)
     {
         return await _context.TourOnlines.AnyAsync(t => t.Id == id);
+    }
+
+    public async Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(List<Guid> tourOnlineIds, Guid museumId)
+    {
+        var queryable = _context.TourOnlines
+        .Where(t => tourOnlineIds.Contains(t.Id))
+        .Where(t => t.MuseumId == museumId)
+        .Where(t => t.IsActive == true);
+
+        var total = await queryable.CountAsync();
+        var tours = await queryable.ToListAsync();
+
+        return new TourOnlineListResultWithMissingIds
+        {
+            Tours = tours,
+            IsAllFound = tourOnlineIds.Count == total,
+            MissingIds = tourOnlineIds.Except(tours.Select(t => t.Id)).ToList()
+        };
+    }
+
+    public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(List<Guid> tourOnlineIds, Guid eventId)
+    {
+        var queryable = _context.TourOnlines
+        .Where(t => tourOnlineIds.Contains(t.Id))
+        .Where(t => t.Events.Any(e => e.Id == eventId));
+
+        var total = await queryable.CountAsync();
+        var tours = await queryable.ToListAsync();
+
+        return new TourOnlineListResultWithMissingIds
+        {
+            Tours = tours,
+            IsAllFound = tourOnlineIds.Count == total,
+            MissingIds = tourOnlineIds.Except(tours.Select(t => t.Id)).ToList()
+        };
     }
 }

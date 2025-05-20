@@ -1,4 +1,5 @@
 using Application.Middlewares;
+using Core.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Application.DTOs.Artifact;
 using MuseTrip360.src.Application.Service;
@@ -42,7 +43,8 @@ public class ArtifactController : ControllerBase
     [HttpPost("/api/v1/museums/{museumId}/artifacts")]
     public async Task<IActionResult> Create(Guid museumId, ArtifactCreateDto dto)
     {
-        return await _artifactService.HandleCreate(museumId, dto);
+        var payload = HttpContext.Items["payload"] as Payload;
+        return await _artifactService.HandleCreate(payload!.UserId, museumId, dto);
     }   
 
     [Protected]

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Application.Service;
 using Application.Middlewares;
 using Application.Shared.Enum;
+using Core.Jwt;
+using Application.Shared.Type;
 [Route("api/v1/events")]
 [ApiController]
 public class EventController : ControllerBase
@@ -46,14 +48,17 @@ public class EventController : ControllerBase
     [HttpPost("museums/{museumId}/request")]
     public async Task<IActionResult> Create(Guid museumId, EventCreateDto dto)
     {
-        return await _organizerEventService.HandleCreateDraft(museumId, dto);
+        var payload = HttpContext.Items["payload"] as Payload;
+        return await _organizerEventService.HandleCreateDraft(payload!.UserId, museumId, dto);
     }
 
     [Protected]
     [HttpPost("admin/museums/{museumId}")]
     public async Task<IActionResult> CreateAdmin(Guid museumId, EventCreateAdminDto dto)
     {
-        return await _adminEventService.HandleCreateAdmin(museumId, dto);
+        var payload = HttpContext.Items["payload"] as Payload;
+        //check admin
+        return await _adminEventService.HandleCreateAdmin(payload!.UserId, museumId, dto);
     }
 
     [Protected]
@@ -95,7 +100,8 @@ public class EventController : ControllerBase
     [HttpGet("assigned")]
     public async Task<IActionResult> GetAllByOrganizer([FromQuery] EventStatusEnum? status)
     {
-        return await _organizerEventService.HandleGetAllByOrganizer(status);
+        var payload = HttpContext.Items["payload"] as Payload;
+        return await _organizerEventService.HandleGetAllByOrganizer(payload!.UserId, status);
     }
 
     [Protected]
@@ -112,15 +118,27 @@ public class EventController : ControllerBase
         return await _organizerEventService.HandleDelete(id);
     }
     [Protected]
-    [HttpPost("{id}/add-artifacts")]
+    [HttpPut("{id}/add-artifacts")]
     public async Task<IActionResult> AddArtifacts(Guid id, List<Guid> artifactIds)
     {
         return await _adminEventService.HandleAddArtifactToEvent(id, artifactIds);
     }
     [Protected]
-    [HttpPost("{id}/remove-artifacts")]
+    [HttpPut("{id}/remove-artifacts")]
     public async Task<IActionResult> RemoveArtifacts(Guid id, List<Guid> artifactIds)
     {
         return await _adminEventService.HandleRemoveArtifactFromEvent(id, artifactIds);
+    }
+    [Protected]
+    [HttpPut("{id}/add-tour-onlines")]
+    public async Task<IActionResult> AddTourOnlines(Guid id, List<Guid> tourOnlineIds)
+    {
+        return await _adminEventService.HandleAddTourOnlineToEvent(id, tourOnlineIds);
+    }
+    [Protected]
+    [HttpPut("{id}/remove-tour-onlines")]
+    public async Task<IActionResult> RemoveTourOnlines(Guid id, List<Guid> tourOnlineIds)
+    {
+        return await _adminEventService.HandleRemoveTourOnlineFromEvent(id, tourOnlineIds);
     }
 }
