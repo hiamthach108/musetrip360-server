@@ -22,8 +22,8 @@ public class EventDto
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    public ICollection<ArtifactDto> Artifacts { get; set; } = null!;
-    //   public ICollection<TourOnlineDto> TourOnlines { get; set; } = null!;
+    public ICollection<ArtifactDto>? Artifacts { get; set; }
+    public ICollection<TourOnlineDto>? TourOnlines { get; set; }
     //   public ICollection<TourGuideDto> TourGuides { get; set; } = null!;
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
     public class EventProfile : Profile

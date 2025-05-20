@@ -17,8 +17,8 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task DeleteAsync(Guid id);
         Task<bool> IsMuseumExistsAsync(Guid museumId);
         Task<bool> IsArtifactExistsAsync(Guid artifactId);
-        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status);
-        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(IEnumerable<Guid> artifactIds, Guid museumId, bool status);
+        Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId);
     }
     public class ArtifactList
     {
@@ -116,12 +116,13 @@ namespace MuseTrip360.src.Infrastructure.Repository
             return await _context.Artifacts.AnyAsync(a => a.Id == artifactId);
         }
 
-        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(List<Guid> artifactIds, Guid museumId, bool status)
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(IEnumerable<Guid> artifactIds, Guid museumId, bool status)
         {
+            var artifactIdsList = artifactIds.ToList(); // Convert to list once for multiple uses
             var foundArtifacts = await _context.Artifacts
                 .Where(a => a.MuseumId == museumId)
                 .Where(a => a.IsActive == status)
-                .Where(a => artifactIds.Contains(a.Id))
+                .Where(a => artifactIdsList.Contains(a.Id))
                 .ToListAsync();
 
             var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
@@ -142,11 +143,12 @@ namespace MuseTrip360.src.Infrastructure.Repository
             };
         }
 
-        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(List<Guid> artifactIds, Guid eventId)
+        public async Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId)
         {
+            var artifactIdsList = artifactIds.ToList(); // Convert to list once for multiple uses
             var foundArtifacts = await _context.Artifacts
                 .Where(a => a.Events.Any(e => e.Id == eventId))
-                .Where(a => artifactIds.Contains(a.Id))
+                .Where(a => artifactIdsList.Contains(a.Id))
                 .ToListAsync();
 
             var foundIds = foundArtifacts.Select(a => a.Id).ToHashSet();
