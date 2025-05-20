@@ -17,6 +17,7 @@ namespace Infrastructure.Repository
         Task<bool> IsEventExistsAsync(Guid id);
         Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId);
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
+        Task<bool> IsOwner(Guid userId, Guid eventId);
     }
 
     public class EventList
@@ -148,6 +149,11 @@ namespace Infrastructure.Repository
             .Include(e => e.TourGuides)
             .Include(e => e.TicketAddons)
             .ToListAsync();
+        }
+
+        public async Task<bool> IsOwner(Guid userId, Guid eventId)
+        {
+            return await _context.Events.AnyAsync(e => e.CreatedBy == userId && e.Id == eventId);
         }
     }
 }

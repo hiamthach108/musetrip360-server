@@ -80,6 +80,11 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "MuseTrip360 API", Version = "v1" });
 
+    // Add XML documentation
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+
     // Add a bearer token to Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -127,7 +132,10 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
-
+builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
+builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
+builder.Services.AddScoped<ITourContentService, TourContentService>();
+builder.Services.AddScoped<IAdminTourContentService, AdminTourContentService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 

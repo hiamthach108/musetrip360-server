@@ -92,7 +92,7 @@ public class MuseTrip360DbContext : DbContext
           property.SetValueConverter(
             new ValueConverter<DateTime, DateTime>(
               v => v.ToUniversalTime(),
-              v => DateTime.SpecifyKind(v, DateTimeKind.Utc).AddHours(7)
+              v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
             ));
         }
       }
