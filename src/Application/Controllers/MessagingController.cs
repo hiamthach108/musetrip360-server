@@ -1,6 +1,7 @@
 namespace Application.Controllers;
 
 using Application.DTOs.Chat;
+using Application.DTOs.Notification;
 using Application.Middlewares;
 using Application.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -65,6 +66,51 @@ public class MessagingController : ControllerBase
   {
     _logger.LogInformation("Join conversation request received");
     return await _service.HandleJoinConversation(conversationId);
+  }
+
+  [Protected]
+  [HttpPost("notifications/system")]
+  public async Task<IActionResult> CreateSystemNotification([FromBody] CreateNotificationDto req)
+  {
+    _logger.LogInformation("Create notification request received");
+    return await _service.HandleCreateSystemNotification(req);
+  }
+
+  [Protected]
+  [HttpGet("notifications")]
+  public async Task<IActionResult> GetNotifications([FromQuery] NotificationQuery query)
+  {
+    _logger.LogInformation("Get notifications request received");
+    return await _service.HandleGetUserNotification(query);
+  }
+
+  [Protected]
+  [HttpPut("notifications/read")]
+  public async Task<IActionResult> UpdateNotificationReadStatus([FromBody] NotificationUpdateReadStatusReq req)
+  {
+    _logger.LogInformation("Update notification read status request received");
+    return await _service.HandleUpdateNotificationReadStatus(req);
+  }
+
+  [Protected]
+  [HttpPost("notifications/test")]
+  public async Task<IActionResult> TestNotification([FromBody] CreateNotificationDto req)
+  {
+    _logger.LogInformation("Test notification request received");
+
+    await _service.PushNewNotification(new CreateNotificationDto
+    {
+      Title = req.Title,
+      Message = req.Message,
+      Type = req.Type,
+      UserId = req.UserId,
+      Metadata = req.Metadata
+    });
+
+    return Ok(new
+    {
+      message = "Test notification sent successfully"
+    });
   }
 }
 
