@@ -13,7 +13,7 @@ public interface ITourContentService
 public interface IAdminTourContentService : ITourContentService
 {
     Task<IActionResult> HandleGetAllAdminAsync(TourContentAdminQuery query);
-    Task<IActionResult> HandleCreateAsync(TourContentCreateDto tourContent);
+    Task<IActionResult> HandleCreateAsync(Guid tourOnlineId, TourContentCreateDto tourContent);
     Task<IActionResult> HandleUpdateAsync(Guid id, TourContentUpdateDto tourContent);
     Task<IActionResult> HandleDeleteAsync(Guid id);
     Task<IActionResult> HandleActivateAsync(Guid id);
@@ -23,6 +23,7 @@ public interface IAdminTourContentService : ITourContentService
 public abstract class BaseTourContentService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(dbContext, mapper, httpContextAccessor), ITourContentService
 {
     protected readonly ITourContentRepository _tourContentRepository = new TourContentRepository(dbContext);
+    protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(dbContext);
     public async Task<IActionResult> HandleGetAllAsync(TourContentQuery query)
     {
         try
@@ -78,11 +79,17 @@ public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper map
         }
     }
 
-    public async Task<IActionResult> HandleCreateAsync(TourContentCreateDto tourContent)
+    public async Task<IActionResult> HandleCreateAsync(Guid tourOnlineId, TourContentCreateDto tourContent)
     {
         try
         {
+            var tourOnline = await _tourOnlineRepository.IsTourOnlineExists(tourOnlineId);
+            if (!tourOnline)
+            {
+                return ErrorResp.NotFound("Tour online not found");
+            }
             var tourContentMapped = _mapper.Map<TourContent>(tourContent);
+            tourContentMapped.TourId = tourOnlineId;
             await _tourContentRepository.CreateTourContent(tourContentMapped);
             return SuccessResp.Ok(tourContentMapped);
         }

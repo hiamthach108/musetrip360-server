@@ -54,7 +54,8 @@ public class TourOnlineRepository : ITourOnlineRepository
         var queryable = _context.TourOnlines
         .Where(t => t.IsActive == true)
         .Where(t => query.MuseumId == null || t.MuseumId == query.MuseumId)
-        .Where(t => query.SearchKeyword == null || t.Name.Contains(query.SearchKeyword) || t.Description.Contains(query.SearchKeyword));
+        .Where(t => query.SearchKeyword == null || t.Name.Contains(query.SearchKeyword) || t.Description.Contains(query.SearchKeyword))
+        .Include(t => t.TourContents);
         var total = await queryable.CountAsync();
 
         var tours = await queryable
@@ -74,7 +75,8 @@ public class TourOnlineRepository : ITourOnlineRepository
         var queryable = _context.TourOnlines
         .Where(t => query.IsActive == null || t.IsActive == query.IsActive)
         .Where(t => query.MuseumId == null || t.MuseumId == query.MuseumId)
-        .Where(t => query.SearchKeyword == null || t.Name.Contains(query.SearchKeyword) || t.Description.Contains(query.SearchKeyword));
+        .Where(t => query.SearchKeyword == null || t.Name.Contains(query.SearchKeyword) || t.Description.Contains(query.SearchKeyword))
+        .Include(t => t.TourContents);
         var total = await queryable.CountAsync();
 
         var tours = await queryable
@@ -87,12 +89,18 @@ public class TourOnlineRepository : ITourOnlineRepository
 
     public async Task<IEnumerable<TourOnline>> GetAllByMuseumIdAsync(Guid museumId)
     {
-        return await _context.TourOnlines.Where(t => t.MuseumId == museumId).ToListAsync();
+        return await _context.TourOnlines
+        .Where(t => t.MuseumId == museumId)
+        .Include(t => t.TourContents)
+        .ToListAsync();
     }
 
     public async Task<TourOnline?> GetByIdAsync(Guid id)
     {
-        return await _context.TourOnlines.FindAsync(id);
+        return await _context.TourOnlines
+        .Where(t => t.Id == id)
+        .Include(t => t.TourContents)
+        .FirstOrDefaultAsync();
     }
 
     public async Task UpdateAsync(TourOnline tourOnline)

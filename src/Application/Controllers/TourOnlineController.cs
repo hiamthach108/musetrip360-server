@@ -55,7 +55,7 @@ public class TourOnlineController : ControllerBase
     /// <response code="403">Forbidden - User does not have admin privileges</response>
     /// <response code="404">Museum not found</response>
     [Protected]
-    [HttpGet("museums/{museumId}")]
+    [HttpGet("/api/v1/museums/{museumId}/tour-onlines")]
     public async Task<IActionResult> GetByMuseumId([FromRoute] Guid museumId)
     {
         return await _adminTourOnlineService.GetAllByMuseumIdAsync(museumId);
@@ -73,7 +73,7 @@ public class TourOnlineController : ControllerBase
     /// <response code="403">Forbidden - User does not have admin privileges</response>
     /// <response code="404">Museum not found</response>
     [Protected]
-    [HttpPost("museums/{museumId}")]
+    [HttpPost("/api/v1/museums/{museumId}/tour-onlines")]
     public async Task<IActionResult> Create([FromRoute] Guid museumId, [FromBody] TourOnlineCreateDto tourOnline)
     {
         return await _adminTourOnlineService.CreateAsync(museumId, tourOnline);

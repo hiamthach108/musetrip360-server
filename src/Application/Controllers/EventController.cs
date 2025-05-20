@@ -71,7 +71,7 @@ public class EventController : ControllerBase
     /// <returns>A list of events belonging to the museum</returns>
     /// <response code="200">Returns the list of events</response>
     /// <response code="404">Museum not found</response>
-    [HttpGet("museums/{museumId}")]
+    [HttpGet("/api/v1/museums/{museumId}/events")]
     public async Task<IActionResult> GetByMuseumId(Guid museumId)
     {
         return await _eventService.HandleGetEventsByMuseumId(museumId);
@@ -89,7 +89,7 @@ public class EventController : ControllerBase
     /// <response code="403">Forbidden - User does not have organizer privileges</response>
     /// <response code="404">Museum not found</response>
     [Protected]
-    [HttpPost("museums/{museumId}/request")]
+    [HttpPost("/api/v1/museums/{museumId}/events/request")]
     public async Task<IActionResult> Create(Guid museumId, EventCreateDto dto)
     {
         return await _organizerEventService.HandleCreateDraft(museumId, dto);
@@ -107,7 +107,7 @@ public class EventController : ControllerBase
     /// <response code="403">Forbidden - User does not have admin privileges</response>
     /// <response code="404">Museum not found</response>
     [Protected]
-    [HttpPost("admin/museums/{museumId}")]
+    [HttpPost("/api/v1/museums/{museumId}/events")]
     public async Task<IActionResult> CreateAdmin(Guid museumId, EventCreateAdminDto dto)
     {
         return await _adminEventService.HandleCreateAdmin(museumId, dto);

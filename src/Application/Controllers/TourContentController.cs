@@ -61,6 +61,7 @@ public class TourContentController : ControllerBase
     /// <summary>
     /// Create a new tour content
     /// </summary>
+    /// <param name="tourOnlineId">The unique identifier of the tour online</param>
     /// <param name="dto">The tour content creation data</param>
     /// <returns>The created tour content</returns>
     /// <response code="201">Returns the newly created tour content</response>
@@ -68,10 +69,10 @@ public class TourContentController : ControllerBase
     /// <response code="401">Unauthorized - User is not authenticated</response>
     /// <response code="403">Forbidden - User does not have required privileges</response>
     [Protected]
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] TourContentCreateDto dto)
+    [HttpPost("/api/v1/tour-onlines/{tourOnlineId}/contents")]
+    public async Task<IActionResult> Create([FromRoute] Guid tourOnlineId, [FromBody] TourContentCreateDto dto)
     {
-        return await _adminTourContentService.HandleCreateAsync(dto);
+        return await _adminTourContentService.HandleCreateAsync(tourOnlineId, dto);
     }
 
     /// <summary>
@@ -118,7 +119,7 @@ public class TourContentController : ControllerBase
     /// <response code="403">Forbidden - User does not have required privileges</response>
     /// <response code="404">Tour content not found</response>
     [Protected]
-    [HttpPost("{id}/activate")]
+    [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(Guid id)
     {
         return await _adminTourContentService.HandleActivateAsync(id);
@@ -134,7 +135,7 @@ public class TourContentController : ControllerBase
     /// <response code="403">Forbidden - User does not have required privileges</response>
     /// <response code="404">Tour content not found</response>
     [Protected]
-    [HttpPost("{id}/deactivate")]
+    [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         return await _adminTourContentService.HandleDeactivateAsync(id);

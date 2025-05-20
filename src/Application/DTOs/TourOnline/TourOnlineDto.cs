@@ -12,6 +12,7 @@ public class TourOnlineDto
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<TourContentDto> TourContents { get; set; } = null!;
 }
 public class TourOnlineProfile : Profile
 {
