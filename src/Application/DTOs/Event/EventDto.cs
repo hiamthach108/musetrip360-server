@@ -24,7 +24,7 @@ public class EventDto
 
     public ICollection<ArtifactDto>? Artifacts { get; set; }
     public ICollection<TourOnlineDto>? TourOnlines { get; set; }
-    //   public ICollection<TourGuideDto> TourGuides { get; set; } = null!;
+    public ICollection<TourGuideDto>? TourGuides { get; set; }
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
     public class EventProfile : Profile
     {
@@ -33,7 +33,7 @@ public class EventDto
             CreateMap<Event, EventDto>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<EventCreateDto, Event>()
-            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));  
+            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<EventUpdateDto, Event>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<EventCreateAdminDto, Event>()

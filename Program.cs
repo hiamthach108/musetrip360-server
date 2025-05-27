@@ -136,6 +136,8 @@ builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
 builder.Services.AddScoped<ITourContentService, TourContentService>();
 builder.Services.AddScoped<IAdminTourContentService, AdminTourContentService>();
+builder.Services.AddScoped<ITourGuideService, TourGuideService>();
+builder.Services.AddScoped<IAdminTourGuideService, AdminTourGuideService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 
