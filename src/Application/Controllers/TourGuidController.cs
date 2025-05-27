@@ -32,7 +32,7 @@ public class TourGuideController : ControllerBase
   [HttpGet]
   public async Task<IActionResult> GetAll([FromQuery] TourGuideQuery query)
   {
-    return await _tourGuideService.GetTourGuideByQueryAsync(query);
+    return await _tourGuideService.HandleGetTourGuideByQueryAsync(query);
   }
 
   /// <summary>
@@ -45,7 +45,7 @@ public class TourGuideController : ControllerBase
   [HttpGet("{id}")]
   public async Task<IActionResult> GetById(Guid id)
   {
-    return await _tourGuideService.GetTourGuideByIdAsync(id);
+    return await _tourGuideService.HandleGetTourGuideByIdAsync(id);
   }
 
   /// <summary>
@@ -60,7 +60,7 @@ public class TourGuideController : ControllerBase
   [HttpPost("/api/v1/museums/{museumId}/tour-guides")]
   public async Task<IActionResult> Create(Guid museumId, TourGuideCreateDto tourGuideCreateDto)
   {
-    return await _adminTourGuideService.CreateTourGuideAsync(tourGuideCreateDto, museumId);
+    return await _adminTourGuideService.HandleCreateTourGuideAsync(tourGuideCreateDto, museumId);
   }
 
   /// <summary>
@@ -75,7 +75,7 @@ public class TourGuideController : ControllerBase
   [HttpPut("{id}")]
   public async Task<IActionResult> Update(Guid id, TourGuideUpdateDto tourGuideUpdateDto)
   {
-    return await _adminTourGuideService.UpdateTourGuideAsync(id, tourGuideUpdateDto);
+    return await _adminTourGuideService.HandleourGuideAsync(id, tourGuideUpdateDto);
   }
 
   /// <summary>
@@ -89,7 +89,7 @@ public class TourGuideController : ControllerBase
   [HttpDelete("{id}")]
   public async Task<IActionResult> Delete(Guid id)
   {
-    return await _adminTourGuideService.DeleteTourGuideAsync(id);
+    return await _adminTourGuideService.HandleDeleteTourGuideAsync(id);
   }
 
   /// <summary>
@@ -101,7 +101,7 @@ public class TourGuideController : ControllerBase
   [HttpGet("/api/v1/events/{eventId}/tour-guides")]
   public async Task<IActionResult> GetByEventId(Guid eventId)
   {
-    return await _tourGuideService.GetTourGuideByEventIdAsync(eventId);
+    return await _tourGuideService.HandleGetTourGuideByEventIdAsync(eventId);
   }
 
   /// <summary>
@@ -113,7 +113,7 @@ public class TourGuideController : ControllerBase
   [HttpGet("/api/v1/museums/{museumId}/tour-guides")]
   public async Task<IActionResult> GetByMuseumId(Guid museumId)
   {
-    return await _tourGuideService.GetTourGuideByMuseumIdAsync(museumId);
+    return await _tourGuideService.HandleGetTourGuideByMuseumIdAsync(museumId);
   }
 
   /// <summary>
@@ -125,6 +125,20 @@ public class TourGuideController : ControllerBase
   [HttpGet("/api/v1/users/{userId}/tour-guides")]
   public async Task<IActionResult> GetByUserId(Guid userId)
   {
-    return await _tourGuideService.GetTourGuideByUserIdAsync(userId);
+    return await _tourGuideService.HandleGetTourGuideByUserIdAsync(userId);
+  }
+
+  /// <summary>
+  /// Updates the availability of a tour guide
+  /// </summary>
+  /// <param name="id">The ID of the tour guide</param>
+  /// <param name="isAvailable">The new availability status</param>
+  /// <returns>The updated tour guide</returns>
+  /// <response code="200">Returns the updated tour guide</response>
+  [Protected]
+  [HttpPut("{id}/available")]
+  public async Task<IActionResult> Available(Guid id, bool isAvailable)
+  {
+    return await _adminTourGuideService.HandleAvailableTourGuideAsync(id, isAvailable);
   }
 }

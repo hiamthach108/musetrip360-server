@@ -8,23 +8,24 @@ using Microsoft.AspNetCore.Mvc;
 
 public interface ITourGuideService
 {
-  Task<IActionResult> GetTourGuideByIdAsync(Guid id);
-  Task<IActionResult> GetTourGuideByEventIdAsync(Guid eventId);
-  Task<IActionResult> GetTourGuideByMuseumIdAsync(Guid museumId);
-  Task<IActionResult> GetTourGuideByUserIdAsync(Guid userId);
-  Task<IActionResult> GetTourGuideByQueryAsync(TourGuideQuery query);
+  Task<IActionResult> HandleGetTourGuideByIdAsync(Guid id);
+  Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId);
+  Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId);
+  Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId);
+  Task<IActionResult> HandleGetTourGuideByQueryAsync(TourGuideQuery query);
 }
 public interface IAdminTourGuideService : ITourGuideService
 {
-  Task<IActionResult> CreateTourGuideAsync(TourGuideCreateDto tourGuideCreateDto, Guid museumId);
-  Task<IActionResult> UpdateTourGuideAsync(Guid id, TourGuideUpdateDto tourGuideUpdateDto);
-  Task<IActionResult> DeleteTourGuideAsync(Guid id);
+  Task<IActionResult> HandleCreateTourGuideAsync(TourGuideCreateDto tourGuideCreateDto, Guid museumId);
+  Task<IActionResult> HandleourGuideAsync(Guid id, TourGuideUpdateDto tourGuideUpdateDto);
+  Task<IActionResult> HandleDeleteTourGuideAsync(Guid id);
+  Task<IActionResult> HandleAvailableTourGuideAsync(Guid id, bool isAvailable);
 }
 
 public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), ITourGuideService
 {
   protected readonly ITourGuideRepository _tourGuideRepository = new TourGuideRepository(context);
-  public async Task<IActionResult> GetTourGuideByEventIdAsync(Guid eventId)
+  public async Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId)
   {
     try
     {
@@ -39,7 +40,7 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> GetTourGuideByIdAsync(Guid id)
+  public async Task<IActionResult> HandleGetTourGuideByIdAsync(Guid id)
   {
     try
     {
@@ -53,7 +54,7 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> GetTourGuideByMuseumIdAsync(Guid museumId)
+  public async Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId)
   {
     try
     {
@@ -67,7 +68,7 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> GetTourGuideByQueryAsync(TourGuideQuery query)
+  public async Task<IActionResult> HandleGetTourGuideByQueryAsync(TourGuideQuery query)
   {
     try
     {
@@ -81,7 +82,7 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> GetTourGuideByUserIdAsync(Guid userId)
+  public async Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId)
   {
     try
     {
@@ -104,7 +105,13 @@ public class TourGuideService(MuseTrip360DbContext context, IMapper mapper, IHtt
 public class AdminTourGuideService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourGuideService(context, mapper, httpContextAccessor), IAdminTourGuideService
 {
   protected readonly IMuseumRepository _museumRepository = new MuseumRepository(context);
-  public async Task<IActionResult> CreateTourGuideAsync(TourGuideCreateDto tourGuideCreateDto, Guid museumId)
+
+  public Task<IActionResult> HandleAvailableTourGuideAsync(Guid id, bool isAvailable)
+  {
+    throw new NotImplementedException();
+  }
+
+  public async Task<IActionResult> HandleCreateTourGuideAsync(TourGuideCreateDto tourGuideCreateDto, Guid museumId)
   {
     try
     {
@@ -131,7 +138,7 @@ public class AdminTourGuideService(MuseTrip360DbContext context, IMapper mapper,
     }
   }
 
-  public async Task<IActionResult> DeleteTourGuideAsync(Guid id)
+  public async Task<IActionResult> HandleDeleteTourGuideAsync(Guid id)
   {
     try
     {
@@ -144,7 +151,7 @@ public class AdminTourGuideService(MuseTrip360DbContext context, IMapper mapper,
     }
   }
 
-  public async Task<IActionResult> UpdateTourGuideAsync(Guid id, TourGuideUpdateDto tourGuideUpdateDto)
+  public async Task<IActionResult> HandleourGuideAsync(Guid id, TourGuideUpdateDto tourGuideUpdateDto)
   {
     try
     {
