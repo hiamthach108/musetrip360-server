@@ -75,7 +75,7 @@ public class TourGuideController : ControllerBase
   [HttpPut("{id}")]
   public async Task<IActionResult> Update(Guid id, TourGuideUpdateDto tourGuideUpdateDto)
   {
-    return await _adminTourGuideService.HandleourGuideAsync(id, tourGuideUpdateDto);
+    return await _adminTourGuideService.HandleUpdateTourGuideAsync(id, tourGuideUpdateDto);
   }
 
   /// <summary>
