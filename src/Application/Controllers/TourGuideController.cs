@@ -136,7 +136,7 @@ public class TourGuideController : ControllerBase
   /// <returns>The updated tour guide</returns>
   /// <response code="200">Returns the updated tour guide</response>
   [Protected]
-  [HttpPut("{id}/available")]
+  [HttpPatch("{id}/available")]
   public async Task<IActionResult> Available(Guid id, bool isAvailable)
   {
     return await _adminTourGuideService.HandleAvailableTourGuideAsync(id, isAvailable);
