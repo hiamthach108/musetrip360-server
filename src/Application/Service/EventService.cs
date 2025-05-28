@@ -148,7 +148,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdMuseumIdStatus(artifactIds, eventItem.MuseumId, true);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest("Some artifacts are not active or not found: " + string.Join(", ", artifactList.MissingIds));
+                return ErrorResp.BadRequest($"Some artifacts are not found, not in the same museum, or not available: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -280,7 +280,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some artifacts are not active or not found: {string.Join(", ", artifactList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some artifacts are not found, not in the same museum, or not available: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -329,7 +329,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdMuseumIdStatus(tourOnlineIds, eventItem.MuseumId, true);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not found, not in the same museum, or not available: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
@@ -359,7 +359,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdEventId(tourOnlineIds, eventId);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not found, not in the same museum, or not available: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
@@ -388,7 +388,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour guide are not active or not found: {string.Join(", ", tourGuideList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour guides are not found, not in the same museum, or not available: {string.Join(", ", tourGuideList.MissingIds)}");
             }
             foreach (var tourGuide in tourGuideList.TourGuides)
             {
@@ -417,7 +417,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour guide are not active or not found: {string.Join(", ", tourGuideList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour guides are not found, not in the same museum, or not available: {string.Join(", ", tourGuideList.MissingIds)}");
             }
             foreach (var tourGuide in tourGuideList.TourGuides)
             {
