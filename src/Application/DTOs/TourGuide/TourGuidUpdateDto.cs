@@ -3,11 +3,9 @@ using System.Text.Json;
 
 public class TourGuideUpdateDto
 {
-  [Required]
   [MaxLength(100)]
-  public string Name { get; set; } = null!;
-  [Required]
+  public string? Name { get; set; } = null!;
   [MaxLength(1000)]
-  public string Bio { get; set; } = null!;
+  public string? Bio { get; set; } = null!;
   public JsonDocument? Metadata { get; set; }
 }
