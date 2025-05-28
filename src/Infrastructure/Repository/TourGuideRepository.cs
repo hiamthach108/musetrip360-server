@@ -89,13 +89,14 @@ public class TourGuideRepository : ITourGuideRepository
 
   public async Task<TourGuideListWithMissingIds> GetTourGuideByListIdEventIdStatus(IEnumerable<Guid> tourGuideIds, Guid eventId, bool isAvailable)
   {
+    var tourGuideIdsList = tourGuideIds.ToList();
     var tourGuides = await _context.TourGuides
-    .Where(t => tourGuideIds.Contains(t.Id))
+    .Where(t => tourGuideIdsList.Contains(t.Id))
     .Where(t => t.Events.Any(e => e.Id == eventId))
     .Where(t => t.IsAvailable == isAvailable)
     .ToListAsync();
 
-    var missingIds = tourGuideIds.Except(tourGuides.Select(t => t.Id)).ToList();
+    var missingIds = tourGuideIdsList.Except(tourGuides.Select(t => t.Id)).ToList();
     var allFound = missingIds.Count == 0;
     return new TourGuideListWithMissingIds { TourGuides = tourGuides, IsAllFound = allFound, MissingIds = missingIds };
   }

@@ -120,7 +120,7 @@ public class TourOnlineRepository : ITourOnlineRepository
 
     public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool isActive)
     {
-        var tourOnlineIdsList = tourOnlineIds.ToList(); // Convert to list once for multiple uses
+        var tourOnlineIdsList = tourOnlineIds.ToList();
         var queryable = _context.TourOnlines
         .Where(t => tourOnlineIdsList.Contains(t.Id))
         .Where(t => t.MuseumId == museumId)
@@ -139,7 +139,7 @@ public class TourOnlineRepository : ITourOnlineRepository
 
     public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId)
     {
-        var tourOnlineIdsList = tourOnlineIds.ToList(); // Convert to list once for multiple uses
+        var tourOnlineIdsList = tourOnlineIds.ToList();
         var queryable = _context.TourOnlines
         .Where(t => tourOnlineIdsList.Contains(t.Id))
         .Where(t => t.Events.Any(e => e.Id == eventId));

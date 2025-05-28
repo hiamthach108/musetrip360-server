@@ -91,14 +91,15 @@ public class TourContentRepository : ITourContentRepository
 
     public async Task<TourContentListWithMissingIds> GetTourContentsByListIdTourOnlineIdStatus(IEnumerable<Guid> tourContentIds, Guid tourOnlineId, bool isActive)
     {
+        var tourContentIdsList = tourContentIds.ToList();
         var queryable = _context.TourContents
-        .Where(x => tourContentIds.Contains(x.Id))
+        .Where(x => tourContentIdsList.Contains(x.Id))
         .Where(x => x.TourId == tourOnlineId)
         .Where(x => x.IsActive == isActive);
 
         var total = await queryable.CountAsync();
         var contents = await queryable.ToListAsync();
-        return new TourContentListWithMissingIds { Contents = contents, IsAllFound = tourContentIds.Count() == total, MissingIds = tourContentIds.Except(contents.Select(x => x.Id)).ToList() };
+        return new TourContentListWithMissingIds { Contents = contents, IsAllFound = tourContentIdsList.Count() == total, MissingIds = tourContentIdsList.Except(contents.Select(x => x.Id)).ToList() };
     }
 
     public async Task<IEnumerable<TourContent>> GetTourContentsByTourOnlineId(Guid tourOnlineId)
