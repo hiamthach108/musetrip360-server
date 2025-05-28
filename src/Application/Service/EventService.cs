@@ -32,6 +32,8 @@ public interface IAdminEventService : IEventService
     Task<IActionResult> HandleCancelEvent(Guid id);
     Task<IActionResult> HandleAddTourOnlineToEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
     Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
+    Task<IActionResult> HandleAddTourGuideToEvent(Guid eventId, IEnumerable<Guid> tourGuideIds);
+    Task<IActionResult> HandleRemoveTourGuideFromEvent(Guid eventId, IEnumerable<Guid> tourGuideIds);
 }
 
 // Organizer, operations
@@ -49,9 +51,6 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IMapper map
 {
     protected readonly IEventRepository _eventRepository = new EventRepository(context);
     protected readonly IMuseumRepository _museumRepository = new MuseumRepository(context);
-    protected readonly IArtifactRepository _artifactRepository = new ArtifactRepository(context);
-    protected readonly IUserRepository _userRepository = new UserRepository(context);
-    protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(context);
 
     public virtual async Task<IActionResult> HandleGetEventById(Guid id)
     {
@@ -109,6 +108,9 @@ public class EventService(MuseTrip360DbContext context, IMapper mapper, IHttpCon
 // Admin implementation
 public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IAdminEventService
 {
+    protected readonly IArtifactRepository _artifactRepository = new ArtifactRepository(context);
+    protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(context);
+    protected readonly ITourGuideRepository _tourGuideRepository = new TourGuideRepository(context);
     public async Task<IActionResult> HandleGetAllAdmin(EventAdminQuery query)
     {
         try
@@ -146,7 +148,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdMuseumIdStatus(artifactIds, eventItem.MuseumId, true);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest("Some artifacts are not active or not found: " + string.Join(", ", artifactList.MissingIds));
+                return ErrorResp.BadRequest($"Some artifacts are not found, not in the same museum, or not available: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -278,7 +280,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
             if (!artifactList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some artifacts are not active or not found: {string.Join(", ", artifactList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some artifacts are not found, not in the same museum, or not available: {string.Join(", ", artifactList.MissingIds)}");
             }
             foreach (var artifact in artifactList.Artifacts)
             {
@@ -324,10 +326,10 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 return ErrorResp.NotFound("Event not found");
             }
 
-            var tourOnlineList = await _tourOnlineRepository.GetActiveTourOnlineByListIdMuseumId(tourOnlineIds, eventItem.MuseumId);
+            var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdMuseumIdStatus(tourOnlineIds, eventItem.MuseumId, true);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not found, not in the same museum, or not available: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
@@ -357,7 +359,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdEventId(tourOnlineIds, eventId);
             if (!tourOnlineList.IsAllFound)
             {
-                return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
+                return ErrorResp.BadRequest($"Some tour online are not found, not in the same museum, or not available: {string.Join(", ", tourOnlineList.MissingIds)}");
             }
             foreach (var tourOnline in tourOnlineList.Tours)
             {
@@ -373,6 +375,63 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
         }
     }
 
+    public async Task<IActionResult> HandleAddTourGuideToEvent(Guid eventId, IEnumerable<Guid> tourGuideIds)
+    {
+        try
+        {
+            var eventItem = await _eventRepository.GetEventById(eventId);
+            if (eventItem == null)
+            {
+                return ErrorResp.NotFound("Event not found");
+            }
+
+            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
+            if (!tourGuideList.IsAllFound)
+            {
+                return ErrorResp.BadRequest($"Some tour guides are not found, not in the same museum, or not available: {string.Join(", ", tourGuideList.MissingIds)}");
+            }
+            foreach (var tourGuide in tourGuideList.TourGuides)
+            {
+                eventItem.TourGuides.Add(tourGuide);
+            }
+
+            await _eventRepository.UpdateAsync(eventId, eventItem);
+            return SuccessResp.Ok("Tour guide added to event successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleRemoveTourGuideFromEvent(Guid eventId, IEnumerable<Guid> tourGuideIds)
+    {
+        try
+        {
+            var eventItem = await _eventRepository.GetEventById(eventId);
+            if (eventItem == null)
+            {
+                return ErrorResp.NotFound("Event not found");
+            }   
+
+            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
+            if (!tourGuideList.IsAllFound)
+            {
+                return ErrorResp.BadRequest($"Some tour guides are not found, not in the same museum, or not available: {string.Join(", ", tourGuideList.MissingIds)}");
+            }
+            foreach (var tourGuide in tourGuideList.TourGuides)
+            {
+                eventItem.TourGuides.Remove(tourGuide);
+            }
+
+            await _eventRepository.UpdateAsync(eventId, eventItem);
+            return SuccessResp.Ok("Tour guide removed from event successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
 }
 
 // Organizer implementation

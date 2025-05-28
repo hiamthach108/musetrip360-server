@@ -160,4 +160,30 @@ public class TourOnlineController : ControllerBase
     {
         return await _adminTourOnlineService.GetAllAdminAsync(query);
     }
+
+    /// <summary>
+    /// Add tour contents to an online tour
+    /// </summary>
+    /// <param name="id">The unique identifier of the online tour</param>
+    /// <param name="tourContentIds">The unique identifiers of the tour contents to add</param>
+    /// <returns>The updated online tour</returns>
+    [Protected]
+    [HttpPut("{id}/add-tour-contents")]
+    public async Task<IActionResult> AddTourContents([FromRoute] Guid id, [FromBody] IEnumerable<Guid> tourContentIds)
+    {
+        return await _adminTourOnlineService.AddTourContentToTourAsync(id, tourContentIds);
+    }
+
+    /// <summary>
+    /// Remove tour contents from an online tour
+    /// </summary>
+    /// <param name="id">The unique identifier of the online tour</param>
+    /// <param name="tourContentIds">The unique identifiers of the tour contents to add</param>
+    /// <returns>The updated online tour</returns>
+    [Protected]
+    [HttpPut("{id}/remove-tour-contents")]
+    public async Task<IActionResult> RemoveTourContents([FromRoute] Guid id, [FromBody] IEnumerable<Guid> tourContentIds)
+    {
+        return await _adminTourOnlineService.RemoveTourContentFromTourAsync(id, tourContentIds);
+    }
 }

@@ -10,6 +10,14 @@ public interface ITourContentRepository
     Task CreateTourContent(TourContent tourContent);
     Task UpdateTourContent(Guid id, TourContent tourContent);
     Task DeleteTourContent(Guid id);
+    Task<TourContentListWithMissingIds> GetTourContentsByListIdTourOnlineIdStatus(IEnumerable<Guid> tourContentIds, Guid tourOnlineId, bool isActive);
+}
+
+public class TourContentListWithMissingIds
+{   
+    public IEnumerable<TourContent> Contents { get; set; } = [];
+    public bool IsAllFound { get; set; }
+    public IEnumerable<Guid> MissingIds { get; set; } = [];
 }
 
 public class TourContentList
@@ -79,6 +87,19 @@ public class TourContentRepository : ITourContentRepository
         .ToListAsync();
         return new TourContentList { Contents = contents, Total = total };
 
+    }
+
+    public async Task<TourContentListWithMissingIds> GetTourContentsByListIdTourOnlineIdStatus(IEnumerable<Guid> tourContentIds, Guid tourOnlineId, bool isActive)
+    {
+        var tourContentIdsList = tourContentIds.ToList();
+        var queryable = _context.TourContents
+        .Where(x => tourContentIdsList.Contains(x.Id))
+        .Where(x => x.TourId == tourOnlineId)
+        .Where(x => x.IsActive == isActive);
+
+        var total = await queryable.CountAsync();
+        var contents = await queryable.ToListAsync();
+        return new TourContentListWithMissingIds { Contents = contents, IsAllFound = tourContentIdsList.Count() == total, MissingIds = tourContentIdsList.Except(contents.Select(x => x.Id)).ToList() };
     }
 
     public async Task<IEnumerable<TourContent>> GetTourContentsByTourOnlineId(Guid tourOnlineId)
