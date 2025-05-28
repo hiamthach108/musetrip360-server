@@ -326,7 +326,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 return ErrorResp.NotFound("Event not found");
             }
 
-            var tourOnlineList = await _tourOnlineRepository.GetActiveTourOnlineByListIdMuseumId(tourOnlineIds, eventItem.MuseumId);
+            var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdMuseumIdStatus(tourOnlineIds, eventItem.MuseumId, true);
             if (!tourOnlineList.IsAllFound)
             {
                 return ErrorResp.BadRequest($"Some tour online are not active or not found: {string.Join(", ", tourOnlineList.MissingIds)}");
@@ -385,7 +385,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 return ErrorResp.NotFound("Event not found");
             }
 
-            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventId(tourGuideIds, eventId);
+            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)
             {
                 return ErrorResp.BadRequest($"Some tour guide are not active or not found: {string.Join(", ", tourGuideList.MissingIds)}");
@@ -414,7 +414,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
                 return ErrorResp.NotFound("Event not found");
             }   
 
-            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventId(tourGuideIds, eventId);
+            var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)
             {
                 return ErrorResp.BadRequest($"Some tour guide are not active or not found: {string.Join(", ", tourGuideList.MissingIds)}");

@@ -12,7 +12,7 @@ public interface ITourOnlineRepository
     Task UpdateAsync(TourOnline tourOnline);
     Task DeleteAsync(Guid id);
     Task<bool> IsTourOnlineExists(Guid id);
-    Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(IEnumerable<Guid> tourOnlineIds, Guid museumId);
+    Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool IsActive);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId);
 }
 public class TourOnlineList
@@ -118,13 +118,13 @@ public class TourOnlineRepository : ITourOnlineRepository
         return await _context.TourOnlines.AnyAsync(t => t.Id == id);
     }
 
-    public async Task<TourOnlineListResultWithMissingIds> GetActiveTourOnlineByListIdMuseumId(IEnumerable<Guid> tourOnlineIds, Guid museumId)
+    public async Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool isActive)
     {
         var tourOnlineIdsList = tourOnlineIds.ToList(); // Convert to list once for multiple uses
         var queryable = _context.TourOnlines
         .Where(t => tourOnlineIdsList.Contains(t.Id))
         .Where(t => t.MuseumId == museumId)
-        .Where(t => t.IsActive == true);
+        .Where(t => t.IsActive == isActive);
 
         var total = await queryable.CountAsync();
         var tours = await queryable.ToListAsync();
