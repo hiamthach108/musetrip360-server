@@ -137,7 +137,7 @@ public class ArtifactController : ControllerBase
     /// <response code="403">Forbidden - User does not have required privileges</response>
     /// <response code="404">Artifact not found</response>
     [Protected]
-    [HttpPost("{id}/activate")]
+    [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(Guid id)
     {   
         return await _artifactService.HandleActivate(id);
@@ -153,7 +153,7 @@ public class ArtifactController : ControllerBase
     /// <response code="403">Forbidden - User does not have required privileges</response>
     /// <response code="404">Artifact not found</response>
     [Protected]
-    [HttpPost("{id}/deactivate")]
+    [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         return await _artifactService.HandleDeactivate(id);

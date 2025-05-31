@@ -246,7 +246,7 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Add artifacts to an event
+    /// Add artifacts to an event (same museum)
     /// </summary>
     /// <param name="id">The unique identifier of the event</param>
     /// <param name="artifactIds">Collection of artifact IDs to add</param>
@@ -264,7 +264,7 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Remove artifacts from an event
+    /// Remove artifacts from an event (same museum)
     /// </summary>
     /// <param name="id">The unique identifier of the event</param>
     /// <param name="artifactIds">Collection of artifact IDs to remove</param>
@@ -282,7 +282,7 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Add online tours to an event
+    /// Add online tours to an event (same museum)
     /// </summary>
     /// <param name="id">The unique identifier of the event</param>
     /// <param name="tourOnlineIds">Collection of online tour IDs to add</param>
@@ -300,7 +300,7 @@ public class EventController : ControllerBase
     }
 
     /// <summary>
-    /// Remove online tours from an event
+    /// Remove online tours from an event (same museum)
     /// </summary>
     /// <param name="id">The unique identifier of the event</param>
     /// <param name="tourOnlineIds">Collection of online tour IDs to remove</param>
@@ -315,5 +315,41 @@ public class EventController : ControllerBase
     public async Task<IActionResult> RemoveTourOnlines(Guid id, IEnumerable<Guid> tourOnlineIds)
     {
         return await _adminEventService.HandleRemoveTourOnlineFromEvent(id, tourOnlineIds);
+    }
+
+    /// <summary>
+    /// Add tour guides to an event (same museum)
+    /// </summary>
+    /// <param name="id">The unique identifier of the event</param>
+    /// <param name="tourGuideIds">Collection of tour guide IDs to add</param>
+    /// <returns>The updated event</returns>
+    /// <response code="200">Returns the updated event</response>
+    /// <response code="400">Invalid input data</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="403">Forbidden - User does not have admin privileges</response>
+    /// <response code="404">Event or tour guides not found</response>
+    [Protected]
+    [HttpPut("{id}/add-tour-guides")]
+    public async Task<IActionResult> AddTourGuides(Guid id, IEnumerable<Guid> tourGuideIds)
+    {
+        return await _adminEventService.HandleAddTourGuideToEvent(id, tourGuideIds);
+    }
+
+    /// <summary>
+    /// Remove tour guides from an event (same museum)
+    /// </summary>
+    /// <param name="id">The unique identifier of the event</param>
+    /// <param name="tourGuideIds">Collection of tour guide IDs to remove</param>
+    /// <returns>The updated event</returns>
+    /// <response code="200">Returns the updated event</response>
+    /// <response code="400">Invalid input data</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="403">Forbidden - User does not have admin privileges</response>
+    /// <response code="404">Event or tour guides not found</response>
+    [Protected]
+    [HttpPut("{id}/remove-tour-guides")]
+    public async Task<IActionResult> RemoveTourGuides(Guid id, IEnumerable<Guid> tourGuideIds)
+    {
+        return await _adminEventService.HandleRemoveTourGuideFromEvent(id, tourGuideIds);
     }
 }

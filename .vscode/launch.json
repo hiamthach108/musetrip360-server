@@ -40,11 +40,12 @@
       "args": [],
       "cwd": "${workspaceFolder}",
       "console": "internalConsole",
+      "justMyCode": false,
       "pipeTransport": {
         "pipeCwd": "${workspaceFolder}",
-        "pipeProgram": "C:\\Windows\\System32\\bash.exe", // Hoặc wsl.exe nếu dùng WSL
+        "pipeProgram": "bash",
         "pipeArgs": ["-c"],
-        "debuggerPath": "/mnt/c/Users/GIANG/Documents/netcoredbg-win64/netcoredbg/netcoredbg.exe",
+        "debuggerPath": "/home/your-username/Downloads/netcoredbg-linux-amd64/netcoredbg",
         "debuggerArgs": ["--interpreter=vscode"],
         "quoteArgs": true
       },

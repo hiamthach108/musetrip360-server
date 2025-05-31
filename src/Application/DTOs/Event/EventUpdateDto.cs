@@ -6,25 +6,18 @@ public class EventUpdateDto : IValidatableObject
 {
     [MaxLength(100)]
     public string? Title { get; set; }
-    [Required]
     [MaxLength(1000)]
-    public string Description { get; set; } = null!;
+    public string? Description { get; set; }
     public EventTypeEnum? EventType { get; set; }
-    [Required]
-    public DateTime StartTime { get; set; }
-    [Required]
-    public DateTime EndTime { get; set; }
-    [Required]
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
     [MaxLength(100)]
-    public string Location { get; set; } = null!;
-    [Required]
+    public string? Location { get; set; }
     [Range(0, int.MaxValue)]
-    public int Capacity { get; set; }
-    [Required]
+    public int? Capacity { get; set; }
     [Range(0, int.MaxValue)]
-    public int AvailableSlots { get; set; }
-    [Required]
-    public DateTime BookingDeadline { get; set; }
+    public int? AvailableSlots { get; set; }
+    public DateTime? BookingDeadline { get; set; }
     public JsonDocument? Metadata { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

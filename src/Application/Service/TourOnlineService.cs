@@ -21,13 +21,15 @@ public interface IAdminTourOnlineService : ITourOnlineService
     Task<IActionResult> DeactivateAsync(Guid id);
     Task<IActionResult> GetAllAdminAsync(TourOnlineAdminQuery query);
     Task<IActionResult> GetAllByMuseumIdAsync(Guid museumId);
+    Task<IActionResult> AddTourContentToTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds);
+    Task<IActionResult> RemoveTourContentFromTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds);
 }
 
 public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(dbContext, mapper, httpContextAccessor), ITourOnlineService
 {
     protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(dbContext);
     protected readonly IMuseumRepository _museumRepository = new MuseumRepository(dbContext);
-
+    protected readonly ITourContentRepository _tourContentRepository = new TourContentRepository(dbContext);
     public virtual async Task<IActionResult> GetAllAsync(TourOnlineQuery query)
     {
         try
@@ -75,6 +77,33 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             await _tourOnlineRepository.UpdateAsync(tour);
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> AddTourContentToTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds)
+    {
+        try
+        {
+            var tour = await _tourOnlineRepository.GetByIdAsync(tourOnlineId);
+            if (tour == null)
+            {
+                return ErrorResp.NotFound("Tour not found");
+            }
+            var tourContentList = await _tourContentRepository.GetTourContentsByListIdTourOnlineIdStatus(tourContentIds, tourOnlineId, true);
+            if (!tourContentList.IsAllFound)
+            {
+                return ErrorResp.BadRequest($"Some tour contents not found or not active: {string.Join(", ", tourContentList.MissingIds)}");
+            }
+            foreach (var tourContent in tourContentList.Contents)
+            {
+                tour.TourContents.Add(tourContent);
+            }
+            await _tourOnlineRepository.UpdateAsync(tour);
+            return SuccessResp.Ok(new { Message = "Tour contents added to tour successfully" });
         }
         catch (Exception e)
         {
@@ -161,6 +190,33 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             var tours = await _tourOnlineRepository.GetAllByMuseumIdAsync(museumId);
             var tourDtos = _mapper.Map<List<TourOnlineDto>>(tours);
             return SuccessResp.Ok(tourDtos);
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> RemoveTourContentFromTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds)
+    {
+        try
+        {
+            var tour = await _tourOnlineRepository.GetByIdAsync(tourOnlineId);
+            if (tour == null)
+            {
+                return ErrorResp.NotFound("Tour not found");
+            }
+            var tourContentList = await _tourContentRepository.GetTourContentsByListIdTourOnlineIdStatus(tourContentIds, tourOnlineId, true);
+            if (!tourContentList.IsAllFound)
+            {
+                return ErrorResp.BadRequest($"Some tour contents not found or not active: {string.Join(", ", tourContentList.MissingIds)}");
+            }
+            foreach (var tourContent in tourContentList.Contents)
+            {
+                tour.TourContents.Remove(tourContent);
+            }
+            await _tourOnlineRepository.UpdateAsync(tour);
+            return SuccessResp.Ok(new { Message = "Tour contents removed from tour successfully" });
         }
         catch (Exception e)
         {
