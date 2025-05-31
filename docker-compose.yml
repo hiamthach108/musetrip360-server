@@ -58,6 +58,7 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - cluster.name=musetrip360-cluster
       - node.name=musetrip360-elastic
+      - xpack.security.authc.api_key.enabled=true
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -77,10 +78,13 @@ services:
     image: docker.elastic.co/kibana/kibana:9.0.0
     environment:
       - ELASTICSEARCH_HOSTS=http://elastic:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=musetrip360_elastic
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=musetrip360_kibana
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a7a6311933d3503b
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a7a6311933d3503b
+      - XPACK_REPORTING_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a7a6311933d3503b
     ports:
       - "5601:5601"
     depends_on:
@@ -94,6 +98,46 @@ services:
       start_period: 60s
     networks:
       - default
+      - elastic
+
+  # Setup service để tạo kibana_system user và admin user
+  elastic-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    depends_on:
+      elastic:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=musetrip360_elastic
+    command: >
+      bash -c '
+        echo "Waiting for Elasticsearch to be ready..."
+        until curl -s -u elastic:musetrip360_elastic http://elastic:9200/_cluster/health | grep -q "yellow\|green"; do
+          sleep 5
+        done
+        
+        echo "Setting up kibana_system user password..."
+        curl -X POST -u elastic:musetrip360_elastic \
+          "http://elastic:9200/_security/user/kibana_system/_password" \
+          -H "Content-Type: application/json" \
+          -d "{\"password\": \"musetrip360_kibana\"}" || true
+        
+        echo "Creating admin user for Kibana access..."
+        curl -X POST -u elastic:musetrip360_elastic \
+          "http://elastic:9200/_security/user/kibana_admin" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"password\": \"musetrip360_admin\",
+            \"roles\": [\"superuser\", \"kibana_admin\"],
+            \"full_name\": \"Kibana Admin\",
+            \"email\": \"admin@musetrip360.com\"
+          }" || true
+        
+        echo "Setup completed"
+        echo "You can now login to Kibana with:"
+        echo "Username: kibana_admin"
+        echo "Password: musetrip360_admin"
+      '
+    networks:
       - elastic
 
   # api:

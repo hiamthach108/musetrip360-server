@@ -119,7 +119,7 @@ This plan outlines the implementation of Elasticsearch integration for the Museu
 # ✅ COMPLETED - docker-compose.yml configuration
 services:
   elastic:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
@@ -339,7 +339,7 @@ var client = new ElasticClient(settings);
 ## Risk Mitigation
 
 ### 1. Technical Risks
-- **Elasticsearch version compatibility**: Use stable version 8.11.0
+- **Elasticsearch version compatibility**: Use stable version 9.0.0
 - **Authentication issues**: Properly configured with basic auth
 - **Performance issues**: Implement proper indexing strategies
 - **Memory usage**: Configure appropriate heap sizes
