@@ -4,6 +4,7 @@ using Application.Service;
 using Application.Workers;
 using Core.Cloudinary;
 using Core.Crypto;
+using Core.Elasticsearch;
 using Core.Firebase;
 using Core.Jwt;
 using Core.Mail;
@@ -49,6 +50,10 @@ builder.Services.AddDbContext<MuseTrip360DbContext>(options =>
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection") ?? throw new ArgumentNullException("RedisConnection")));
 
+// Elasticsearch Configuration
+builder.Services.Configure<ElasticsearchConfiguration>(
+    builder.Configuration.GetSection("Elasticsearch"));
+builder.Services.AddSingleton<IElasticsearchService, ElasticsearchService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
@@ -127,12 +132,14 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
+builder.Services.AddScoped<IMuseumSearchService, MuseumSearchService>();
 
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 
 var app = builder.Build();
 
+app.UseInitializeDatabase();
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();

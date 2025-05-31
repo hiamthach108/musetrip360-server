@@ -53,26 +53,34 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=true
       - ELASTIC_PASSWORD=musetrip360_elastic
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=musetrip360-cluster
+      - node.name=musetrip360-elastic
     ports:
       - "9200:9200"
+      - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD", "curl", "-u", "elastic:musetrip360_elastic", "-f", "http://localhost:9200"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "curl", "-u", "elastic:musetrip360_elastic", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 60s
     networks:
+      - default
       - elastic
-
-  ## Get access token for Kibana: docker-compose exec elastic bin/elasticsearch-service-tokens create elastic/kibana kibana_token
 
   kibana:
     image: docker.elastic.co/kibana/kibana:9.0.0
     environment:
-      - ELASTICSEARCH_URL=http://elastic:9200
-      # - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYV90b2tlbjpVdlY1QUdoMlFReXhDcWZWb1k3UEZB
+      - ELASTICSEARCH_HOSTS=http://elastic:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=musetrip360_elastic
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
     ports:
       - "5601:5601"
     depends_on:
@@ -80,10 +88,12 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 60s
     networks:
+      - default
       - elastic
 
   # api:
@@ -93,9 +103,20 @@ services:
   #   ports:
   #     - "5000:5000"
   #   environment:
-  #     - ConnectionStrings__DatabaseConnection=postgresql://postgres:123456@postgres:5432/exedb
-  #     - ConnectionStrings__RedisConnection=redis://default:exeredis@redis:6379
-  #     - ConnectionStrings__RabbitMQConnection=amqp://user:password@rabbitmq:5672
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=musetrip360db;Username=postgres;Password=123456;CommandTimeout=20;Timeout=15;
+  #     - ConnectionStrings__RedisConnection=redis:6379,password=exeredis,abortConnect=false
+  #     - ConnectionStrings__ElasticsearchConnection=http://elastic:musetrip360_elastic@elastic:9200
+  #     - Elasticsearch__Username=elastic
+  #     - Elasticsearch__Password=musetrip360_elastic
+  #     - RabbitMQ__HostName=rabbitmq
+  #     - RabbitMQ__UserName=user
+  #     - RabbitMQ__Password=password
+  #     - RabbitMQ__Port=5672
+  #     - RabbitMQ__VirtualHost=/
+  #     - Elasticsearch__DefaultIndex=musetrip360
+  #     - Elasticsearch__NumberOfShards=1
+  #     - Elasticsearch__NumberOfReplicas=0
   #   depends_on:
   #     postgres:
   #       condition: service_healthy
@@ -103,6 +124,12 @@ services:
   #       condition: service_healthy
   #     rabbitmq:
   #       condition: service_healthy
+  #     elastic:
+  #       condition: service_healthy
+  #   networks:
+  #     - default
+  #     - elastic
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
@@ -112,4 +139,6 @@ volumes:
 
 networks:
   elastic:
+    driver: bridge
+  default:
     driver: bridge
