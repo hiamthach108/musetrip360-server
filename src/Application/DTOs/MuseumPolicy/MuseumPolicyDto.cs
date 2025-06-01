@@ -1,3 +1,4 @@
+
 namespace Application.DTOs.MuseumPolicy;
 
 using Application.Shared.Enum;

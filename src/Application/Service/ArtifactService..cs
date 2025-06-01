@@ -43,11 +43,10 @@ public class ArtifactService : BaseService, IArtifactService
     {
         try
         {
-            // Check if the user is authenticated
             var payload = ExtractPayload();
             if (payload == null)
             {
-                return ErrorResp.Unauthorized("Invalid token");
+                return ErrorResp.Unauthorized("Unauthorized");
             }
             // check if the museum is exists
             var isMuseumExists = _museumRepository.IsMuseumExists(museumId);
