@@ -31,6 +31,10 @@ public class MuseumProfile : Profile
     CreateMap<Museum, MuseumDto>();
     CreateMap<MuseumDto, Museum>();
 
+    // Elasticsearch mapping
+    CreateMap<Museum, MuseumIndexDto>();
+    CreateMap<MuseumIndexDto, MuseumDto>();
+
     // ignore null
     CreateMap<Museum, MuseumCreateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     CreateMap<MuseumCreateDto, Museum>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));

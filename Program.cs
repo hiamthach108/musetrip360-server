@@ -4,6 +4,7 @@ using Application.Service;
 using Application.Workers;
 using Core.Cloudinary;
 using Core.Crypto;
+using Core.Elasticsearch;
 using Core.Firebase;
 using Core.Jwt;
 using Core.Mail;
@@ -42,13 +43,15 @@ builder.Services.AddSignalR(options =>
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddDbContext<MuseTrip360DbContext>(options =>
 {
-    // log the connection string
-    Console.WriteLine($"Connection string: {builder.Configuration.GetConnectionString("DatabaseConnection")}");
     options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection") ?? "");
 });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection") ?? throw new ArgumentNullException("RedisConnection")));
 
+// Elasticsearch Configuration
+builder.Services.Configure<ElasticsearchConfiguration>(
+    builder.Configuration.GetSection("Elasticsearch"));
+builder.Services.AddSingleton<IElasticsearchService, ElasticsearchService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
@@ -132,6 +135,8 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
+builder.Services.AddScoped<IMuseumSearchService, MuseumSearchService>();
+
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
 builder.Services.AddScoped<ITourContentService, TourContentService>();
@@ -143,6 +148,7 @@ builder.Services.AddHostedService<NotificationWorker>();
 
 var app = builder.Build();
 
+app.UseInitializeDatabase();
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
