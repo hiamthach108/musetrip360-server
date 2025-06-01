@@ -26,13 +26,6 @@ public class SearchController : ControllerBase
     return await _museumSearchService.HandleSearchMuseumsAsync(query);
   }
 
-  [HttpGet("museums/suggest")]
-  public async Task<IActionResult> SuggestMuseums([FromQuery] string query, [FromQuery] int size = 5)
-  {
-    _logger.LogInformation("Museum suggestions request received with query: {Query}", query);
-    return await _museumSearchService.HandleSuggestMuseumsAsync(query, size);
-  }
-
   [HttpGet("museums/aggregations")]
   public async Task<IActionResult> GetMuseumAggregations()
   {

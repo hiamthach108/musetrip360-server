@@ -317,6 +317,9 @@ public class MuseumService : BaseService, IMuseumService
       await _userRoleRepository.AddAsync(userRole);
     }
 
+    // Index in Elasticsearch
+    await _museumSearchService.IndexMuseumAsync(museum.Id);
+
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
   }

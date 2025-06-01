@@ -144,8 +144,6 @@ public class MuseumSearchService : BaseService, IMuseumSearchService
 
       var museumIndexDto = _mapper.Map<MuseumIndexDto>(museum);
 
-      museumIndexDto.Status = MuseumStatusEnum.Active;
-
       return await _elasticsearchService.IndexDocumentAsync(
         _museumIndex,
         museumId.ToString(),

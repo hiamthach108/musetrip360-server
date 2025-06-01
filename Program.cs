@@ -43,8 +43,6 @@ builder.Services.AddSignalR(options =>
 builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddDbContext<MuseTrip360DbContext>(options =>
 {
-    // log the connection string
-    Console.WriteLine($"Connection string: {builder.Configuration.GetConnectionString("DatabaseConnection")}");
     options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection") ?? "");
 });
 
