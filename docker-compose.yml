@@ -46,6 +46,99 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=musetrip360_elastic
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=musetrip360-cluster
+      - node.name=musetrip360-elastic
+      - xpack.security.authc.api_key.enabled=true
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-u", "elastic:musetrip360_elastic", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - default
+      - elastic
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.0.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elastic:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=musetrip360_kibana
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENCRYPTIONKEY=dev_key_32_chars_long_for_security
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=dev_saved_objects_key_32_chars_long
+      - XPACK_REPORTING_ENCRYPTIONKEY=dev_reporting_key_32_chars_long_sec
+    ports:
+      - "5601:5601"
+    depends_on:
+      elastic:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - default
+      - elastic
+
+  # Setup service để tạo kibana_system user và admin user
+  elastic-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    depends_on:
+      elastic:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=musetrip360_elastic
+    command: >
+      bash -c '
+        echo "Waiting for Elasticsearch to be ready..."
+        until curl -s -u elastic:musetrip360_elastic http://elastic:9200/_cluster/health | grep -q "yellow\|green"; do
+          sleep 5
+        done
+        
+        echo "Setting up kibana_system user password..."
+        curl -X POST -u elastic:musetrip360_elastic \
+          "http://elastic:9200/_security/user/kibana_system/_password" \
+          -H "Content-Type: application/json" \
+          -d "{\"password\": \"musetrip360_kibana\"}" || true
+        
+        echo "Creating admin user for Kibana access..."
+        curl -X POST -u elastic:musetrip360_elastic \
+          "http://elastic:9200/_security/user/kibana_admin" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"password\": \"musetrip360_admin\",
+            \"roles\": [\"superuser\", \"kibana_admin\"],
+            \"full_name\": \"Kibana Admin\",
+            \"email\": \"admin@musetrip360.com\"
+          }" || true
+        
+        echo "Setup completed"
+        echo "You can now login to Kibana with:"
+        echo "Username: kibana_admin"
+        echo "Password: musetrip360_admin"
+      '
+    networks:
+      - elastic
 
   # api:
   #   build:
@@ -54,9 +147,20 @@ services:
   #   ports:
   #     - "5000:5000"
   #   environment:
-  #     - ConnectionStrings__DatabaseConnection=postgresql://postgres:123456@postgres:5432/exedb
-  #     - ConnectionStrings__RedisConnection=redis://default:exeredis@redis:6379
-  #     - ConnectionStrings__RabbitMQConnection=amqp://user:password@rabbitmq:5672
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=musetrip360db;Username=postgres;Password=123456;CommandTimeout=20;Timeout=15;
+  #     - ConnectionStrings__RedisConnection=redis:6379,password=exeredis,abortConnect=false
+  #     - ConnectionStrings__ElasticsearchConnection=http://elastic:musetrip360_elastic@elastic:9200
+  #     - Elasticsearch__Username=elastic
+  #     - Elasticsearch__Password=musetrip360_elastic
+  #     - RabbitMQ__HostName=rabbitmq
+  #     - RabbitMQ__UserName=user
+  #     - RabbitMQ__Password=password
+  #     - RabbitMQ__Port=5672
+  #     - RabbitMQ__VirtualHost=/
+  #     - Elasticsearch__DefaultIndex=musetrip360
+  #     - Elasticsearch__NumberOfShards=1
+  #     - Elasticsearch__NumberOfReplicas=0
   #   depends_on:
   #     postgres:
   #       condition: service_healthy
@@ -64,8 +168,21 @@ services:
   #       condition: service_healthy
   #     rabbitmq:
   #       condition: service_healthy
+  #     elastic:
+  #       condition: service_healthy
+  #   networks:
+  #     - default
+  #     - elastic
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  elasticsearch_data:
+
+networks:
+  elastic:
+    driver: bridge
+  default:
+    driver: bridge

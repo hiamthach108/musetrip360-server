@@ -53,8 +53,9 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IUserRoleRepository _userRoleRepository;
   private readonly IRoleRepository _roleRepository;
   private readonly IUserService _userSvc;
+  private readonly IMuseumSearchService _museumSearchService;
 
-  public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx, IUserService userSvc)
+  public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx, IUserService userSvc, IMuseumSearchService museumSearchService)
     : base(dbContext, mapper, httpCtx)
   {
     _museumRepository = new MuseumRepository(dbContext);
@@ -63,6 +64,7 @@ public class MuseumService : BaseService, IMuseumService
     _userRoleRepository = new UserRoleRepository(dbContext);
     _roleRepository = new RoleRepository(dbContext);
     _userSvc = userSvc;
+    _museumSearchService = museumSearchService;
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -134,6 +136,9 @@ public class MuseumService : BaseService, IMuseumService
     museum.Status = MuseumStatusEnum.NotVerified;
     await _museumRepository.AddAsync(museum);
 
+    // Index in Elasticsearch
+    await _museumSearchService.IndexMuseumAsync(museum.Id);
+
     var museumDto = _mapper.Map<MuseumDto>(museum);
     return SuccessResp.Created(museumDto);
   }
@@ -148,6 +153,9 @@ public class MuseumService : BaseService, IMuseumService
     _mapper.Map(dto, museum);
     await _museumRepository.UpdateAsync(id, museum);
 
+    // Update in Elasticsearch
+    await _museumSearchService.IndexMuseumAsync(id);
+
     var museumDto = _mapper.Map<MuseumDto>(museum);
     return SuccessResp.Ok(museumDto);
   }
@@ -160,6 +168,10 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.NotFound("Museum not found");
     }
     await _museumRepository.DeleteAsync(museum);
+
+    // Remove from Elasticsearch
+    await _museumSearchService.DeleteMuseumFromIndexAsync(id);
+
     return SuccessResp.Ok("Museum deleted successfully");
   }
 
@@ -304,6 +316,9 @@ public class MuseumService : BaseService, IMuseumService
       };
       await _userRoleRepository.AddAsync(userRole);
     }
+
+    // Index in Elasticsearch
+    await _museumSearchService.IndexMuseumAsync(museum.Id);
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
