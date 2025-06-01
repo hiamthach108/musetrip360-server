@@ -39,4 +39,18 @@ public class SearchController : ControllerBase
     _logger.LogInformation("Museum aggregations request received");
     return await _museumSearchService.HandleGetMuseumAggregationsAsync();
   }
+
+  [HttpPost("museums/reindex")]
+  public async Task<IActionResult> ReindexMuseums()
+  {
+    _logger.LogInformation("Museum reindex request received");
+    var result = await _museumSearchService.RecreateMuseumIndexAsync();
+
+    if (result)
+    {
+      return Ok(new { success = true, message = "Museums reindexed successfully" });
+    }
+
+    return BadRequest(new { success = false, message = "Failed to reindex museums" });
+  }
 }

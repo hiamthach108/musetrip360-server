@@ -19,6 +19,7 @@ public interface IMuseumSearchService
   Task<bool> DeleteMuseumFromIndexAsync(Guid museumId);
   Task<bool> BulkIndexMuseumsAsync();
   Task<bool> CreateMuseumIndexAsync();
+  Task<bool> RecreateMuseumIndexAsync();
 }
 
 public class MuseumSearchService : BaseService, IMuseumSearchService
@@ -174,7 +175,7 @@ public class MuseumSearchService : BaseService, IMuseumSearchService
     try
     {
       var museumQuery = new MuseumQuery { Page = 1, PageSize = int.MaxValue };
-      var museums = _museumRepository.GetAll(museumQuery);
+      var museums = _museumRepository.GetAllAdmin(museumQuery);
       var museumIndexDtos = museums.Museums.Select(m => _mapper.Map<MuseumIndexDto>(m)).ToList();
 
       return await _elasticsearchService.BulkIndexAsync(_museumIndex, museumIndexDtos);
@@ -195,8 +196,35 @@ public class MuseumSearchService : BaseService, IMuseumSearchService
         return true;
       }
 
-      // Create index with basic settings
+      // Create index with Vietnamese-friendly settings
       return await _elasticsearchService.CreateIndexAsync(_museumIndex);
+    }
+    catch (Exception ex)
+    {
+      return false;
+    }
+  }
+
+  public async Task<bool> RecreateMuseumIndexAsync()
+  {
+    try
+    {
+      // Delete existing index if exists
+      if (await _elasticsearchService.IndexExistsAsync(_museumIndex))
+      {
+        await _elasticsearchService.DeleteIndexAsync(_museumIndex);
+      }
+
+      // Create new index with proper mapping
+      var created = await _elasticsearchService.CreateIndexAsync(_museumIndex);
+
+      if (created)
+      {
+        // Reindex all museums
+        await BulkIndexMuseumsAsync();
+      }
+
+      return created;
     }
     catch (Exception ex)
     {
@@ -208,16 +236,19 @@ public class MuseumSearchService : BaseService, IMuseumSearchService
   {
     var queryParts = new List<string>();
 
-    // Full-text search
+    // Full-text search with Vietnamese support
     if (!string.IsNullOrEmpty(query.Search))
     {
-      queryParts.Add($"(name:*{query.Search}* OR description:*{query.Search}*)");
+      // Use multi-match query for better Vietnamese text search
+      var searchTerm = query.Search.Trim();
+      queryParts.Add($"(name:\"{searchTerm}\" OR name:*{searchTerm}* OR description:\"{searchTerm}\" OR description:*{searchTerm}*)");
     }
 
-    // Location filter
+    // Location filter with Vietnamese support
     if (!string.IsNullOrEmpty(query.Location))
     {
-      queryParts.Add($"location:*{query.Location}*");
+      var locationTerm = query.Location.Trim();
+      queryParts.Add($"(location:\"{locationTerm}\" OR location:*{locationTerm}*)");
     }
 
     // Status filter
