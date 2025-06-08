@@ -45,7 +45,7 @@
         "pipeCwd": "${workspaceFolder}",
         "pipeProgram": "bash",
         "pipeArgs": ["-c"],
-        "debuggerPath": "/home/your-username/Downloads/netcoredbg-linux-amd64/netcoredbg",
+        "debuggerPath": "/home/nguyengiang/Downloads/netcoredbg-linux-amd64/netcoredbg/netcoredbg",
         "debuggerArgs": ["--interpreter=vscode"],
         "quoteArgs": true
       },
