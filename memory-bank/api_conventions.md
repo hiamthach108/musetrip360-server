@@ -82,7 +82,6 @@ public class [Resource]Controller : ControllerBase
 - **Route**: `/api/v1/[resource]` (lowercase)
 - **Attributes**:
   - `[Protected]`: Requires access token
-  - `[AdminOnly]`: Only admin can access
 - **Logging**: Log each request at the start of handler
 - **Dependency Injection**: Inject service and logger via constructor
 
@@ -252,7 +251,6 @@ ErrorResp.InternalServerError("message"); // 500
 
 ### 10.1 Middleware Attributes
 - `[Protected]`: Requires valid JWT token
-- `[AdminOnly]`: Only admin role can access
 
 ### 10.2 JWT Payload
 ```csharp

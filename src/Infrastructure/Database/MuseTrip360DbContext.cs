@@ -9,12 +9,13 @@ using Domain.Rolebase;
 using Domain.Museums;
 using Domain.Events;
 using Domain.Artifacts;
-using Domain.Tickets;
 using Domain.Payment;
 using Domain.Tours;
 using Domain.Messaging;
 using Domain.Reviews;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Domain.Subscription;
+using Domain.Content;
 
 public class MuseTrip360DbContext : DbContext
 {
@@ -34,24 +35,22 @@ public class MuseTrip360DbContext : DbContext
 
   // Event
   public DbSet<Event> Events { get; set; }
+  public DbSet<EventParticipant> EventParticipants { get; set; }
 
   // Artifact 
   public DbSet<Artifact> Artifacts { get; set; }
-
-  // Tickets
-  public DbSet<TicketMaster> TicketMasters { get; set; }
-  public DbSet<TicketAddon> TicketAddons { get; set; }
-  public DbSet<Ticket> Tickets { get; set; }
 
   // Tours
   public DbSet<TourOnline> TourOnlines { get; set; }
   public DbSet<TourContent> TourContents { get; set; }
   public DbSet<TourGuide> TourGuides { get; set; }
+  public DbSet<TourViewer> TourViewers { get; set; }
 
   // Payment
   public DbSet<Order> Orders { get; set; }
-  public DbSet<OrderTicket> OrderTickets { get; set; }
   public DbSet<Payment> Payments { get; set; }
+  public DbSet<OrderEvent> OrderEvents { get; set; }
+  public DbSet<OrderTour> OrderTours { get; set; }
 
   // Messaging
   public DbSet<Message> Messages { get; set; }
@@ -62,6 +61,13 @@ public class MuseTrip360DbContext : DbContext
   // Feedbacks
   public DbSet<Feedback> Feedbacks { get; set; }
   public DbSet<SystemReport> SystemReports { get; set; }
+
+  // Subscription 
+  public DbSet<Subscription> Subscriptions { get; set; }
+  public DbSet<Plan> Plans { get; set; }
+
+  // Content
+  public DbSet<RepresentationMaterial> RepresentationMaterials { get; set; }
 
   public MuseTrip360DbContext(DbContextOptions<MuseTrip360DbContext> options) : base(options) { }
 
@@ -250,6 +256,21 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
 
+    builder.Entity<EventParticipant>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.EventId);
+      e.HasIndex(x => x.UserId);
+      e.Property(x => x.JoinedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.Role).HasConversion<string>().HasDefaultValue(ParticipantRoleEnum.Attendee);
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(ParticipantStatusEnum.Pending);
+      e.HasOne(x => x.Event).WithMany(x => x.EventParticipants).HasForeignKey(x => x.EventId);
+      e.HasOne(x => x.User).WithMany(x => x.EventParticipants).HasForeignKey(x => x.UserId);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
     builder.Entity<Artifact>(e =>
     {
       e.HasKey(x => x.Id);
@@ -265,52 +286,6 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.Museum).WithMany(x => x.Artifacts).HasForeignKey(x => x.MuseumId);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Artifacts).HasForeignKey(x => x.CreatedBy);
-      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-    });
-
-    builder.Entity<TicketMaster>(e =>
-    {
-      e.HasKey(x => x.Id);
-      e.HasIndex(x => x.MuseumId);
-      e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
-      e.Property(x => x.Price).IsRequired();
-      e.Property(x => x.DiscountPercentage).IsRequired();
-      e.Property(x => x.GroupSize).IsRequired();
-      e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
-      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
-      e.HasOne(x => x.Museum).WithMany(x => x.TicketMasters).HasForeignKey(x => x.MuseumId);
-      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-    });
-
-    builder.Entity<TicketAddon>(e =>
-    {
-      e.HasKey(x => x.Id);
-      e.HasIndex(x => x.MuseumId);
-      e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
-      e.Property(x => x.Price).IsRequired();
-      e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
-      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
-      e.HasOne(x => x.Museum).WithMany(x => x.TicketAddons).HasForeignKey(x => x.MuseumId);
-      e.HasOne(x => x.Event).WithMany(x => x.TicketAddons).HasForeignKey(x => x.EventId);
-      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-    });
-
-    builder.Entity<Ticket>(e =>
-    {
-      e.HasKey(x => x.Id);
-      e.HasIndex(x => x.MasterId);
-      e.Property(x => x.PurchaseDate).IsRequired();
-      e.Property(x => x.GroupSize).IsRequired();
-      e.Property(x => x.TotalPrice).IsRequired();
-      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(TicketStatusEnum.Active);
-      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
-      e.HasOne(x => x.TicketMaster).WithMany(x => x.Tickets).HasForeignKey(x => x.MasterId);
-      e.HasOne(x => x.Owner).WithMany(x => x.Tickets).HasForeignKey(x => x.OwnerId);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
@@ -355,6 +330,20 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
 
+    builder.Entity<TourViewer>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.TourId);
+      e.HasIndex(x => x.UserId);
+      e.Property(x => x.AccessType).IsRequired().HasMaxLength(100);
+      e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
+      e.Property(x => x.LastViewedAt).IsRequired(false);
+      e.HasOne(x => x.TourOnline).WithMany(x => x.TourViewers).HasForeignKey(x => x.TourId);
+      e.HasOne(x => x.User).WithMany(x => x.TourViewers).HasForeignKey(x => x.UserId);
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
     builder.Entity<Order>(e =>
     {
       e.HasKey(x => x.Id);
@@ -363,20 +352,6 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
-    });
-
-    builder.Entity<OrderTicket>(e =>
-    {
-      e.HasKey(x => new { x.OrderId, x.MasterId, x.AddonId });
-      e.HasIndex(x => x.OrderId);
-      e.HasIndex(x => x.MasterId);
-      e.HasIndex(x => x.AddonId);
-      e.Property(x => x.Quantity).IsRequired();
-      e.Property(x => x.GroupSize).IsRequired();
-      e.Property(x => x.Price).IsRequired();
-      e.HasOne(x => x.Order).WithMany(x => x.OrderTickets).HasForeignKey(x => x.OrderId);
-      e.HasOne(x => x.TicketMaster).WithMany(x => x.OrderTickets).HasForeignKey(x => x.MasterId);
-      e.HasOne(x => x.TicketAddon).WithMany(x => x.OrderTickets).HasForeignKey(x => x.AddonId);
     });
 
     builder.Entity<Payment>(e =>
@@ -392,6 +367,26 @@ public class MuseTrip360DbContext : DbContext
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Payments).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<OrderEvent>(e =>
+    {
+      e.HasKey(x => new { x.OrderId, x.EventId });
+      e.HasIndex(x => x.OrderId);
+      e.HasIndex(x => x.EventId);
+      e.Property(x => x.UnitPrice).IsRequired();
+      e.HasOne(x => x.Order).WithMany(x => x.OrderEvents).HasForeignKey(x => x.OrderId);
+      e.HasOne(x => x.Event).WithMany(x => x.OrderEvents).HasForeignKey(x => x.EventId);
+    });
+
+    builder.Entity<OrderTour>(e =>
+    {
+      e.HasKey(x => new { x.OrderId, x.TourId });
+      e.HasIndex(x => x.OrderId);
+      e.HasIndex(x => x.TourId);
+      e.Property(x => x.UnitPrice).IsRequired();
+      e.HasOne(x => x.Order).WithMany(x => x.OrderTours).HasForeignKey(x => x.OrderId);
+      e.HasOne(x => x.TourOnline).WithMany(x => x.OrderTours).HasForeignKey(x => x.TourId);
     });
 
     builder.Entity<Message>(e =>
@@ -463,6 +458,50 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.SystemReports).HasForeignKey(x => x.CreatedBy);
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<Plan>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.Name).IsUnique();
+      e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.Price).IsRequired();
+      e.Property(x => x.DurationDays).IsRequired();
+      e.Property(x => x.MaxEvents).IsRequired(false);
+      e.Property(x => x.DiscountPercent).IsRequired(false);
+      e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<Subscription>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasOne(x => x.User).WithMany(x => x.Subscriptions).HasForeignKey(x => x.UserId);
+      e.HasOne(x => x.Plan).WithMany(x => x.Subscriptions).HasForeignKey(x => x.PlanId);
+      e.HasOne(x => x.Order).WithMany(x => x.Subscriptions).HasForeignKey(x => x.OrderId);
+      e.Property(x => x.StartDate).IsRequired();
+      e.Property(x => x.EndDate).IsRequired();
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(SubscriptionStatusEnum.Active);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<RepresentationMaterial>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.EventId);
+      e.Property(x => x.Content).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.ZOrder).IsRequired();
+      e.HasOne(x => x.Event).WithMany(x => x.RepresentationMaterials).HasForeignKey(x => x.EventId);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedBy).IsRequired();
+      e.HasOne(x => x.CreatedByUser).WithMany(x => x.RepresentationMaterials).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });

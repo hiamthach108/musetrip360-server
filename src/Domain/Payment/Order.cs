@@ -2,6 +2,7 @@ namespace Domain.Payment;
 
 using Application.Shared.Enum;
 using Application.Shared.Type;
+using Domain.Subscription;
 using Domain.Users;
 
 public class Order : BaseEntity
@@ -11,7 +12,9 @@ public class Order : BaseEntity
   public PaymentStatusEnum Status { get; set; }
 
   public User CreatedByUser { get; set; } = null!;
-  public ICollection<OrderTicket> OrderTickets { get; set; } = new List<OrderTicket>();
-  public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
+  public ICollection<Payment> Payments { get; set; } = [];
+  public ICollection<Subscription> Subscriptions { get; set; } = [];
+  public ICollection<OrderEvent> OrderEvents { get; set; } = [];
+  public ICollection<OrderTour> OrderTours { get; set; } = [];
 }
