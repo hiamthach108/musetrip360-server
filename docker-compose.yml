@@ -140,40 +140,89 @@ services:
     networks:
       - elastic
 
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=musetrip360db;Username=postgres;Password=123456;CommandTimeout=20;Timeout=15;
-  #     - ConnectionStrings__RedisConnection=redis:6379,password=exeredis,abortConnect=false
-  #     - ConnectionStrings__ElasticsearchConnection=http://elastic:musetrip360_elastic@elastic:9200
-  #     - Elasticsearch__Username=elastic
-  #     - Elasticsearch__Password=musetrip360_elastic
-  #     - RabbitMQ__HostName=rabbitmq
-  #     - RabbitMQ__UserName=user
-  #     - RabbitMQ__Password=password
-  #     - RabbitMQ__Port=5672
-  #     - RabbitMQ__VirtualHost=/
-  #     - Elasticsearch__DefaultIndex=musetrip360
-  #     - Elasticsearch__NumberOfShards=1
-  #     - Elasticsearch__NumberOfReplicas=0
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     elastic:
-  #       condition: service_healthy
-  #   networks:
-  #     - default
-  #     - elastic
-  #   restart: unless-stopped
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.0.0
+    environment:
+      - xpack.monitoring.enabled=false
+      - ELASTIC_USER=elastic
+      - ELASTIC_PASSWORD=musetrip360_elastic
+      - ELASTIC_HOSTS=http://elastic:9200
+      - LS_JAVA_OPTS=-Xmx512m -Xms512m
+    ports:
+      - "5044:5044"  # Beats input
+      - "5001:5001"  # TCP input for .NET logs
+      - "8080:8080"  # HTTP input for logs
+      - "9600:9600"  # Logstash API
+    command: >
+      logstash -e '
+      input {
+        tcp {
+          port => 5001
+          codec => json_lines
+          tags => ["dotnet-api"]
+        }
+        beats {
+          port => 5044
+          tags => ["beats"]
+        }
+        http {
+          port => 8080
+          tags => ["http-logs"]
+        }
+      }
+      
+      filter {
+        if "dotnet-api" in [tags] {
+          if [Level] {
+            mutate {
+              lowercase => [ "Level" ]
+              rename => { "Level" => "log_level" }
+            }
+          }
+          if [Timestamp] {
+            date {
+              match => [ "Timestamp", "ISO8601" ]
+              target => "@timestamp"
+            }
+          }
+          if [Exception] {
+            mutate {
+              add_field => { "has_exception" => true }
+            }
+          }
+          mutate {
+            add_field => { 
+              "application" => "musetrip360-api"
+              "environment" => "development"
+            }
+          }
+        }
+      }
+      
+      output {
+        elasticsearch {
+          hosts => ["http://elastic:9200"]
+          user => "elastic"
+          password => "musetrip360_elastic"
+          index => "musetrip360-logs-%{+YYYY.MM.dd}"
+        }
+        stdout {
+          codec => rubydebug
+        }
+      }
+      '
+    depends_on:
+      elastic:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9600"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - default
+      - elastic
 
 volumes:
   postgres_data:
