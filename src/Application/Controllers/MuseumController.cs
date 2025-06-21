@@ -175,4 +175,12 @@ public class MuseumController : ControllerBase
     _logger.LogInformation("Delete museum policy received");
     return await _museumService.HandleDeletePolicy(id);
   }
+
+  [Protected]
+  [HttpPost("policies/bulk")]
+  public async Task<IActionResult> BulkCreateUpdateMuseumPolicies([FromBody] MuseumPolicyBulkRequestDto dto)
+  {
+    _logger.LogInformation("Bulk create/update museum policies received");
+    return await _museumService.HandleBulkCreateUpdatePolicies(dto);
+  }
 }

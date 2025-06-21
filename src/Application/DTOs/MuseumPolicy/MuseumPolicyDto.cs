@@ -1,4 +1,3 @@
-
 namespace Application.DTOs.MuseumPolicy;
 
 using Application.Shared.Enum;
@@ -14,6 +13,7 @@ public class MuseumPolicyDto
   public string Content { get; set; } = null!;
   public PolicyTypeEnum PolicyType { get; set; }
   public bool IsActive { get; set; }
+  public int ZOrder { get; set; }
   public Guid MuseumId { get; set; }
   public Guid CreatedBy { get; set; }
   public UserDto CreatedByUser { get; set; } = null!;
@@ -26,6 +26,7 @@ public class MuseumPolicyCreateDto
   public string Title { get; set; } = null!;
   public string Content { get; set; } = null!;
   public PolicyTypeEnum PolicyType { get; set; }
+  public int ZOrder { get; set; }
   public Guid MuseumId { get; set; }
 }
 
@@ -35,6 +36,23 @@ public class MuseumPolicyUpdateDto
   public string? Content { get; set; }
   public PolicyTypeEnum? PolicyType { get; set; }
   public bool? IsActive { get; set; }
+  public int? ZOrder { get; set; }
+}
+
+public class MuseumPolicyBulkCreateUpdateDto
+{
+  public Guid? Id { get; set; }
+  public string Title { get; set; } = null!;
+  public string Content { get; set; } = null!;
+  public PolicyTypeEnum PolicyType { get; set; }
+  public bool IsActive { get; set; } = true;
+  public Guid MuseumId { get; set; }
+}
+
+public class MuseumPolicyBulkRequestDto
+{
+  public Guid MuseumId { get; set; }
+  public List<MuseumPolicyBulkCreateUpdateDto> Policies { get; set; } = new List<MuseumPolicyBulkCreateUpdateDto>();
 }
 
 public class MuseumPolicyProfile : Profile
@@ -45,5 +63,6 @@ public class MuseumPolicyProfile : Profile
 
     CreateMap<MuseumPolicyCreateDto, MuseumPolicy>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     CreateMap<MuseumPolicyUpdateDto, MuseumPolicy>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<MuseumPolicyBulkCreateUpdateDto, MuseumPolicy>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
   }
 }
