@@ -10,6 +10,7 @@ public class MuseumPolicy : BaseEntity
   public string Content { get; set; } = null!;
   public PolicyTypeEnum PolicyType { get; set; }
   public bool IsActive { get; set; }
+  public int ZOrder { get; set; }
   public Guid MuseumId { get; set; }
   public Guid CreatedBy { get; set; }
 

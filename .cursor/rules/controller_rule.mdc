@@ -38,7 +38,6 @@ public class UserController : ControllerBase
   }
 
   [Protected]
-  [AdminOnly]
   [HttpGet("admin")]
   public async Task<IActionResult> Get([FromQuery] UserQuery query)
   {
@@ -48,7 +47,6 @@ public class UserController : ControllerBase
   }
 
   [Protected]
-  [AdminOnly]
   [HttpPost("admin")]
   public async Task<IActionResult> Create([FromBody] UserCreateDto req)
   {
@@ -58,7 +56,6 @@ public class UserController : ControllerBase
   }
 
   [Protected]
-  [AdminOnly]
   [HttpPut("admin/{id}")]
   public async Task<IActionResult> Update(Guid id, [FromBody] UserUpdateDto req)
   {
