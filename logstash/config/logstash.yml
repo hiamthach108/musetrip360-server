@@ -1,0 +1,21 @@
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+
+# Pipeline settings
+pipeline.workers: 2
+pipeline.batch.size: 125
+pipeline.batch.delay: 50
+
+# Monitoring settings
+xpack.monitoring.enabled: false
+
+# Log settings
+log.level: info
+path.logs: /usr/share/logstash/logs
+
+# Config settings
+config.reload.automatic: true
+config.reload.interval: 3s
+
+# Dead letter queue settings
+dead_letter_queue.enable: false 

@@ -66,8 +66,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons);
+            .Include(e => e.TourGuides);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -92,8 +91,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons);
+            .Include(e => e.TourGuides);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -111,7 +109,6 @@ namespace Infrastructure.Repository
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons)
             .FirstOrDefaultAsync(e => e.Id == id);
         }
 
@@ -136,7 +133,6 @@ namespace Infrastructure.Repository
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons)
             .ToListAsync();
         }
 
@@ -147,7 +143,6 @@ namespace Infrastructure.Repository
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
-            .Include(e => e.TicketAddons)
             .ToListAsync();
         }
 

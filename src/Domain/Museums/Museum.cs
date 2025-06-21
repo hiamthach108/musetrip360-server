@@ -5,7 +5,6 @@ using Application.Shared.Type;
 using Domain.Artifacts;
 using Domain.Events;
 using Domain.Reviews;
-using Domain.Tickets;
 using Domain.Tours;
 using Domain.Users;
 
@@ -26,8 +25,6 @@ public class Museum : BaseEntity
   public ICollection<Article> Articles { get; set; } = new List<Article>();
   public ICollection<Event> Events { get; set; } = new List<Event>();
   public ICollection<Artifact> Artifacts { get; set; } = new List<Artifact>();
-  public ICollection<TicketMaster> TicketMasters { get; set; } = new List<TicketMaster>();
-  public ICollection<TicketAddon> TicketAddons { get; set; } = new List<TicketAddon>();
   public ICollection<TourOnline> TourOnlines { get; set; } = new List<TourOnline>();
   public ICollection<TourGuide> TourGuides { get; set; } = new List<TourGuide>();
   public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();

@@ -8,8 +8,9 @@ using Domain.Messaging;
 using Domain.Museums;
 using Domain.Payment;
 using Domain.Reviews;
-using Domain.Tickets;
 using Domain.Tours;
+using Domain.Subscription;
+using Domain.Content;
 
 public class User : BaseEntity
 {
@@ -29,12 +30,10 @@ public class User : BaseEntity
   public ICollection<Article> Articles { get; set; } = new List<Article>();
   public ICollection<Event> Events { get; set; } = new List<Event>();
   public ICollection<Artifact> Artifacts { get; set; } = new List<Artifact>();
-  public ICollection<TicketMaster> TicketMasters { get; set; } = new List<TicketMaster>();
   public ICollection<TourOnline> TourOnlines { get; set; } = new List<TourOnline>();
   public ICollection<TourGuide> TourGuides { get; set; } = new List<TourGuide>();
   public ICollection<Museum> Museums { get; set; } = new List<Museum>();
   public ICollection<MuseumRequest> MuseumRequests { get; set; } = new List<MuseumRequest>();
-  public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
   public ICollection<Order> Orders { get; set; } = new List<Order>();
   public ICollection<Payment> Payments { get; set; } = new List<Payment>();
   public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
@@ -44,4 +43,8 @@ public class User : BaseEntity
 
   public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
   public ICollection<SystemReport> SystemReports { get; set; } = new List<SystemReport>();
+  public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+  public ICollection<TourViewer> TourViewers { get; set; } = new List<TourViewer>();
+  public ICollection<EventParticipant> EventParticipants { get; set; } = new List<EventParticipant>();
+  public ICollection<RepresentationMaterial> RepresentationMaterials { get; set; } = new List<RepresentationMaterial>();
 }

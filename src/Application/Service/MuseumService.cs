@@ -43,6 +43,7 @@ public interface IMuseumService
   Task<IActionResult> HandleCreatePolicy(MuseumPolicyCreateDto dto);
   Task<IActionResult> HandleUpdatePolicy(Guid id, MuseumPolicyUpdateDto dto);
   Task<IActionResult> HandleDeletePolicy(Guid id);
+  Task<IActionResult> HandleBulkCreateUpdatePolicies(MuseumPolicyBulkRequestDto dto);
 }
 
 public class MuseumService : BaseService, IMuseumService
@@ -416,5 +417,71 @@ public class MuseumService : BaseService, IMuseumService
 
     await _museumPolicyRepository.DeleteAsync(policy);
     return SuccessResp.Ok("Museum policy deleted successfully");
+  }
+
+  public async Task<IActionResult> HandleBulkCreateUpdatePolicies(MuseumPolicyBulkRequestDto dto)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var museum = _museumRepository.GetById(dto.MuseumId);
+    if (museum == null)
+    {
+      return ErrorResp.NotFound("Museum not found");
+    }
+
+    if (dto.Policies == null || !dto.Policies.Any())
+    {
+      return ErrorResp.BadRequest("No policies provided");
+    }
+
+    var existingPolicies = _museumPolicyRepository.GetAllByMuseumId(dto.MuseumId);
+    var policiesToProcess = new List<MuseumPolicy>();
+
+    for (int i = 0; i < dto.Policies.Count; i++)
+    {
+      var policyDto = dto.Policies[i];
+      var policy = _mapper.Map<MuseumPolicy>(policyDto);
+
+      policy.MuseumId = dto.MuseumId;
+      policy.ZOrder = i + 1; // Set ZOrder based on list position
+      policy.CreatedBy = payload.UserId;
+
+      if (policyDto.Id.HasValue && policyDto.Id != Guid.Empty)
+      {
+        policy.Id = policyDto.Id.Value;
+      }
+      else
+      {
+        policy.Id = Guid.NewGuid();
+      }
+
+      policiesToProcess.Add(policy);
+    }
+
+    var updatedPolicies = await _museumPolicyRepository.BulkCreateUpdateAsync(policiesToProcess, dto.MuseumId);
+
+    // Delete policies that are no longer in the list
+    var newPolicyIds = policiesToProcess.Select(p => p.Id).ToList();
+    var policiesToDelete = existingPolicies
+        .Where(p => !newPolicyIds.Contains(p.Id))
+        .Select(p => p.Id)
+        .ToList();
+
+    if (policiesToDelete.Any())
+    {
+      await _museumPolicyRepository.DeleteByIdsAsync(policiesToDelete);
+    }
+
+    var resultDtos = _mapper.Map<IEnumerable<MuseumPolicyDto>>(updatedPolicies);
+    return SuccessResp.Ok(new
+    {
+      List = resultDtos,
+      Total = updatedPolicies.Count,
+      DeletedCount = policiesToDelete.Count
+    });
   }
 }

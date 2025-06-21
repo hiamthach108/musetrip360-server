@@ -15,5 +15,5 @@ public class TourGuide : BaseEntity
   public Museum Museum { get; set; } = null!;
   public User User { get; set; } = null!;
 
-  public ICollection<Event> Events { get; set; } = new List<Event>();
+  public ICollection<Event> Events { get; set; } = [];
 }
