@@ -144,9 +144,10 @@ builder.Services.AddScoped<IAdminTourContentService, AdminTourContentService>();
 builder.Services.AddScoped<ITourGuideService, TourGuideService>();
 builder.Services.AddScoped<IAdminTourGuideService, AdminTourGuideService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
-
+builder.Services.AddHostedService<OrderWorker>();
 var app = builder.Build();
 
 app.UseInitializeDatabase();

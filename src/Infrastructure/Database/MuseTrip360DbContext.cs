@@ -349,6 +349,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.Property(x => x.TotalAmount).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(PaymentStatusEnum.Pending);
+      e.Property(x => x.OrderType).HasConversion<string>().HasDefaultValue(OrderTypeEnum.Subscription);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

@@ -7,4 +7,6 @@ public static class QueueConst
   public const string Embeddings = "embeddings-mq";
   public const string Email = "email-mq";
   public const string AIChat = "ai-chat-mq";
+
+  public const string Order = "order-mq";
 }
