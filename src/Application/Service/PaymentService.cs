@@ -21,15 +21,21 @@ public interface IPaymentService
   Task<IActionResult> HandleGetAllOrders(OrderQuery query);
   Task<IActionResult> HandleAdminGetOrders(OrderQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
+
+  // BankAccount management methods
+  Task<IActionResult> HandleGetBankAccountsByMuseum(Guid museumId);
+  Task<IActionResult> HandleGetBankAccountById(Guid id);
+  Task<IActionResult> HandleCreateBankAccount(Guid museumId, BankAccountCreateDto dto);
+  Task<IActionResult> HandleUpdateBankAccount(Guid id, BankAccountUpdateDto dto);
+  Task<IActionResult> HandleDeleteBankAccount(Guid id);
 }
 
 public class PaymentService : BaseService, IPaymentService
 {
   private readonly ILogger<PaymentService> _logger;
-  private readonly IMapper _mapper;
-  private readonly MuseTrip360DbContext _dbContext;
   private readonly IQueuePublisher _queuePub;
   private readonly IOrderRepository _orderRepo;
+  private readonly IBankAccountRepository _bankAccountRepo;
 
   public PaymentService(
     ILogger<PaymentService> logger,
@@ -39,10 +45,9 @@ public class PaymentService : BaseService, IPaymentService
     IHttpContextAccessor httpContextAccessor) : base(dbContext, mapper, httpContextAccessor)
   {
     _logger = logger;
-    _mapper = mapper;
-    _dbContext = dbContext;
     _queuePub = queuePublisher;
     _orderRepo = new OrderRepository(dbContext);
+    _bankAccountRepo = new BankAccountRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderQuery query)
@@ -121,5 +126,114 @@ public class PaymentService : BaseService, IPaymentService
     var result = await _orderRepo.AddAsync(order);
 
     return _mapper.Map<OrderDto>(order);
+  }
+
+  // BankAccount management methods
+  public async Task<IActionResult> HandleGetBankAccountsByMuseum(Guid museumId)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var result = await _bankAccountRepo.GetByMuseumIdAsync(museumId);
+    var bankAccounts = _mapper.Map<IEnumerable<BankAccountDto>>(result);
+
+    var response = new
+    {
+      Data = bankAccounts,
+    };
+
+    return SuccessResp.Ok(response);
+  }
+
+  public async Task<IActionResult> HandleGetBankAccountById(Guid id)
+  {
+    var bankAccount = await _bankAccountRepo.GetByIdAsync(id);
+    if (bankAccount == null)
+    {
+      return ErrorResp.NotFound("Bank account not found");
+    }
+
+    var result = _mapper.Map<BankAccountDto>(bankAccount);
+    return SuccessResp.Ok(result);
+  }
+
+  public async Task<IActionResult> HandleCreateBankAccount(Guid museumId, BankAccountCreateDto dto)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    // Check if account number already exists for this museum
+    var exists = await _bankAccountRepo.ExistsAccountNumberForMuseumAsync(dto.AccountNumber, museumId);
+    if (exists)
+    {
+      return ErrorResp.BadRequest("Account number already exists for this museum");
+    }
+
+    var bankAccount = _mapper.Map<BankAccount>(dto);
+    bankAccount.MuseumId = museumId;
+
+    var result = await _bankAccountRepo.AddAsync(bankAccount);
+    var responseDto = _mapper.Map<BankAccountDto>(result);
+
+    return SuccessResp.Created(responseDto);
+  }
+
+  public async Task<IActionResult> HandleUpdateBankAccount(Guid id, BankAccountUpdateDto dto)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var existingBankAccount = await _bankAccountRepo.GetByIdAsync(id);
+    if (existingBankAccount == null)
+    {
+      return ErrorResp.NotFound("Bank account not found");
+    }
+
+    // Check if account number already exists for this museum (excluding current one)
+    if (!string.IsNullOrEmpty(dto.AccountNumber))
+    {
+      var exists = await _bankAccountRepo.ExistsAccountNumberForMuseumAsync(dto.AccountNumber, existingBankAccount.MuseumId, id);
+      if (exists)
+      {
+        return ErrorResp.BadRequest("Account number already exists for this museum");
+      }
+    }
+
+    _mapper.Map(dto, existingBankAccount);
+    var result = await _bankAccountRepo.UpdateAsync(id, existingBankAccount);
+
+    if (result == null)
+    {
+      return ErrorResp.NotFound("Bank account not found");
+    }
+
+    var responseDto = _mapper.Map<BankAccountDto>(result);
+    return SuccessResp.Ok(responseDto);
+  }
+
+  public async Task<IActionResult> HandleDeleteBankAccount(Guid id)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var result = await _bankAccountRepo.DeleteAsync(id);
+    if (result == null)
+    {
+      return ErrorResp.NotFound("Bank account not found");
+    }
+
+    return SuccessResp.Ok("Bank account deleted successfully");
   }
 }
