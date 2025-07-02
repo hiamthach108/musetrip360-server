@@ -51,6 +51,9 @@ public class MuseTrip360DbContext : DbContext
   public DbSet<Payment> Payments { get; set; }
   public DbSet<OrderEvent> OrderEvents { get; set; }
   public DbSet<OrderTour> OrderTours { get; set; }
+  public DbSet<BankAccount> BankAccounts { get; set; }
+  public DbSet<Payout> Payouts { get; set; }
+  public DbSet<MuseumBalance> MuseumBalances { get; set; }
 
   // Messaging
   public DbSet<Message> Messages { get; set; }
@@ -488,6 +491,48 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.StartDate).IsRequired();
       e.Property(x => x.EndDate).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(SubscriptionStatusEnum.Active);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<BankAccount>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.MuseumId);
+      e.Property(x => x.HolderName).IsRequired().HasMaxLength(100);
+      e.Property(x => x.BankName).IsRequired().HasMaxLength(100);
+      e.Property(x => x.AccountNumber).IsRequired().HasMaxLength(100);
+      e.Property(x => x.QRCode).IsRequired().HasMaxLength(1000);
+      e.HasOne(x => x.Museum).WithMany(x => x.BankAccounts).HasForeignKey(x => x.MuseumId);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<Payout>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.MuseumId);
+      e.HasIndex(x => x.BankAccountId);
+      e.Property(x => x.Amount).IsRequired();
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(PayoutStatusEnum.Pending);
+      e.Property(x => x.ProcessedDate).IsRequired();
+      e.HasOne(x => x.Museum).WithMany(x => x.Payouts).HasForeignKey(x => x.MuseumId);
+      e.HasOne(x => x.BankAccount).WithMany(x => x.Payouts).HasForeignKey(x => x.BankAccountId);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<MuseumBalance>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.MuseumId);
+      e.Property(x => x.AvailableBalance).IsRequired();
+      e.Property(x => x.PendingBalance).IsRequired();
+      e.Property(x => x.TotalBalance).IsRequired();
+      e.HasOne(x => x.Museum).WithMany(x => x.MuseumBalances).HasForeignKey(x => x.MuseumId);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
