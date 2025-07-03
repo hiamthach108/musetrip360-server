@@ -7,6 +7,7 @@ using Core.Crypto;
 using Core.Elasticsearch;
 using Core.Firebase;
 using Core.Jwt;
+using Core.LLM;
 using Core.Mail;
 using Core.Payos;
 using Core.Queue;
@@ -32,6 +33,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         // Other JSON options you might have...
     }); ;
+builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication("Bearer").AddBearerToken();
 builder.Services.AddHttpContextAccessor();
@@ -124,6 +126,7 @@ builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
 builder.Services.AddSingleton<RabbitMQConnection, RabbitMQConnection>();
 builder.Services.AddSingleton<IQueuePublisher, RabbitMqPublisher>();
 builder.Services.AddSingleton<IQueueSubscriber, RabbitMqSubscriber>();
+builder.Services.AddSingleton<ILLM, GeminiSvc>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -145,6 +148,7 @@ builder.Services.AddScoped<ITourGuideService, TourGuideService>();
 builder.Services.AddScoped<IAdminTourGuideService, AdminTourGuideService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAiService, AiService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddHostedService<OrderWorker>();

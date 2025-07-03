@@ -16,14 +16,14 @@ public interface IHttpClientService
 public class HttpClientService : IHttpClientService
 {
   private readonly IHttpClientFactory _httpClientFactory;
-  private readonly ILogger<HttpClientService> _logger;
+  private readonly ILogger _logger;
   private readonly string _baseUrl;
   private readonly JsonSerializerOptions _jsonOptions;
 
   public HttpClientService(
     string baseUrl,
     IHttpClientFactory httpClientFactory,
-    ILogger<HttpClientService> logger)
+    ILogger logger)
   {
     _baseUrl = baseUrl;
     _httpClientFactory = httpClientFactory;
