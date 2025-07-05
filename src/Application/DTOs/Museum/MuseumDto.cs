@@ -15,6 +15,8 @@ public class MuseumDto
   public string ContactEmail { get; set; } = null!;
   public string ContactPhone { get; set; } = null!;
   public double Rating { get; set; }
+  public decimal Latitude { get; set; }
+  public decimal Longitude { get; set; }
   public Guid CreatedBy { get; set; }
 
   [JsonConverter(typeof(JsonStringEnumConverter))]

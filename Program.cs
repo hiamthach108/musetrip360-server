@@ -139,6 +139,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
 builder.Services.AddScoped<IMuseumSearchService, MuseumSearchService>();
+builder.Services.AddScoped<ISearchItemService, SearchItemService>();
 
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
@@ -160,7 +161,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // app.UseStaticFiles();
-app.UseRouting();
+// app.UseRouting();
 app.UseCors(CORS);
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthentication();

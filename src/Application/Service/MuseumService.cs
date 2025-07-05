@@ -55,8 +55,15 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IRoleRepository _roleRepository;
   private readonly IUserService _userSvc;
   private readonly IMuseumSearchService _museumSearchService;
-
-  public MuseumService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpCtx, IUserService userSvc, IMuseumSearchService museumSearchService)
+  private readonly ISearchItemService _searchItemService;
+  public MuseumService(
+    MuseTrip360DbContext dbContext,
+    IMapper mapper,
+    IHttpContextAccessor httpCtx,
+    IUserService userSvc,
+    IMuseumSearchService museumSearchService,
+    ISearchItemService searchItemService
+  )
     : base(dbContext, mapper, httpCtx)
   {
     _museumRepository = new MuseumRepository(dbContext);
@@ -66,6 +73,7 @@ public class MuseumService : BaseService, IMuseumService
     _roleRepository = new RoleRepository(dbContext);
     _userSvc = userSvc;
     _museumSearchService = museumSearchService;
+    _searchItemService = searchItemService;
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -136,11 +144,12 @@ public class MuseumService : BaseService, IMuseumService
     museum.CreatedBy = payload.UserId;
     museum.Status = MuseumStatusEnum.NotVerified;
     await _museumRepository.AddAsync(museum);
-
-    // Index in Elasticsearch
-    await _museumSearchService.IndexMuseumAsync(museum.Id);
+    // Index in Elasticsearch service
+    await _searchItemService.IndexMuseumAsync(museum.Id);
 
     var museumDto = _mapper.Map<MuseumDto>(museum);
+
+
     return SuccessResp.Created(museumDto);
   }
 

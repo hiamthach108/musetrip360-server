@@ -16,6 +16,8 @@ public class Museum : BaseEntity
   public string Location { get; set; } = null!;
   public string ContactEmail { get; set; } = null!;
   public string ContactPhone { get; set; } = null!;
+  public decimal Latitude { get; set; }
+  public decimal Longitude { get; set; }
   public float Rating { get; set; }
   public Guid CreatedBy { get; set; }
   public MuseumStatusEnum Status { get; set; }
