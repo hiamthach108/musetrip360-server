@@ -140,6 +140,13 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
+    // check if name is exists
+    var isMuseumNameExists = _museumRepository.IsMuseumNameExists(dto.Name);
+    if (isMuseumNameExists)
+    {
+      return ErrorResp.BadRequest("Museum name already exists");
+    }
+
     var museum = _mapper.Map<Museum>(dto);
     museum.CreatedBy = payload.UserId;
     museum.Status = MuseumStatusEnum.NotVerified;
@@ -328,7 +335,7 @@ public class MuseumService : BaseService, IMuseumService
     }
 
     // Index in Elasticsearch
-    await _museumSearchService.IndexMuseumAsync(museum.Id);
+    await _searchItemService.IndexMuseumAsync(museum.Id);
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
