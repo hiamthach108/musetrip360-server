@@ -69,8 +69,7 @@ public class MuseumRepository : IMuseumRepository
     queryable = queryable.OrderByDescending(m => m.UpdatedAt);
     if (!string.IsNullOrEmpty(query.Search))
     {
-      queryable = queryable.Where(m => m.Name.Contains(query.Search));
-      queryable = queryable.Where(m => m.Description.Contains(query.Search));
+      queryable = queryable.Where(m => m.Name.Contains(query.Search) || m.Description.Contains(query.Search));
     }
 
     var total = queryable.Count();

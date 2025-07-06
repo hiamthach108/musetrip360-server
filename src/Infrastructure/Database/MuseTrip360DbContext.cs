@@ -183,6 +183,8 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactEmail).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(20);
+      e.Property(x => x.Latitude);
+      e.Property(x => x.Longitude);
       e.Property(x => x.Rating).IsRequired().HasDefaultValue(0);
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(MuseumStatusEnum.Active);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Museums).HasForeignKey(x => x.CreatedBy);

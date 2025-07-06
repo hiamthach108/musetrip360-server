@@ -23,5 +23,9 @@ public class MuseumCreateDto
   [Phone(ErrorMessage = "Invalid phone number")]
   public string ContactPhone { get; set; } = null!;
 
+  public decimal Latitude { get; set; }
+
+  public decimal Longitude { get; set; }
+
   public JsonDocument? Metadata { get; set; }
 }

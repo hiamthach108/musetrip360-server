@@ -3,6 +3,7 @@ namespace Application.Controllers;
 using System;
 using System.Threading.Tasks;
 using Application.DTOs.Museum;
+using Application.DTOs.Search;
 using Application.Service;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,39 +12,32 @@ using Microsoft.AspNetCore.Mvc;
 public class SearchController : ControllerBase
 {
   private readonly ILogger<SearchController> _logger;
-  private readonly IMuseumSearchService _museumSearchService;
+  private readonly ISearchItemService _searchItemService;
 
-  public SearchController(ILogger<SearchController> logger, IMuseumSearchService museumSearchService)
+  public SearchController(ILogger<SearchController> logger, ISearchItemService searchItemService)
   {
     _logger = logger;
-    _museumSearchService = museumSearchService;
+    _searchItemService = searchItemService;
   }
 
-  [HttpGet("museums")]
-  public async Task<IActionResult> SearchMuseums([FromQuery] MuseumSearchQuery query)
+  [HttpGet]
+  public async Task<IActionResult> UnifiedSearch([FromQuery] SearchQuery query)
   {
-    _logger.LogInformation("Search museums request received with query: {Query}", query.Search);
-    return await _museumSearchService.HandleSearchMuseumsAsync(query);
+
+    return await _searchItemService.HandleUnifiedSearchAsync(query);
   }
 
-  [HttpGet("museums/aggregations")]
-  public async Task<IActionResult> GetMuseumAggregations()
+  [HttpPost("reindex")]
+  public async Task<IActionResult> RecreateIndex()
   {
-    _logger.LogInformation("Museum aggregations request received");
-    return await _museumSearchService.HandleGetMuseumAggregationsAsync();
-  }
-
-  [HttpPost("museums/reindex")]
-  public async Task<IActionResult> ReindexMuseums()
-  {
-    _logger.LogInformation("Museum reindex request received");
-    var result = await _museumSearchService.RecreateMuseumIndexAsync();
+    _logger.LogInformation("Search index recreation request received");
+    var result = await _searchItemService.RecreateSearchIndexAsync();
 
     if (result)
     {
-      return Ok(new { success = true, message = "Museums reindexed successfully" });
+      return Ok(new { success = true, message = "Search index recreated successfully" });
     }
 
-    return BadRequest(new { success = false, message = "Failed to reindex museums" });
+    return BadRequest(new { success = false, message = "Failed to recreate search index" });
   }
 }

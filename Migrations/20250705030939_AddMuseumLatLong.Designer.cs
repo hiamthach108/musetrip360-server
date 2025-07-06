@@ -4,6 +4,7 @@ using System.Text.Json;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MuseTrip360.Migrations
 {
     [DbContext(typeof(MuseTrip360DbContext))]
-    partial class MuseTrip360DbContextModelSnapshot : ModelSnapshot
+    [Migration("20250705030939_AddMuseumLatLong")]
+    partial class AddMuseumLatLong
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,7 +38,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("EventsId");
 
-                    b.ToTable("ArtifactEvent", (string)null);
+                    b.ToTable("ArtifactEvent");
                 });
 
             modelBuilder.Entity("Domain.Artifacts.Artifact", b =>
@@ -106,7 +109,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("Artifacts", (string)null);
+                    b.ToTable("Artifacts");
                 });
 
             modelBuilder.Entity("Domain.Content.RepresentationMaterial", b =>
@@ -150,7 +153,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("RepresentationMaterials", (string)null);
+                    b.ToTable("RepresentationMaterials");
                 });
 
             modelBuilder.Entity("Domain.Events.Event", b =>
@@ -228,7 +231,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Events.EventParticipant", b =>
@@ -281,7 +284,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("EventParticipants", (string)null);
+                    b.ToTable("EventParticipants");
                 });
 
             modelBuilder.Entity("Domain.Messaging.Conversation", b =>
@@ -326,7 +329,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("LastMessageId");
 
-                    b.ToTable("Conversations", (string)null);
+                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("Domain.Messaging.ConversationUser", b =>
@@ -366,7 +369,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ConversationUsers", (string)null);
+                    b.ToTable("ConversationUsers");
                 });
 
             modelBuilder.Entity("Domain.Messaging.Message", b =>
@@ -417,7 +420,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Domain.Messaging.Notification", b =>
@@ -475,7 +478,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Domain.Museums.Article", b =>
@@ -533,7 +536,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("Articles", (string)null);
+                    b.ToTable("Articles");
                 });
 
             modelBuilder.Entity("Domain.Museums.Museum", b =>
@@ -608,7 +611,7 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Museums", (string)null);
+                    b.ToTable("Museums");
                 });
 
             modelBuilder.Entity("Domain.Museums.MuseumPolicy", b =>
@@ -668,7 +671,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("MuseumPolicies", (string)null);
+                    b.ToTable("MuseumPolicies");
                 });
 
             modelBuilder.Entity("Domain.Museums.MuseumRequest", b =>
@@ -733,7 +736,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("MuseumRequests", (string)null);
+                    b.ToTable("MuseumRequests");
                 });
 
             modelBuilder.Entity("Domain.Payment.BankAccount", b =>
@@ -784,7 +787,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("BankAccounts", (string)null);
+                    b.ToTable("BankAccounts");
                 });
 
             modelBuilder.Entity("Domain.Payment.MuseumBalance", b =>
@@ -824,7 +827,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("MuseumBalances", (string)null);
+                    b.ToTable("MuseumBalances");
                 });
 
             modelBuilder.Entity("Domain.Payment.Order", b =>
@@ -873,7 +876,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Domain.Payment.OrderEvent", b =>
@@ -893,7 +896,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderEvents", (string)null);
+                    b.ToTable("OrderEvents");
                 });
 
             modelBuilder.Entity("Domain.Payment.OrderTour", b =>
@@ -913,7 +916,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("TourId");
 
-                    b.ToTable("OrderTours", (string)null);
+                    b.ToTable("OrderTours");
                 });
 
             modelBuilder.Entity("Domain.Payment.Payment", b =>
@@ -967,7 +970,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("Domain.Payment.Payout", b =>
@@ -1015,7 +1018,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("Payouts", (string)null);
+                    b.ToTable("Payouts");
                 });
 
             modelBuilder.Entity("Domain.Reviews.Feedback", b =>
@@ -1059,7 +1062,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("MuseumId");
 
-                    b.ToTable("Feedbacks", (string)null);
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("Domain.Reviews.SystemReport", b =>
@@ -1106,7 +1109,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("SystemReports", (string)null);
+                    b.ToTable("SystemReports");
                 });
 
             modelBuilder.Entity("Domain.Rolebase.Permission", b =>
@@ -1150,7 +1153,7 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Permissions", (string)null);
+                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("Domain.Rolebase.Role", b =>
@@ -1191,7 +1194,7 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("Domain.Subscription.Plan", b =>
@@ -1246,7 +1249,7 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Plans", (string)null);
+                    b.ToTable("Plans");
                 });
 
             modelBuilder.Entity("Domain.Subscription.Subscription", b =>
@@ -1299,7 +1302,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Subscriptions", (string)null);
+                    b.ToTable("Subscriptions");
                 });
 
             modelBuilder.Entity("Domain.Tours.TourContent", b =>
@@ -1343,7 +1346,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("TourId");
 
-                    b.ToTable("TourContents", (string)null);
+                    b.ToTable("TourContents");
                 });
 
             modelBuilder.Entity("Domain.Tours.TourGuide", b =>
@@ -1394,7 +1397,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TourGuides", (string)null);
+                    b.ToTable("TourGuides");
                 });
 
             modelBuilder.Entity("Domain.Tours.TourOnline", b =>
@@ -1445,7 +1448,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TourOnlines", (string)null);
+                    b.ToTable("TourOnlines");
                 });
 
             modelBuilder.Entity("Domain.Tours.TourViewer", b =>
@@ -1492,7 +1495,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TourViewers", (string)null);
+                    b.ToTable("TourViewers");
                 });
 
             modelBuilder.Entity("Domain.Users.User", b =>
@@ -1567,7 +1570,7 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -1603,7 +1606,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserRoles", (string)null);
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("EventTourGuide", b =>
@@ -1618,7 +1621,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("TourGuidesId");
 
-                    b.ToTable("EventTourGuide", (string)null);
+                    b.ToTable("EventTourGuide");
                 });
 
             modelBuilder.Entity("EventTourOnline", b =>
@@ -1633,7 +1636,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("TourOnlinesId");
 
-                    b.ToTable("EventTourOnline", (string)null);
+                    b.ToTable("EventTourOnline");
                 });
 
             modelBuilder.Entity("PermissionRole", b =>
@@ -1648,7 +1651,7 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("RolesId");
 
-                    b.ToTable("PermissionRole", (string)null);
+                    b.ToTable("PermissionRole");
                 });
 
             modelBuilder.Entity("ArtifactEvent", b =>
