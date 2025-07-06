@@ -4,6 +4,7 @@ using Application.Shared.Enum;
 using Application.Shared.Type;
 using Domain.Artifacts;
 using Domain.Events;
+using Domain.Payment;
 using Domain.Reviews;
 using Domain.Tours;
 using Domain.Users;
@@ -15,6 +16,8 @@ public class Museum : BaseEntity
   public string Location { get; set; } = null!;
   public string ContactEmail { get; set; } = null!;
   public string ContactPhone { get; set; } = null!;
+  public decimal Latitude { get; set; }
+  public decimal Longitude { get; set; }
   public float Rating { get; set; }
   public Guid CreatedBy { get; set; }
   public MuseumStatusEnum Status { get; set; }
@@ -28,4 +31,7 @@ public class Museum : BaseEntity
   public ICollection<TourOnline> TourOnlines { get; set; } = new List<TourOnline>();
   public ICollection<TourGuide> TourGuides { get; set; } = new List<TourGuide>();
   public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+  public ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
+  public ICollection<Payout> Payouts { get; set; } = new List<Payout>();
+  public ICollection<MuseumBalance> MuseumBalances { get; set; } = new List<MuseumBalance>();
 }

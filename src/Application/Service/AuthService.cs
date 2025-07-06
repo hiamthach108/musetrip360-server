@@ -147,12 +147,12 @@ public class AuthService : IAuthService
     var user = await _userRepo.GetUserByEmail(req.Email);
     if (user == null)
     {
-      return ErrorResp.NotFound("User not found");
+      return ErrorResp.BadRequest("Email is incorrect");
     }
 
     if (user.HashedPassword == null || !_cryptoService.VerifyPassword(req.Password, user.HashedPassword))
     {
-      return ErrorResp.BadRequest("Email or password is incorrect");
+      return ErrorResp.BadRequest("Password is incorrect");
     }
 
     var sessionId = Guid.NewGuid();

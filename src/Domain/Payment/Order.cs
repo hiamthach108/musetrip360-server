@@ -10,6 +10,7 @@ public class Order : BaseEntity
   public Guid CreatedBy { get; set; }
   public float TotalAmount { get; set; }
   public PaymentStatusEnum Status { get; set; }
+  public OrderTypeEnum OrderType { get; set; }
 
   public User CreatedByUser { get; set; } = null!;
 

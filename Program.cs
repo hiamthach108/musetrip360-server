@@ -7,6 +7,7 @@ using Core.Crypto;
 using Core.Elasticsearch;
 using Core.Firebase;
 using Core.Jwt;
+using Core.LLM;
 using Core.Mail;
 using Core.Payos;
 using Core.Queue;
@@ -32,6 +33,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         // Other JSON options you might have...
     }); ;
+builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication("Bearer").AddBearerToken();
 builder.Services.AddHttpContextAccessor();
@@ -124,6 +126,7 @@ builder.Services.AddSingleton<IRealtimeService, RealtimeService>();
 builder.Services.AddSingleton<RabbitMQConnection, RabbitMQConnection>();
 builder.Services.AddSingleton<IQueuePublisher, RabbitMqPublisher>();
 builder.Services.AddSingleton<IQueueSubscriber, RabbitMqSubscriber>();
+builder.Services.AddSingleton<ILLM, GeminiSvc>();
 
 // Services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -136,6 +139,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
 builder.Services.AddScoped<IMuseumSearchService, MuseumSearchService>();
+builder.Services.AddScoped<ISearchItemService, SearchItemService>();
 
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
@@ -143,9 +147,12 @@ builder.Services.AddScoped<ITourContentService, TourContentService>();
 builder.Services.AddScoped<IAdminTourContentService, AdminTourContentService>();
 builder.Services.AddScoped<ITourGuideService, TourGuideService>();
 builder.Services.AddScoped<IAdminTourGuideService, AdminTourGuideService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAiService, AiService>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
-
+builder.Services.AddHostedService<OrderWorker>();
 var app = builder.Build();
 
 app.UseInitializeDatabase();
@@ -154,7 +161,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // app.UseStaticFiles();
-app.UseRouting();
+// app.UseRouting();
 app.UseCors(CORS);
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthentication();
