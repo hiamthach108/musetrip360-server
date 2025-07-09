@@ -169,6 +169,7 @@ app.UseAuthorization();
 app.UseHttpsRedirection();
 app.UseWebSockets();
 app.MapHub<ChatHub>("/chat").RequireCors(CORS);
+app.MapHub<SignalingHub>("/signaling");
 app.MapControllers();
 
 app.Run();
