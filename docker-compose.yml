@@ -230,7 +230,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "5000:5000"
     env_file:
       - .env
       
@@ -244,7 +244,7 @@ services:
       elastic:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/ping"]
       interval: 30s
       timeout: 10s
       retries: 5

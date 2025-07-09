@@ -20,7 +20,7 @@ docker-build:
 	docker build -t musetrip360_server -f Dockerfile .
 
 docker-run:
-	docker run -p 8000:8000 musetrip360_server
+	docker run -p 5000:5000 musetrip360_server
 
 # Docker Compose Commands - Full Stack Deployment
 deploy:
@@ -33,7 +33,7 @@ deploy:
 		docker-compose up --build -d; \
 	fi
 	@echo "✅ Deployment complete!"
-	@echo "🌐 API Server: http://localhost:8000"
+	@echo "🌐 API Server: http://localhost:5000"
 
 deploy-dev:
 	@echo "🔧 Starting development environment..."

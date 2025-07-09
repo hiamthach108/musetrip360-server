@@ -18,7 +18,7 @@ RUN addgroup --system --gid 1001 dotnetgroup && \
     adduser --system --uid 1001 --ingroup dotnetgroup dotnetuser
 
 # Set environment
-ENV ASPNETCORE_URLS=http://+:8000
+ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Install curl for health checks
@@ -27,7 +27,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8000
+EXPOSE 5000
 
 # Copy published app
 COPY --from=build-env /App/out .

@@ -6,7 +6,7 @@
 ```bash
 make deploy
 ```
-This will start all services in detached mode. Access your API at: http://localhost:8000
+This will start all services in detached mode. Access your API at: http://localhost:5000
 
 ### 2. View Real-time Logs
 ```bash
@@ -101,7 +101,7 @@ make deploy
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **API Server** | http://localhost:8000 | - |
+| **API Server** | http://localhost:5000 | - |
 | **Kibana** | http://localhost:5601 | `kibana_admin` / `musetrip360_admin` |
 | **Elasticsearch** | http://localhost:9200 | `elastic` / `musetrip360_elastic` |
 | **RabbitMQ Management** | http://localhost:15672 | `user` / `password` |
