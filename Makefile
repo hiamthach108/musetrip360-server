@@ -27,10 +27,10 @@ deploy:
 	@echo "🚀 Deploying MuseTrip360 full stack..."
 	@if [ -f .env ]; then \
 		echo "✅ Loading environment variables from .env"; \
-		docker-compose --env-file .env up --build -d; \
+		docker compose up --build -d; \
 	else \
 		echo "⚠️  No .env file found, using defaults from env.template"; \
-		docker-compose up --build -d; \
+		docker compose up --build -d; \
 	fi
 	@echo "✅ Deployment complete!"
 	@echo "🌐 API Server: http://localhost:5000"
@@ -39,75 +39,75 @@ deploy-dev:
 	@echo "🔧 Starting development environment..."
 	@if [ -f .env ]; then \
 		echo "✅ Loading environment variables from .env"; \
-		docker-compose --env-file .env up --build; \
+		docker compose up --build; \
 	else \
 		echo "⚠️  No .env file found, using defaults from env.template"; \
-		docker-compose up --build; \
+		docker compose up --build; \
 	fi
 	
 start-stack:
 	@echo "▶️  Starting existing containers..."
-	@if [ -f .env ]; then docker-compose --env-file .env start; else docker-compose start; fi
+	@if [ -f .env ]; then docker compose start; else docker compose start; fi
 
 stop-stack:
 	@echo "⏸️  Stopping containers..."
-	@if [ -f .env ]; then docker-compose --env-file .env stop; else docker-compose stop; fi
+	@if [ -f .env ]; then docker compose stop; else docker compose stop; fi
 
 restart-stack:
 	@echo "🔄 Restarting containers..."
-	@if [ -f .env ]; then docker-compose --env-file .env restart; else docker-compose restart; fi
+	@if [ -f .env ]; then docker compose restart; else docker compose restart; fi
 
 down:
 	@echo "🛑 Stopping and removing containers..."
-	@if [ -f .env ]; then docker-compose --env-file .env down; else docker-compose down; fi
+	@if [ -f .env ]; then docker compose down; else docker compose down; fi
 
 down-volumes:
 	@echo "🗑️  Stopping containers and removing volumes..."
-	@if [ -f .env ]; then docker-compose --env-file .env down -v; else docker-compose down -v; fi
+	@if [ -f .env ]; then docker compose down -v; else docker compose down -v; fi
 	@echo "⚠️  All data has been removed!"
 
 # Logs and Monitoring
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-api:
-	docker-compose logs -f musetrip360-api
+	docker compose logs -f musetrip360-api
 
 logs-db:
-	docker-compose logs -f postgres
+	docker compose logs -f postgres
 
 logs-redis:
-	docker-compose logs -f redis
+	docker compose logs -f redis
 
 logs-elastic:
-	docker-compose logs -f elastic
+	docker compose logs -f elastic
 
 # Status and Health
 status:
 	@echo "📊 Container Status:"
-	docker-compose ps
+	docker compose ps
 
 health:
 	@echo "🏥 Health Check Status:"
-	docker-compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+	docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 
 # Database Operations (requires running containers)
 db-migrate:
 	@echo "🔄 Running database migrations in container..."
-	docker-compose exec musetrip360-api dotnet ef database update
+	docker compose exec musetrip360-api dotnet ef database update
 
 db-seed:
 	@echo "🌱 Seeding database..."
-	docker-compose exec musetrip360-api dotnet run --seed
+	docker compose exec musetrip360-api dotnet run --seed
 
 # Development Helpers
 shell-api:
 	@echo "🐚 Entering API container shell..."
-	docker-compose exec musetrip360-api /bin/bash
+	docker compose exec musetrip360-api /bin/bash
 
 shell-db:
 	@echo "🐚 Entering PostgreSQL container..."
-	docker-compose exec postgres psql -U postgres -d musetrip360db
+	docker compose exec postgres psql -U postgres -d musetrip360db
 
 # Cleanup Commands
 clean:
@@ -127,19 +127,19 @@ prod-deploy:
 		echo "📝 Please create .env file with production configuration"; \
 		exit 1; \
 	fi
-	docker-compose -f docker-compose.yml up --build -d
+	docker compose -f docker compose.yml up --build -d
 	@echo "✅ Production deployment complete!"
 
 prod-update:
 	@echo "📦 Updating production containers..."
-	docker-compose pull
-	docker-compose up --build -d --force-recreate
+	docker compose pull
+	docker compose up --build -d --force-recreate
 	@echo "✅ Production update complete!"
 
 # Backup and Restore
 backup-db:
 	@echo "💾 Creating database backup..."
-	docker-compose exec postgres pg_dump -U postgres musetrip360db > backup_$(shell date +%Y%m%d_%H%M%S).sql
+	docker compose exec postgres pg_dump -U postgres musetrip360db > backup_$(shell date +%Y%m%d_%H%M%S).sql
 	@echo "✅ Database backup created!"
 
 restore-db:
@@ -148,7 +148,7 @@ restore-db:
 		echo "❌ Error: Please specify backup file with 'make restore-db file=backup_file.sql'"; \
 		exit 1; \
 	fi
-	docker-compose exec -T postgres psql -U postgres -d musetrip360db < $(file)
+	docker compose exec -T postgres psql -U postgres -d musetrip360db < $(file)
 	@echo "✅ Database restored!"
 
 # Help
