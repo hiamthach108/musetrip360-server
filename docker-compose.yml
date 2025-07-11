@@ -4,15 +4,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: musetrip360db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7.4.1-alpine
     environment:
-      - REDIS_PASSWORD=exeredis
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-exeredis}
     ports:
       - "6379:6379"
     volumes:
@@ -34,8 +34,8 @@ services:
   rabbitmq:
     image: rabbitmq:4.1-management
     environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-user}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-password}
     ports:
       - "5672:5672" # AMQP port
       - "15672:15672" # Management UI
@@ -52,7 +52,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=musetrip360_elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-musetrip360_elastic}
       - xpack.security.http.ssl.enabled=false
       - xpack.security.transport.ssl.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -65,7 +65,7 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD", "curl", "-u", "elastic:musetrip360_elastic", "-f", "http://localhost:9200/_cluster/health"]
+      test: ["CMD", "curl", "-u", "elastic:${ELASTIC_PASSWORD:-musetrip360_elastic}", "-f", "http://localhost:9200/_cluster/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -79,12 +79,12 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elastic:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=musetrip360_kibana
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:-musetrip360_kibana}
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
-      - XPACK_SECURITY_ENCRYPTIONKEY=dev_key_32_chars_long_for_security
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=dev_saved_objects_key_32_chars_long
-      - XPACK_REPORTING_ENCRYPTIONKEY=dev_reporting_key_32_chars_long_sec
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:-dev_key_32_chars_long_for_security}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_SAVED_OBJECTS_KEY:-dev_saved_objects_key_32_chars_long}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_KEY:-dev_reporting_key_32_chars_long_sec}
     ports:
       - "5601:5601"
     depends_on:
@@ -107,26 +107,28 @@ services:
       elastic:
         condition: service_healthy
     environment:
-      - ELASTIC_PASSWORD=musetrip360_elastic  
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-musetrip360_elastic}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD:-musetrip360_kibana}
+      - KIBANA_ADMIN_PASSWORD=${KIBANA_ADMIN_PASSWORD:-musetrip360_admin}
     command: >
       bash -c '
         echo "Waiting for Elasticsearch to be ready..."
-        until curl -s -u elastic:musetrip360_elastic http://elastic:9200/_cluster/health | grep -q "yellow\|green"; do
+        until curl -s -u elastic:${ELASTIC_PASSWORD} http://elastic:9200/_cluster/health | grep -q "yellow\|green"; do
           sleep 5
         done
         
         echo "Setting up kibana_system user password..."
-        curl -X POST -u elastic:musetrip360_elastic \
+        curl -X POST -u elastic:${ELASTIC_PASSWORD} \
           "http://elastic:9200/_security/user/kibana_system/_password" \
           -H "Content-Type: application/json" \
-          -d "{\"password\": \"musetrip360_kibana\"}" || true
+          -d "{\"password\": \"${KIBANA_PASSWORD}\"}" || true
         
         echo "Creating admin user for Kibana access..."
-        curl -X POST -u elastic:musetrip360_elastic \
+        curl -X POST -u elastic:${ELASTIC_PASSWORD} \
           "http://elastic:9200/_security/user/kibana_admin" \
           -H "Content-Type: application/json" \
           -d "{
-            \"password\": \"musetrip360_admin\",
+            \"password\": \"${KIBANA_ADMIN_PASSWORD}\",
             \"roles\": [\"superuser\", \"kibana_admin\"],
             \"full_name\": \"Kibana Admin\",
             \"email\": \"admin@musetrip360.com\"
@@ -135,7 +137,7 @@ services:
         echo "Setup completed"
         echo "You can now login to Kibana with:"
         echo "Username: kibana_admin"
-        echo "Password: musetrip360_admin"
+        echo "Password: ${KIBANA_ADMIN_PASSWORD}"
       '
     networks:
       - elastic
@@ -145,7 +147,7 @@ services:
     environment:
       - xpack.monitoring.enabled=false
       - ELASTIC_USER=elastic
-      - ELASTIC_PASSWORD=musetrip360_elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-musetrip360_elastic}
       - ELASTIC_HOSTS=http://elastic:9200
       - LS_JAVA_OPTS=-Xmx512m -Xms512m
     ports:
@@ -193,7 +195,7 @@ services:
           mutate {
             add_field => { 
               "application" => "musetrip360-api"
-              "environment" => "development"
+              "environment" => "${ASPNETCORE_ENVIRONMENT:-development}"
             }
           }
         }
@@ -203,7 +205,7 @@ services:
         elasticsearch {
           hosts => ["http://elastic:9200"]
           user => "elastic"
-          password => "musetrip360_elastic"
+          password => "${ELASTIC_PASSWORD}"
           index => "musetrip360-logs-%{+YYYY.MM.dd}"
         }
         stdout {
@@ -233,6 +235,35 @@ services:
       - "5000:5000"
     env_file:
       - .env
+    environment:
+      # .NET Core Configuration overrides
+      - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=${POSTGRES_DB:-musetrip360db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-123456};CommandTimeout=20;Timeout=15;
+      - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD:-exeredis},abortConnect=false
+      - ConnectionStrings__ElasticsearchConnection=http://elastic:9200
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-user}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-password}
+      - RabbitMQ__Port=5672
+      - RabbitMQ__VirtualHost=/
+      - Elasticsearch__Username=elastic
+      - Elasticsearch__Password=${ELASTIC_PASSWORD:-musetrip360_elastic}
+      - Elasticsearch__DefaultIndex=${ELASTIC_DEFAULT_INDEX:-musetrip360}
+      - Elasticsearch__NumberOfShards=${ELASTIC_SHARDS:-1}
+      - Elasticsearch__NumberOfReplicas=${ELASTIC_REPLICAS:-0}
+      - Elasticsearch__ConnectionString=http://elastic:9200
+      - GoogleClientId=${GOOGLE_CLIENT_ID:-google-client-id}
+      - GoogleClientSecret=${GOOGLE_CLIENT_SECRET:-google-client-secret}
+      - SMTP__Host=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP__Port=${SMTP_PORT:-587}
+      - SMTP__EnableSSL=${SMTP_ENABLE_SSL:-true}
+      - SMTP__Email=${SMTP_EMAIL:-musetrip360-mail}
+      - SMTP__Password=${SMTP_PASSWORD:-musetrip360-password}
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+      - PayOS__ClientId=${PAYOS_CLIENT_ID:-}
+      - PayOS__ApiKey=${PAYOS_API_KEY:-}
+      - PayOS__ChecksumKey=${PAYOS_CHECKSUM_KEY:-}
       
     depends_on:
       postgres:
