@@ -22,11 +22,6 @@ Thumbs.db
 README.md
 *.md
 
-# Environment files
-.env
-.env.*
-!.env.example
-
 # Docker files (avoid recursion)
 Dockerfile*
 docker-compose*
