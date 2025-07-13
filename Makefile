@@ -35,6 +35,18 @@ deploy:
 	@echo "✅ Deployment complete!"
 	@echo "🌐 API Server: http://localhost:5000"
 
+# Rebuild only the API server container
+rebuild-api:
+	@echo "🔄 Rebuilding MuseTrip360 API server..."
+	@if [ -f .env ]; then \
+		docker compose --env-file .env build --no-cache musetrip360-api; \
+		docker compose --env-file .env up -d musetrip360-api; \
+	else \
+		docker compose --env-file env.template build --no-cache musetrip360-api; \
+		docker compose --env-file env.template up -d musetrip360-api; \
+	fi
+	@echo "✅ API server rebuilt and restarted!"
+
 deploy-dev:
 	@echo "🔧 Starting development environment..."
 	@if [ -f .env ]; then \
@@ -176,6 +188,7 @@ help:
 	@echo "🚀 Docker Compose - Full Stack:"
 	@echo "  deploy         - Deploy full stack (detached mode)"
 	@echo "  deploy-dev     - Deploy full stack (interactive mode)"
+	@echo "  rebuild-api    - Rebuild only API server container"
 	@echo "  start-stack    - Start existing containers"
 	@echo "  stop-stack     - Stop containers (keep data)"
 	@echo "  restart-stack  - Restart all containers"
@@ -205,7 +218,7 @@ help:
 	@echo "  help           - Show this help message"
 
 .PHONY: setup debug start build test new-migration migration docker-build docker-run \
-        deploy deploy-dev start-stack stop-stack restart-stack down down-volumes \
+        deploy deploy-dev rebuild-api start-stack stop-stack restart-stack down down-volumes \
         logs logs-api logs-db logs-redis logs-elastic status health \
         db-migrate db-seed shell-api shell-db clean clean-all \
         prod-deploy prod-update backup-db restore-db help
