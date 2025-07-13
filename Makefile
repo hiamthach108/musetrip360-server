@@ -27,10 +27,10 @@ deploy:
 	@echo "🚀 Deploying MuseTrip360 full stack..."
 	@if [ -f .env ]; then \
 		echo "✅ Loading environment variables from .env"; \
-		docker compose up --build -d; \
+		docker compose --env-file .env up --build -d; \
 	else \
 		echo "⚠️  No .env file found, using defaults from env.template"; \
-		docker compose up --build -d; \
+		docker compose --env-file env.template up --build -d; \
 	fi
 	@echo "✅ Deployment complete!"
 	@echo "🌐 API Server: http://localhost:5000"
