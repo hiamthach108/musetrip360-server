@@ -78,6 +78,40 @@ down-volumes:
 	@if [ -f .env ]; then docker compose down -v; else docker compose down -v; fi
 	@echo "⚠️  All data has been removed!"
 
+# Individual Service Management
+restart-redis:
+	@echo "🔄 Restarting Redis container..."
+	@if [ -f .env ]; then \
+		docker compose --env-file .env stop redis; \
+		docker compose --env-file .env up -d redis; \
+	else \
+		docker compose --env-file env.template stop redis; \
+		docker compose --env-file env.template up -d redis; \
+	fi
+	@echo "✅ Redis restarted!"
+
+restart-postgres:
+	@echo "🔄 Restarting PostgreSQL container..."
+	@if [ -f .env ]; then \
+		docker compose --env-file .env stop postgres; \
+		docker compose --env-file .env up -d postgres; \
+	else \
+		docker compose --env-file env.template stop postgres; \
+		docker compose --env-file env.template up -d postgres; \
+	fi
+	@echo "✅ PostgreSQL restarted!"
+
+restart-elastic:
+	@echo "🔄 Restarting Elasticsearch container..."
+	@if [ -f .env ]; then \
+		docker compose --env-file .env stop elastic; \
+		docker compose --env-file .env up -d elastic; \
+	else \
+		docker compose --env-file env.template stop elastic; \
+		docker compose --env-file env.template up -d elastic; \
+	fi
+	@echo "✅ Elasticsearch restarted!"
+
 # Logs and Monitoring
 logs:
 	docker compose logs -f
@@ -195,6 +229,11 @@ help:
 	@echo "  down           - Stop and remove containers"
 	@echo "  down-volumes   - Stop containers and remove all data"
 	@echo ""
+	@echo "🔧 Individual Services:"
+	@echo "  restart-redis  - Restart Redis container only"
+	@echo "  restart-postgres - Restart PostgreSQL container only"
+	@echo "  restart-elastic - Restart Elasticsearch container only"
+	@echo ""
 	@echo "📊 Monitoring:"
 	@echo "  logs           - Show all container logs"
 	@echo "  logs-api       - Show API container logs"
@@ -219,6 +258,7 @@ help:
 
 .PHONY: setup debug start build test new-migration migration docker-build docker-run \
         deploy deploy-dev rebuild-api start-stack stop-stack restart-stack down down-volumes \
+        restart-redis restart-postgres restart-elastic \
         logs logs-api logs-db logs-redis logs-elastic status health \
         db-migrate db-seed shell-api shell-db clean clean-all \
         prod-deploy prod-update backup-db restore-db help
