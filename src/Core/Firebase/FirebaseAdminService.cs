@@ -17,8 +17,40 @@ public class FirebaseAdminService : IFirebaseAdminService
   {
     _app = FirebaseApp.Create(new AppOptions
     {
-      Credential = GoogleCredential.FromJson(configuration["FirebaseToken"])
+      Credential = GetFirebaseCredential(configuration)
     });
+  }
+
+  private GoogleCredential GetFirebaseCredential(IConfiguration configuration)
+  {
+    // Check for JSON file path first
+    var jsonFilePath = configuration["Firebase:ServiceAccountKeyPath"] ?? "firebase.json";
+    if (!string.IsNullOrEmpty(jsonFilePath) && File.Exists(jsonFilePath))
+    {
+      return GoogleCredential.FromFile(jsonFilePath);
+    }
+
+    // Fallback to JSON string from configuration
+    var jsonString = configuration["FirebaseToken"];
+    if (!string.IsNullOrEmpty(jsonString))
+    {
+      return GoogleCredential.FromJson(jsonString);
+    }
+
+    // Fallback to default credentials (useful for Google Cloud environments)
+    try
+    {
+      return GoogleCredential.GetApplicationDefault();
+    }
+    catch
+    {
+      throw new InvalidOperationException(
+        "No Firebase credentials found. Please provide either:\n" +
+        "1. Firebase:ServiceAccountKeyPath pointing to a JSON file\n" +
+        "2. Firebase:ServiceAccountKey with JSON content\n" +
+        "3. Set up Application Default Credentials"
+      );
+    }
   }
 
   public async Task<FirebaseToken> VerifyIdTokenAsync(string idToken)

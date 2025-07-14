@@ -1,0 +1,58 @@
+# Build artifacts
+bin/
+obj/
+out/
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Node modules (if any)
+node_modules/
+
+# Test results
+TestResults/
+coverage/
+
+# Memory dumps
+*.dmp
+
+# Cache directories
+.cache/
+.temp/
+
+# Build tools
+.dotnet/
+.nuget/
+
+# Database files
+*.db
+*.sqlite
+
+# Temporary files
+tmp/
+temp/ 
