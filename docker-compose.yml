@@ -223,7 +223,28 @@ services:
     networks:
       - default
       - elastic
+  turnserver:
+    image: coturn/coturn:latest
+    container_name: turnserver
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - TURN_USER=webrtc
+      - TURN_PASSWORD=supersecret
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf
+    command: ["turnserver", "-c", "/etc/coturn/turnserver.conf", "-v"]
 
+  ion-sfu:
+    image: pionwebrtc/ion-sfu:latest
+    container_name: ion-sfu
+    restart: unless-stopped
+    ports:
+      - "7000:7000"             # WebSocket
+    environment:
+      - ION_LOG_LEVEL=debug
+    depends_on:
+      - turnserver
 volumes:
   postgres_data:
   redis_data:
