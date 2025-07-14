@@ -42,7 +42,7 @@ public class SignalingHub : Hub
             var sfu = new SfuConnection(socket, _logger, _hubContext);
             // set connection id for sfu connection
             sfu.SetConnectionId(Context.ConnectionId);
-            await sfu.ConnectAsync(new Uri("ws://35.197.146.171:7000/ws"));
+            await sfu.ConnectAsync(new Uri("ws://localhost:7000/ws"));
             // add sfu connection to dictionary
             _connections.TryAdd(Context.ConnectionId, sfu);
             _logger.LogInformation($"SFU connected for {Context.ConnectionId}");
