@@ -288,22 +288,23 @@ services:
     container_name: turnserver
     restart: unless-stopped
     network_mode: "host"
-    environment:
-      - TURN_USER=webrtc
-      - TURN_PASSWORD=supersecret
     volumes:
       - ./turnserver.conf:/etc/coturn/turnserver.conf
     command: ["turnserver", "-c", "/etc/coturn/turnserver.conf", "-v"]
-  ion-sfu:
-    image: pionwebrtc/ion-sfu:latest
-    container_name: ion-sfu
-    restart: unless-stopped
-    ports:
-      - "7000:7000"             # WebSocket
+  sfu:
+    image: pionwebrtc/ion-sfu:latest-allrpc
+    restart: always
     environment:
-      - ION_LOG_LEVEL=debug
-    depends_on:
-      - turnserver
+      - gaddr=0.0.0.0:50051
+      - jaddr=0.0.0.0:7000
+    volumes:
+      - "./config.toml:/configs/sfu.toml"
+    ports:
+      - 7000:7000
+      - 50051:50051
+      - 5000-5200:5000-5200/udp
+    networks:
+      - default
 volumes:
   postgres_data:
   redis_data:
