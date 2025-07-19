@@ -68,13 +68,14 @@ public class EventController : ControllerBase
     /// Get all events for a specific museum
     /// </summary>
     /// <param name="museumId">The unique identifier of the museum</param>
+    /// <param name="query">Query parameters for filtering and pagination</param>
     /// <returns>A list of events belonging to the museum</returns>
     /// <response code="200">Returns the list of events</response>
     /// <response code="404">Museum not found</response>
     [HttpGet("/api/v1/museums/{museumId}/events")]
-    public async Task<IActionResult> GetByMuseumId(Guid museumId)
+    public async Task<IActionResult> GetByMuseumId(Guid museumId, [FromQuery] EventAdminQuery query)
     {
-        return await _eventService.HandleGetEventsByMuseumId(museumId);
+        return await _eventService.HandleGetEventsByMuseumId(museumId, query);
     }
 
     /// <summary>

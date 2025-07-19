@@ -66,13 +66,14 @@ public class ArtifactController : ControllerBase
     /// Get all artifacts for a specific museum
     /// </summary>
     /// <param name="museumId">The unique identifier of the museum</param>
+    /// <param name="query">Query parameters for filtering and pagination</param>
     /// <returns>A list of artifacts belonging to the museum</returns>
     /// <response code="200">Returns the list of artifacts</response>
     /// <response code="404">Museum not found</response>
     [HttpGet("/api/v1/museums/{museumId}/artifacts")]
-    public async Task<IActionResult> GetByMuseumId(Guid museumId)
+    public async Task<IActionResult> GetByMuseumId(Guid museumId, [FromQuery] ArtifactAdminQuery query)
     {
-        return await _artifactService.HandleGetByMuseumId(museumId);
+        return await _artifactService.HandleGetByMuseumId(museumId, query);
     }
 
     /// <summary>
@@ -91,7 +92,7 @@ public class ArtifactController : ControllerBase
     public async Task<IActionResult> Create(Guid museumId, ArtifactCreateDto dto)
     {
         return await _artifactService.HandleCreate(museumId, dto);
-    }   
+    }
 
     /// <summary>
     /// Update an existing artifact
@@ -139,7 +140,7 @@ public class ArtifactController : ControllerBase
     [Protected]
     [HttpPatch("{id}/activate")]
     public async Task<IActionResult> Activate(Guid id)
-    {   
+    {
         return await _artifactService.HandleActivate(id);
     }
 

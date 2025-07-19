@@ -49,6 +49,7 @@ public class TourOnlineController : ControllerBase
     /// Get all online tours for a specific museum
     /// </summary>
     /// <param name="museumId">The unique identifier of the museum</param>
+    /// <param name="query">Query parameters for filtering and pagination</param>
     /// <returns>A list of online tours for the specified museum</returns>
     /// <response code="200">Returns the list of online tours</response>
     /// <response code="401">Unauthorized - User is not authenticated</response>
@@ -56,9 +57,9 @@ public class TourOnlineController : ControllerBase
     /// <response code="404">Museum not found</response>
     [Protected]
     [HttpGet("/api/v1/museums/{museumId}/tour-onlines")]
-    public async Task<IActionResult> GetByMuseumId([FromRoute] Guid museumId)
+    public async Task<IActionResult> GetByMuseumId([FromRoute] Guid museumId, [FromQuery] TourOnlineAdminQuery query)
     {
-        return await _adminTourOnlineService.GetAllByMuseumIdAsync(museumId);
+        return await _adminTourOnlineService.GetAllByMuseumIdAsync(museumId, query);
     }
 
     /// <summary>

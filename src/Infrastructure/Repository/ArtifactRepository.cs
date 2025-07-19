@@ -9,7 +9,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
     public interface IArtifactRepository
     {
         Task<Artifact?> GetByIdAsync(Guid id);
-        Task<IEnumerable<Artifact>> GetByMuseumIdAsync(Guid museumId);
+        Task<ArtifactList> GetByMuseumIdAsync(Guid museumId, ArtifactAdminQuery query);
         Task<ArtifactList> GetAllAsync(ArtifactQuery query);
         Task<ArtifactList> GetAllAdminAsync(ArtifactAdminQuery query);
         Task AddAsync(Artifact artifact);
@@ -101,9 +101,19 @@ namespace MuseTrip360.src.Infrastructure.Repository
             }
         }
 
-        public async Task<IEnumerable<Artifact>> GetByMuseumIdAsync(Guid museumId)
+        public async Task<ArtifactList> GetByMuseumIdAsync(Guid museumId, ArtifactAdminQuery query)
         {
-            return await _context.Artifacts.Where(a => a.MuseumId == museumId).ToListAsync();
+            var queryable = _context.Artifacts
+                .Where(a => a.MuseumId == museumId)
+                .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
+                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
+            var total = queryable.Count();
+            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
+            return new ArtifactList
+            {
+                Artifacts = artifacts,
+                Total = total
+            };
         }
 
         public async Task<bool> IsMuseumExistsAsync(Guid museumId)

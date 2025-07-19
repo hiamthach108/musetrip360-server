@@ -6,7 +6,7 @@ public interface ITourContentRepository
     Task<TourContent?> GetTourContentById(Guid id);
     Task<TourContentList> GetTourContents(TourContentQuery query);
     Task<TourContentList> GetTourContentsAdmin(TourContentAdminQuery query);
-    Task<IEnumerable<TourContent>> GetTourContentsByTourOnlineId(Guid tourOnlineId);
+    Task<TourContentList> GetTourContentsByTourOnlineId(TourContentAdminQuery query, Guid tourOnlineId);
     Task CreateTourContent(TourContent tourContent);
     Task UpdateTourContent(Guid id, TourContent tourContent);
     Task DeleteTourContent(Guid id);
@@ -14,7 +14,7 @@ public interface ITourContentRepository
 }
 
 public class TourContentListWithMissingIds
-{   
+{
     public IEnumerable<TourContent> Contents { get; set; } = [];
     public bool IsAllFound { get; set; }
     public IEnumerable<Guid> MissingIds { get; set; } = [];
@@ -102,12 +102,22 @@ public class TourContentRepository : ITourContentRepository
         return new TourContentListWithMissingIds { Contents = contents, IsAllFound = tourContentIdsList.Count() == total, MissingIds = tourContentIdsList.Except(contents.Select(x => x.Id)).ToList() };
     }
 
-    public async Task<IEnumerable<TourContent>> GetTourContentsByTourOnlineId(Guid tourOnlineId)
+    public async Task<TourContentList> GetTourContentsByTourOnlineId(TourContentAdminQuery query, Guid tourOnlineId)
     {
-        return await _context.TourContents
+        var queryable = _context.TourContents
         .Where(x => x.TourId == tourOnlineId)
+        .Where(x => query.IsActive == null || x.IsActive == query.IsActive)
+        .Where(x => query.TourId == null || x.TourId == query.TourId)
+        .Where(x => query.SearchKeyword == null || x.Content.Contains(query.SearchKeyword));
+
+        var total = await queryable.CountAsync();
+
+        var contents = await queryable
         .OrderBy(x => x.ZOrder)
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
         .ToListAsync();
+        return new TourContentList { Contents = contents, Total = total };
     }
 
     public async Task UpdateTourContent(Guid id, TourContent tourContent)

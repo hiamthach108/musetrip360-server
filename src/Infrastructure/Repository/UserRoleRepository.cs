@@ -1,5 +1,6 @@
 namespace Infrastructure.Repository;
 
+using Application.DTOs.UserRole;
 using Application.Shared.Constant;
 using Database;
 using Domain.Users;
@@ -12,7 +13,14 @@ public interface IUserRoleRepository
   UserRole? GetUserRole(Guid userId, Guid roleId, string? museumId);
   IEnumerable<UserRole> GetAllAsync();
   IEnumerable<UserRole> GetAllByUserId(Guid userId);
+  UserRoleList GetListByMuseumId(UserRoleQuery query);
   bool IsSuperAdmin(Guid userId);
+}
+
+public class UserRoleList
+{
+  public List<UserRole> UserRoles { get; set; } = new List<UserRole>();
+  public int Total { get; set; }
 }
 
 public class UserRoleRepository : IUserRoleRepository
@@ -60,5 +68,31 @@ public class UserRoleRepository : IUserRoleRepository
   public bool IsSuperAdmin(Guid userId)
   {
     return _dbContext.UserRoles.Any(ur => ur.UserId == userId && ur.Role.Name == UserConst.ROLE_SUPERADMIN);
+  }
+
+  public UserRoleList GetListByMuseumId(UserRoleQuery q)
+  {
+    var query = _dbContext.UserRoles
+      .Include(ur => ur.Role)
+      .Include(ur => ur.User)
+      .Where(ur => ur.MuseumId == q.MuseumId)
+      .AsQueryable();
+
+    if (!string.IsNullOrEmpty(q.Search))
+    {
+      query = query.Where(ur => ur.User.FullName.Contains(q.Search) || ur.User.Email.Contains(q.Search));
+    }
+
+    if (q.Statuses.Count > 0)
+    {
+      query = query.Where(ur => q.Statuses.Contains(ur.User.Status));
+    }
+
+    var total = query.Count();
+    var userRoles = query.Skip((q.Page - 1) * q.PageSize)
+      .Take(q.PageSize)
+      .ToList();
+
+    return new UserRoleList { UserRoles = userRoles, Total = total };
   }
 }

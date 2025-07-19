@@ -96,36 +96,39 @@ public class TourGuideController : ControllerBase
   /// Gets all tour guides associated with a specific event
   /// </summary>
   /// <param name="eventId">The ID of the event</param>
+  /// <param name="query">Query parameters for filtering tour guides</param>
   /// <returns>List of tour guides for the specified event</returns>
   /// <response code="200">Returns the list of tour guides</response>
   [HttpGet("/api/v1/events/{eventId}/tour-guides")]
-  public async Task<IActionResult> GetByEventId(Guid eventId)
+  public async Task<IActionResult> GetByEventId(Guid eventId, [FromQuery] TourGuideQuery query)
   {
-    return await _tourGuideService.HandleGetTourGuideByEventIdAsync(eventId);
+    return await _tourGuideService.HandleGetTourGuideByEventIdAsync(eventId, query);
   }
 
   /// <summary>
   /// Gets all tour guides associated with a specific museum
   /// </summary>
   /// <param name="museumId">The ID of the museum</param>
+  /// <param name="query">Query parameters for filtering tour guides</param>
   /// <returns>List of tour guides for the specified museum</returns>
   /// <response code="200">Returns the list of tour guides</response>
   [HttpGet("/api/v1/museums/{museumId}/tour-guides")]
-  public async Task<IActionResult> GetByMuseumId(Guid museumId)
+  public async Task<IActionResult> GetByMuseumId(Guid museumId, [FromQuery] TourGuideQuery query)
   {
-    return await _tourGuideService.HandleGetTourGuideByMuseumIdAsync(museumId);
+    return await _tourGuideService.HandleGetTourGuideByMuseumIdAsync(museumId, query);
   }
 
   /// <summary>
   /// Gets all tour guides associated with a specific user
   /// </summary>
   /// <param name="userId">The ID of the user</param>
+  /// <param name="query">Query parameters for filtering tour guides</param>
   /// <returns>List of tour guides for the specified user</returns>
   /// <response code="200">Returns the list of tour guides</response>
   [HttpGet("/api/v1/users/{userId}/tour-guides")]
-  public async Task<IActionResult> GetByUserId(Guid userId)
+  public async Task<IActionResult> GetByUserId(Guid userId, [FromQuery] TourGuideQuery query)
   {
-    return await _tourGuideService.HandleGetTourGuideByUserIdAsync(userId);
+    return await _tourGuideService.HandleGetTourGuideByUserIdAsync(userId, query);
   }
 
   /// <summary>
