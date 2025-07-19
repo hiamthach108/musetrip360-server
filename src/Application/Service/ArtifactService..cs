@@ -162,7 +162,11 @@ public class ArtifactService : BaseService, IArtifactService
             // map the artifacts to the artifact dtos
             var artifactDtos = _mapper.Map<List<ArtifactDto>>(artifacts.Artifacts);
             // return the artifact dtos
-            return SuccessResp.Ok(artifactDtos);
+            return SuccessResp.Ok(new
+            {
+                List = artifactDtos,
+                Total = artifacts.Total
+            });
         }
         catch (Exception e)
         {

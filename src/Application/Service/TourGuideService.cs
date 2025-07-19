@@ -32,7 +32,11 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
 
       var tourGuide = await _tourGuideRepository.GetTourGuideByEventIdAsync(query, eventId);
       var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
-      return SuccessResp.Ok(tourGuideDtos);
+      return SuccessResp.Ok(new
+      {
+        List = tourGuideDtos,
+        Total = tourGuide.Total
+      });
     }
     catch (Exception ex)
     {
@@ -64,7 +68,11 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     {
       var tourGuide = await _tourGuideRepository.GetTourGuideByMuseumIdAsync(query, museumId);
       var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
-      return SuccessResp.Ok(tourGuideDtos);
+      return SuccessResp.Ok(new
+      {
+        List = tourGuideDtos,
+        Total = tourGuide.Total
+      });
     }
     catch (Exception ex)
     {
@@ -78,7 +86,11 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     {
       var tourGuide = await _tourGuideRepository.GetAllTourGuidesAsync(query);
       var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
-      return SuccessResp.Ok(tourGuideDtos);
+      return SuccessResp.Ok(new
+      {
+        List = tourGuideDtos,
+        Total = tourGuide.Total
+      });
     }
     catch (Exception ex)
     {
@@ -92,7 +104,11 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     {
       var tourGuide = await _tourGuideRepository.GetTourGuideByUserIdAsync(query, userId);
       var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
-      return SuccessResp.Ok(tourGuideDtos);
+      return SuccessResp.Ok(new
+      {
+        List = tourGuideDtos,
+        Total = tourGuide.Total
+      });
     }
     catch (Exception ex)
     {

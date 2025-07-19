@@ -189,7 +189,7 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
         {
             var tours = await _tourOnlineRepository.GetAllByMuseumIdAsync(museumId, query);
             var tourDtos = _mapper.Map<List<TourOnlineDto>>(tours.Tours);
-            return SuccessResp.Ok(tourDtos);
+            return SuccessResp.Ok(new { List = tourDtos, Total = tours.Total });
         }
         catch (Exception e)
         {
