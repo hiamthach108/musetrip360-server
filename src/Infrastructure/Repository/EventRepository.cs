@@ -15,7 +15,7 @@ namespace Infrastructure.Repository
         Task UpdateAsync(Guid id, Event eventItem);
         Task DeleteAsync(Guid id);
         Task<bool> IsEventExistsAsync(Guid id);
-        Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId);
+        Task<EventList> GetEventsByMuseumIdAsync(Guid museumId, EventAdminQuery query);
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
         Task<bool> IsOwner(Guid userId, Guid eventId);
     }
@@ -127,13 +127,30 @@ namespace Infrastructure.Repository
             }
         }
 
-        public async Task<IEnumerable<Event>> GetEventsByMuseumIdAsync(Guid museumId)
+        public async Task<EventList> GetEventsByMuseumIdAsync(Guid museumId, EventAdminQuery query)
         {
-            return await _context.Events.Where(e => e.MuseumId == museumId)
+            // fetch all events that match the query
+            var queryable = _context.Events
+            .Where(e => e.MuseumId == museumId)
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
+            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
+            .Where(e => query.EventType == null || e.EventType == query.EventType)
+            .Where(e => query.Status == null || e.Status == query.Status)
+            // time range available is e.Start before query end or query Start before e.End is available
+            .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
+            .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
-            .ToListAsync();
+            .Include(e => e.TourGuides);
+
+            var total = queryable.Count();
+            var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
+
+            return new EventList
+            {
+                Events = events,
+                Total = total
+            };
         }
 
         public async Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status)

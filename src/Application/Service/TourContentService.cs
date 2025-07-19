@@ -18,6 +18,7 @@ public interface IAdminTourContentService : ITourContentService
     Task<IActionResult> HandleDeleteAsync(Guid id);
     Task<IActionResult> HandleActivateAsync(Guid id);
     Task<IActionResult> HandleDeactivateAsync(Guid id);
+    Task<IActionResult> HandleGetByTourOnlineIdAsync(Guid tourOnlineId, TourContentAdminQuery query);
 }
 
 public abstract class BaseTourContentService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(dbContext, mapper, httpContextAccessor), ITourContentService
@@ -141,6 +142,20 @@ public class AdminTourContentService(MuseTrip360DbContext dbContext, IMapper map
         try
         {
             var tourContents = await _tourContentRepository.GetTourContents(query);
+            var tourContentDtos = _mapper.Map<List<TourContentDto>>(tourContents.Contents);
+            return SuccessResp.Ok(new { List = tourContentDtos, Total = tourContents.Total });
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetByTourOnlineIdAsync(Guid tourOnlineId, TourContentAdminQuery query)
+    {
+        try
+        {
+            var tourContents = await _tourContentRepository.GetTourContentsByTourOnlineId(query, tourOnlineId);
             var tourContentDtos = _mapper.Map<List<TourContentDto>>(tourContents.Contents);
             return SuccessResp.Ok(new { List = tourContentDtos, Total = tourContents.Total });
         }
