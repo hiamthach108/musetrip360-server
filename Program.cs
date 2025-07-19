@@ -138,7 +138,6 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
-builder.Services.AddScoped<IMuseumSearchService, MuseumSearchService>();
 builder.Services.AddScoped<ISearchItemService, SearchItemService>();
 
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();

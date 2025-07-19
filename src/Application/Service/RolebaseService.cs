@@ -30,6 +30,7 @@ public class RolebaseService : BaseService, IRolebaseService
   private readonly ILogger<RolebaseService> _logger;
   private readonly IRoleRepository _roleRepo;
   private readonly IPermissionRepository _permissionRepo;
+  private readonly IUserRoleRepository _userRoleRepo;
   private readonly IMapper _mapper;
 
   public RolebaseService(
@@ -41,19 +42,38 @@ public class RolebaseService : BaseService, IRolebaseService
     _logger = logger;
     _roleRepo = new RoleRepository(dbContext);
     _permissionRepo = new PermissionRepository(dbContext);
+    _userRoleRepo = new UserRoleRepository(dbContext);
     _mapper = mapper;
   }
 
   // Role Management Methods
   public async Task<IActionResult> HandleGetAllAsync(RoleQuery query)
   {
-    _logger.LogInformation("Getting all roles with query: {@Query}", query);
-    var result = _roleRepo.GetRoleList(query);
-    return SuccessResp.Ok(new
+    var payload = ExtractPayload();
+    if (payload == null)
     {
-      data = _mapper.Map<List<RoleDto>>(result.Roles),
-      total = result.Total
-    });
+      return ErrorResp.Unauthorized("Unauthorized");
+    }
+
+    _logger.LogInformation("Getting all roles with query: {@Query}", query);
+    if (_userRoleRepo.IsSuperAdmin(payload.UserId))
+    {
+      var result = _roleRepo.GetRoleList(query);
+      return SuccessResp.Ok(new
+      {
+        data = _mapper.Map<List<RoleDto>>(result.Roles),
+        total = result.Total
+      });
+    }
+    else
+    {
+      var result = _roleRepo.GetMuseumRoleList(query);
+      return SuccessResp.Ok(new
+      {
+        data = _mapper.Map<List<RoleDto>>(result.Roles),
+        total = result.Total
+      });
+    }
   }
 
   public async Task<IActionResult> HandleGetByIdAsync(Guid id)
