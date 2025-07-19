@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 public interface ITourGuideService
 {
   Task<IActionResult> HandleGetTourGuideByIdAsync(Guid id);
-  Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId);
-  Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId);
-  Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId);
+  Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId, TourGuideQuery query);
+  Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId, TourGuideQuery query);
+  Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId, TourGuideQuery query);
   Task<IActionResult> HandleGetTourGuideByQueryAsync(TourGuideQuery query);
 }
 public interface IAdminTourGuideService : ITourGuideService
@@ -25,13 +25,13 @@ public interface IAdminTourGuideService : ITourGuideService
 public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), ITourGuideService
 {
   protected readonly ITourGuideRepository _tourGuideRepository = new TourGuideRepository(context);
-  public async Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId)
+  public async Task<IActionResult> HandleGetTourGuideByEventIdAsync(Guid eventId, TourGuideQuery query)
   {
     try
     {
 
-      var tourGuide = await _tourGuideRepository.GetTourGuideByEventIdAsync(eventId);
-      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide);
+      var tourGuide = await _tourGuideRepository.GetTourGuideByEventIdAsync(query, eventId);
+      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
       return SuccessResp.Ok(tourGuideDtos);
     }
     catch (Exception ex)
@@ -58,12 +58,12 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId)
+  public async Task<IActionResult> HandleGetTourGuideByMuseumIdAsync(Guid museumId, TourGuideQuery query)
   {
     try
     {
-      var tourGuide = await _tourGuideRepository.GetTourGuideByMuseumIdAsync(museumId);
-      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide);
+      var tourGuide = await _tourGuideRepository.GetTourGuideByMuseumIdAsync(query, museumId);
+      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
       return SuccessResp.Ok(tourGuideDtos);
     }
     catch (Exception ex)
@@ -86,12 +86,12 @@ public abstract class BaseTourGuideService(MuseTrip360DbContext context, IMapper
     }
   }
 
-  public async Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId)
+  public async Task<IActionResult> HandleGetTourGuideByUserIdAsync(Guid userId, TourGuideQuery query)
   {
     try
     {
-      var tourGuide = await _tourGuideRepository.GetTourGuideByUserIdAsync(userId);
-      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide);
+      var tourGuide = await _tourGuideRepository.GetTourGuideByUserIdAsync(query, userId);
+      var tourGuideDtos = _mapper.Map<IEnumerable<TourGuideDto>>(tourGuide.TourGuides);
       return SuccessResp.Ok(tourGuideDtos);
     }
     catch (Exception ex)

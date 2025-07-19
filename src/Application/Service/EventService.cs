@@ -15,7 +15,7 @@ public interface IEventService
 {
     Task<IActionResult> HandleGetEventById(Guid id);
     Task<IActionResult> HandleGetAll(EventQuery query);
-    Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId);
+    Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId, EventAdminQuery query);
     Task<bool> IsOwner(Guid userId, Guid eventId);
 }
 
@@ -80,13 +80,13 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IMapper map
         }
     }
 
-    public virtual async Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId)
+    public virtual async Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId, EventAdminQuery query)
     {
         try
         {
-            var events = await _eventRepository.GetEventsByMuseumIdAsync(museumId);
-            var eventDtos = _mapper.Map<List<EventDto>>(events);
-            return SuccessResp.Ok(eventDtos);
+            var events = await _eventRepository.GetEventsByMuseumIdAsync(museumId, query);
+            var eventDtos = _mapper.Map<List<EventDto>>(events.Events);
+            return SuccessResp.Ok(new { List = eventDtos, Total = events.Total });
         }
         catch (Exception e)
         {
@@ -412,7 +412,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
-            }   
+            }
 
             var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)

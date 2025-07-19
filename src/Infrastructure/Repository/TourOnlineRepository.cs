@@ -7,7 +7,7 @@ public interface ITourOnlineRepository
     Task<TourOnline?> GetByIdAsync(Guid id);
     Task<TourOnlineList> GetAllAsync(TourOnlineQuery query);
     Task<TourOnlineList> GetAllAdminAsync(TourOnlineAdminQuery query);
-    Task<IEnumerable<TourOnline>> GetAllByMuseumIdAsync(Guid museumId);
+    Task<TourOnlineList> GetAllByMuseumIdAsync(Guid museumId, TourOnlineAdminQuery query);
     Task CreateAsync(TourOnline tourOnline);
     Task UpdateAsync(TourOnline tourOnline);
     Task DeleteAsync(Guid id);
@@ -87,12 +87,21 @@ public class TourOnlineRepository : ITourOnlineRepository
         return new TourOnlineList { Tours = tours, Total = total };
     }
 
-    public async Task<IEnumerable<TourOnline>> GetAllByMuseumIdAsync(Guid museumId)
+    public async Task<TourOnlineList> GetAllByMuseumIdAsync(Guid museumId, TourOnlineAdminQuery query)
     {
-        return await _context.TourOnlines
+        var queryable = _context.TourOnlines
+        .Where(t => query.IsActive == null || t.IsActive == query.IsActive)
         .Where(t => t.MuseumId == museumId)
-        .Include(t => t.TourContents)
+        .Where(t => query.SearchKeyword == null || t.Name.Contains(query.SearchKeyword) || t.Description.Contains(query.SearchKeyword))
+        .Include(t => t.TourContents);
+        var total = await queryable.CountAsync();
+
+        var tours = await queryable
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
         .ToListAsync();
+
+        return new TourOnlineList { Tours = tours, Total = total };
     }
 
     public async Task<TourOnline?> GetByIdAsync(Guid id)
