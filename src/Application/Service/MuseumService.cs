@@ -54,14 +54,12 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IUserRoleRepository _userRoleRepository;
   private readonly IRoleRepository _roleRepository;
   private readonly IUserService _userSvc;
-  private readonly IMuseumSearchService _museumSearchService;
   private readonly ISearchItemService _searchItemService;
   public MuseumService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
     IUserService userSvc,
-    IMuseumSearchService museumSearchService,
     ISearchItemService searchItemService
   )
     : base(dbContext, mapper, httpCtx)
@@ -72,7 +70,6 @@ public class MuseumService : BaseService, IMuseumService
     _userRoleRepository = new UserRoleRepository(dbContext);
     _roleRepository = new RoleRepository(dbContext);
     _userSvc = userSvc;
-    _museumSearchService = museumSearchService;
     _searchItemService = searchItemService;
   }
 
@@ -170,8 +167,21 @@ public class MuseumService : BaseService, IMuseumService
     _mapper.Map(dto, museum);
     await _museumRepository.UpdateAsync(id, museum);
 
-    // Update in Elasticsearch
-    await _museumSearchService.IndexMuseumAsync(id);
+    // Update in Elasticsearch in separate thread
+    if (museum.Status != MuseumStatusEnum.Active)
+    {
+      _ = Task.Run(async () =>
+      {
+        await _searchItemService.DeleteItemFromIndexAsync(id);
+      });
+    }
+    else
+    {
+      _ = Task.Run(async () =>
+      {
+        await _searchItemService.IndexMuseumAsync(id);
+      });
+    }
 
     var museumDto = _mapper.Map<MuseumDto>(museum);
     return SuccessResp.Ok(museumDto);
@@ -187,7 +197,10 @@ public class MuseumService : BaseService, IMuseumService
     await _museumRepository.DeleteAsync(museum);
 
     // Remove from Elasticsearch
-    await _museumSearchService.DeleteMuseumFromIndexAsync(id);
+    _ = Task.Run(async () =>
+    {
+      await _searchItemService.DeleteItemFromIndexAsync(id);
+    });
 
     return SuccessResp.Ok("Museum deleted successfully");
   }

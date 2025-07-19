@@ -42,6 +42,8 @@ public class MuseumProfile : Profile
     CreateMap<MuseumCreateDto, Museum>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
     CreateMap<Museum, MuseumUpdateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-    CreateMap<MuseumUpdateDto, Museum>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<MuseumUpdateDto, Museum>()
+      .ForMember(dest => dest.Status, opt => opt.PreCondition(src => src.Status.HasValue))
+      .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
   }
 }
