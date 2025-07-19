@@ -109,4 +109,13 @@ public class UserController : ControllerBase
 
     return await _service.HandleDeleteUserRole(req);
   }
+
+  [Protected]
+  [HttpGet("museum/{museumId}")]
+  public async Task<IActionResult> GetMuseumUser([FromQuery] UserRoleQuery query, [FromRoute] string museumId)
+  {
+    _logger.LogInformation("Get museum user request received");
+
+    return await _service.HandleGetMuseumUser(query, museumId);
+  }
 }
