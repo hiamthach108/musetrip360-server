@@ -28,6 +28,7 @@ public interface IUserService
   Task<IActionResult> HandleGetUserRoles(Guid userId);
   Task<IActionResult> HandleAddUserRole(UserRoleFormDto body);
   Task<IActionResult> HandleDeleteUserRole(UserRoleFormDto body);
+  Task<IActionResult> HandleGetMuseumUser(UserRoleQuery query, string museumId);
 
 
   Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId);
@@ -381,5 +382,31 @@ public class UserService : BaseService, IUserService
     }
 
     return false;
+  }
+
+  public async Task<IActionResult> HandleGetMuseumUser(UserRoleQuery query, string museumId)
+  {
+    if (!Guid.TryParse(museumId, out var museumIdGuid))
+    {
+      return ErrorResp.BadRequest("Invalid museum id");
+    }
+    var museum = _museumRepo.GetById(museumIdGuid);
+    if (museum == null)
+    {
+      return ErrorResp.NotFound("Museum not found");
+    }
+    query.MuseumId = museumId;
+
+    var resp = _userRoleRepo.GetListByMuseumId(query);
+
+    var result = new
+    {
+      Data = _mapper.Map<IEnumerable<UserRoleDto>>(resp.UserRoles),
+      Total = resp.Total,
+      Page = query.Page,
+      PageSize = query.PageSize
+    };
+
+    return SuccessResp.Ok(result);
   }
 }

@@ -15,7 +15,7 @@ public interface IArtifactService
     Task<IActionResult> HandleGetAll(ArtifactQuery query);
     Task<IActionResult> HandleGetAllAdmin(ArtifactAdminQuery query);
     Task<IActionResult> HandleGetById(Guid id);
-    Task<IActionResult> HandleGetByMuseumId(Guid museumId);
+    Task<IActionResult> HandleGetByMuseumId(Guid museumId, ArtifactAdminQuery query);
     Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto);
     Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto);
     Task<IActionResult> HandleDelete(Guid id);
@@ -129,7 +129,7 @@ public class ArtifactService : BaseService, IArtifactService
         catch (Exception e)
         {
             return ErrorResp.InternalServerError(e.Message);
-        }   
+        }
     }
 
     public async Task<IActionResult> HandleGetById(Guid id)
@@ -141,7 +141,7 @@ public class ArtifactService : BaseService, IArtifactService
             if (artifact == null)
             {
                 return ErrorResp.NotFound("Artifact not found");
-            }   
+            }
             // map the artifact to the artifact dto
             var artifactDto = _mapper.Map<ArtifactDto>(artifact);
             // return the artifact dto
@@ -153,16 +153,20 @@ public class ArtifactService : BaseService, IArtifactService
         }
     }
 
-    public async Task<IActionResult> HandleGetByMuseumId(Guid museumId)
+    public async Task<IActionResult> HandleGetByMuseumId(Guid museumId, ArtifactAdminQuery query)
     {
         try
         {
             // get the artifacts
-            var artifacts = await _artifactRepository.GetByMuseumIdAsync(museumId);
+            var artifacts = await _artifactRepository.GetByMuseumIdAsync(museumId, query);
             // map the artifacts to the artifact dtos
-            var artifactDtos = _mapper.Map<List<ArtifactDto>>(artifacts);
+            var artifactDtos = _mapper.Map<List<ArtifactDto>>(artifacts.Artifacts);
             // return the artifact dtos
-            return SuccessResp.Ok(artifactDtos);
+            return SuccessResp.Ok(new
+            {
+                List = artifactDtos,
+                Total = artifacts.Total
+            });
         }
         catch (Exception e)
         {
@@ -170,7 +174,7 @@ public class ArtifactService : BaseService, IArtifactService
         }
     }
 
-     public async Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto)
+    public async Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto)
     {
         try
         {

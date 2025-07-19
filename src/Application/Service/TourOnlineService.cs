@@ -20,7 +20,7 @@ public interface IAdminTourOnlineService : ITourOnlineService
     Task<IActionResult> ActivateAsync(Guid id);
     Task<IActionResult> DeactivateAsync(Guid id);
     Task<IActionResult> GetAllAdminAsync(TourOnlineAdminQuery query);
-    Task<IActionResult> GetAllByMuseumIdAsync(Guid museumId);
+    Task<IActionResult> GetAllByMuseumIdAsync(Guid museumId, TourOnlineAdminQuery query);
     Task<IActionResult> AddTourContentToTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds);
     Task<IActionResult> RemoveTourContentFromTourAsync(Guid tourOnlineId, IEnumerable<Guid> tourContentIds);
 }
@@ -183,13 +183,13 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
         }
     }
 
-    public async Task<IActionResult> GetAllByMuseumIdAsync(Guid museumId)
+    public async Task<IActionResult> GetAllByMuseumIdAsync(Guid museumId, TourOnlineAdminQuery query)
     {
         try
         {
-            var tours = await _tourOnlineRepository.GetAllByMuseumIdAsync(museumId);
-            var tourDtos = _mapper.Map<List<TourOnlineDto>>(tours);
-            return SuccessResp.Ok(tourDtos);
+            var tours = await _tourOnlineRepository.GetAllByMuseumIdAsync(museumId, query);
+            var tourDtos = _mapper.Map<List<TourOnlineDto>>(tours.Tours);
+            return SuccessResp.Ok(new { List = tourDtos, Total = tours.Total });
         }
         catch (Exception e)
         {

@@ -8,9 +8,9 @@ public interface ITourGuideRepository
 {
   Task<TourGuideList> GetAllTourGuidesAsync(TourGuideQuery query);
   Task<TourGuide?> GetTourGuideByIdAsync(Guid id);
-  Task<IEnumerable<TourGuide>> GetTourGuideByUserIdAsync(Guid userId);
-  Task<IEnumerable<TourGuide>> GetTourGuideByMuseumIdAsync(Guid museumId);
-  Task<IEnumerable<TourGuide>> GetTourGuideByEventIdAsync(Guid eventId);
+  Task<TourGuideList> GetTourGuideByUserIdAsync(TourGuideQuery query, Guid userId);
+  Task<TourGuideList> GetTourGuideByMuseumIdAsync(TourGuideQuery query, Guid museumId);
+  Task<TourGuideList> GetTourGuideByEventIdAsync(TourGuideQuery query, Guid eventId);
   Task AddTourGuideAsync(TourGuide tourGuide);
   Task UpdateTourGuideAsync(TourGuide tourGuide);
   Task DeleteTourGuideAsync(Guid id);
@@ -101,19 +101,49 @@ public class TourGuideRepository : ITourGuideRepository
     return new TourGuideListWithMissingIds { TourGuides = tourGuides, IsAllFound = allFound, MissingIds = missingIds };
   }
 
-  public async Task<IEnumerable<TourGuide>> GetTourGuideByMuseumIdAsync(Guid museumId)
+  public async Task<TourGuideList> GetTourGuideByMuseumIdAsync(TourGuideQuery query, Guid museumId)
   {
-    return await _context.TourGuides.Where(t => t.MuseumId == museumId).ToListAsync();
+    var queryable = _context.TourGuides
+    .Where(t => query.Name == null || t.Name.Contains(query.Name))
+    .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
+    .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
+    .Where(t => t.MuseumId == museumId);
+    var total = await queryable.CountAsync();
+    var tourGuides = await queryable
+    .Skip((query.Page - 1) * query.PageSize)
+    .Take(query.PageSize)
+    .ToListAsync();
+    return new TourGuideList { TourGuides = tourGuides, Total = total };
   }
 
-  public async Task<IEnumerable<TourGuide>> GetTourGuideByEventIdAsync(Guid eventId)
+  public async Task<TourGuideList> GetTourGuideByEventIdAsync(TourGuideQuery query, Guid eventId)
   {
-    return await _context.TourGuides.Where(t => t.Events.Any(e => e.Id == eventId)).ToListAsync();
+    var queryable = _context.TourGuides
+    .Where(t => query.Name == null || t.Name.Contains(query.Name))
+    .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
+    .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
+    .Where(t => t.Events.Any(e => e.Id == eventId));
+    var total = await queryable.CountAsync();
+    var tourGuides = await queryable
+    .Skip((query.Page - 1) * query.PageSize)
+    .Take(query.PageSize)
+    .ToListAsync();
+    return new TourGuideList { TourGuides = tourGuides, Total = total };
   }
 
-  public async Task<IEnumerable<TourGuide>> GetTourGuideByUserIdAsync(Guid userId)
+  public async Task<TourGuideList> GetTourGuideByUserIdAsync(TourGuideQuery query, Guid userId)
   {
-    return await _context.TourGuides.Where(t => t.UserId == userId).ToListAsync();
+    var queryable = _context.TourGuides
+    .Where(t => query.Name == null || t.Name.Contains(query.Name))
+    .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
+    .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
+    .Where(t => t.UserId == userId);
+    var total = await queryable.CountAsync();
+    var tourGuides = await queryable
+    .Skip((query.Page - 1) * query.PageSize)
+    .Take(query.PageSize)
+    .ToListAsync();
+    return new TourGuideList { TourGuides = tourGuides, Total = total };
   }
 
   public async Task<bool> IsTourGuideExistsAsync(Guid id)

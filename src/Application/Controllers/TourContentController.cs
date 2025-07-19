@@ -140,5 +140,12 @@ public class TourContentController : ControllerBase
     {
         return await _adminTourContentService.HandleDeactivateAsync(id);
     }
+
+    [Protected]
+    [HttpGet("/api/v1/tour-onlines/{tourOnlineId}/contents")]
+    public async Task<IActionResult> GetByTourOnlineId(Guid tourOnlineId, [FromQuery] TourContentAdminQuery query)
+    {
+        return await _adminTourContentService.HandleGetByTourOnlineIdAsync(tourOnlineId, query);
+    }
 }
 
