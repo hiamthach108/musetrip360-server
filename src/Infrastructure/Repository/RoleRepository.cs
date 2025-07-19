@@ -1,6 +1,7 @@
 namespace Infrastructure.Repository;
 
 using Application.DTOs.Role;
+using Application.Shared.Constant;
 using Database;
 using Domain.Rolebase;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ public interface IRoleRepository
 {
   Role? GetById(Guid id);
   RoleList GetRoleList(RoleQuery query);
+  RoleList GetMuseumRoleList(RoleQuery query);
   Task<Role> AddAsync(Role role);
   Task<Role> UpdateAsync(Guid roleId, Role role);
   Task<Role> DeleteAsync(Role role);
@@ -152,5 +154,26 @@ public class RoleRepository : IRoleRepository
 
     await _dbContext.SaveChangesAsync();
     return existingRole;
+  }
+
+  public RoleList GetMuseumRoleList(RoleQuery query)
+  {
+    string searchKeyword = query.Search ?? "";
+    int page = query.Page < 1 ? 1 : query.Page;
+    int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
+
+    var q = _dbContext.Roles
+        .Where(r => (r.Name.Contains(searchKeyword) || r.Description.Contains(searchKeyword)) && !r.Name.Equals(UserConst.ROLE_SUPERADMIN))
+        .Where(r => r.IsActive)
+        .AsQueryable();
+
+    var total = q.Count();
+
+    var roles = q
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
+        .ToList();
+
+    return new RoleList { Roles = roles, Total = total };
   }
 }
