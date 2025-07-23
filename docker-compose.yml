@@ -30,6 +30,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-exeredis}"]
 
   rabbitmq:
     image: rabbitmq:4.1-management
