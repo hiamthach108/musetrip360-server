@@ -53,7 +53,7 @@ public class MuseTrip360DbContext : DbContext
   public DbSet<OrderTour> OrderTours { get; set; }
   public DbSet<BankAccount> BankAccounts { get; set; }
   public DbSet<Payout> Payouts { get; set; }
-  public DbSet<MuseumBalance> MuseumBalances { get; set; }
+  public DbSet<MuseumWallet> MuseumWallets { get; set; }
 
   // Messaging
   public DbSet<Message> Messages { get; set; }
@@ -446,9 +446,9 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.Property(x => x.Comment).IsRequired().HasMaxLength(1000);
       e.Property(x => x.Rating).IsRequired();
-      e.Property(x => x.MuseumId).IsRequired();
+      e.Property(x => x.TargetId).IsRequired();
+      e.Property(x => x.Type).HasConversion<string>().HasDefaultValue(DataEntityType.Museum);
       e.Property(x => x.CreatedBy).IsRequired();
-      e.HasOne(x => x.Museum).WithMany(x => x.Feedbacks).HasForeignKey(x => x.MuseumId);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Feedbacks).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -527,14 +527,14 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
 
-    builder.Entity<MuseumBalance>(e =>
+    builder.Entity<MuseumWallet>(e =>
     {
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.AvailableBalance).IsRequired();
       e.Property(x => x.PendingBalance).IsRequired();
       e.Property(x => x.TotalBalance).IsRequired();
-      e.HasOne(x => x.Museum).WithMany(x => x.MuseumBalances).HasForeignKey(x => x.MuseumId);
+      e.HasOne(x => x.Museum).WithMany(x => x.MuseumWallets).HasForeignKey(x => x.MuseumId);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

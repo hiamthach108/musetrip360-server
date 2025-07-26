@@ -3,7 +3,7 @@ namespace Domain.Payment;
 using Application.Shared.Type;
 using Domain.Museums;
 
-public class MuseumBalance : BaseEntity
+public class MuseumWallet : BaseEntity
 {
   public Guid MuseumId { get; set; }
   public float AvailableBalance { get; set; }
