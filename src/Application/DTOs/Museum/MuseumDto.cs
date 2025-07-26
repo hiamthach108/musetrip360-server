@@ -5,6 +5,7 @@ using AutoMapper;
 using Domain.Museums;
 using System.Text.Json.Serialization;
 using Application.Shared.Enum;
+using System.Text.Json;
 
 public class MuseumDto
 {
@@ -21,6 +22,7 @@ public class MuseumDto
 
   [JsonConverter(typeof(JsonStringEnumConverter))]
   public MuseumStatusEnum Status { get; set; }
+  public JsonDocument? Metadata { get; set; }
 
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
