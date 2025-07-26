@@ -1,5 +1,6 @@
 namespace Domain.Tours;
 
+using Application.Shared.Enum;
 using Application.Shared.Type;
 using Domain.Events;
 using Domain.Museums;
@@ -10,6 +11,7 @@ public class TourOnline : BaseEntity
   public string Name { get; set; } = null!;
   public string Description { get; set; } = null!;
   public bool IsActive { get; set; }
+  public TourStatusEnum Status { get; set; }
   public Guid MuseumId { get; set; }
 
   public Museum Museum { get; set; } = null!;

@@ -30,8 +30,7 @@ public class Museum : BaseEntity
   public ICollection<Artifact> Artifacts { get; set; } = new List<Artifact>();
   public ICollection<TourOnline> TourOnlines { get; set; } = new List<TourOnline>();
   public ICollection<TourGuide> TourGuides { get; set; } = new List<TourGuide>();
-  public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
   public ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
   public ICollection<Payout> Payouts { get; set; } = new List<Payout>();
-  public ICollection<MuseumBalance> MuseumBalances { get; set; } = new List<MuseumBalance>();
+  public ICollection<MuseumWallet> MuseumWallets { get; set; } = new List<MuseumWallet>();
 }
