@@ -19,9 +19,10 @@ public interface IArtifactService
     Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto);
     Task<IActionResult> HandleUpdate(Guid id, ArtifactUpdateDto dto);
     Task<IActionResult> HandleDelete(Guid id);
-    // Task<IActionResult> HandleRate(Guid id, int rating);
     Task<IActionResult> HandleActivate(Guid id);
     Task<IActionResult> HandleDeactivate(Guid id);
+    Task<IActionResult> HandleGetByFilterSort(ArtifactFilterSort filterSort);
+    Task<IActionResult> HandleRate(Guid id, int rating, string comment);
 }
 
 public class ArtifactService : BaseService, IArtifactService
@@ -197,30 +198,6 @@ public class ArtifactService : BaseService, IArtifactService
         }
     }
 
-    // public async Task<IActionResult> HandleRate(Guid id, int rating)
-    // {
-    //     try
-    //     {
-    //         // check if the user is authenticated
-    //         // check if the artifact is exists
-    //         var isArtifactExists = await _artifactRepository.IsArtifactExistsAsync(id);
-    //         if (!isArtifactExists)
-    //         {
-    //             return ErrorResp.NotFound("Artifact not found");
-    //         }
-    //         // rate the artifact
-    //         var artifact = await _artifactRepository.GetByIdAsync(id);
-    //         artifact!.Rating = rating;
-    //         await _artifactRepository.UpdateAsync(id, artifact);
-    //         // return the success response
-    //         return SuccessResp.Ok("Artifact rated successfully");
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         return ErrorResp.InternalServerError(e.Message);
-    //     }
-    // }
-
     public async Task<IActionResult> HandleActivate(Guid id)
     {
         try
@@ -260,6 +237,56 @@ public class ArtifactService : BaseService, IArtifactService
             await _artifactRepository.UpdateAsync(id, artifact);
             // return the success response
             return SuccessResp.Ok("Artifact deactivated successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetByFilterSort(ArtifactFilterSort filterSort)
+    {
+        try
+        {
+            // get the artifacts
+            var artifacts = await _artifactRepository.GetArtifactByFilterSort(filterSort);
+            // map the artifacts to the artifact dtos
+            var artifactDtos = _mapper.Map<List<ArtifactDto>>(artifacts.Artifacts);
+            // return the artifact dtos
+            return SuccessResp.Ok(new
+            {
+                List = artifactDtos,
+                Total = artifacts.Total
+            });
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+    public async Task<IActionResult> HandleRate(Guid id, int rating, string comment)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            // check if the artifact is exists
+            var isArtifactExists = await _artifactRepository.IsArtifactExistsAsync(id);
+            if (!isArtifactExists)
+            {
+                return ErrorResp.NotFound("Artifact not found");
+            }
+            // rate the artifact
+            var result = await _artifactRepository.UpdateRatingArtifacts(id, rating, payload.UserId, comment);
+            if (!result)
+            {
+                return ErrorResp.BadRequest("Rating artifact failed");
+            }
+            // return the success response
+            return SuccessResp.Ok("Rating artifact successfully");
         }
         catch (Exception e)
         {
