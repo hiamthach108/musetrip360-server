@@ -187,7 +187,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
 
         public async Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort)
         {
-            var direction = filterSort.IsDescending == true ? "descending" : "ascending" ?? "descending";
+            var direction = (filterSort.IsDescending == true ? "descending" : "ascending") ?? "descending";
             var sortFields = ArtifactFilterSort.GetNonNullFields(filterSort);
             var sortString = string.Join(", ", sortFields.Select(f => $"{f} {direction}"));
 
@@ -260,10 +260,9 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 await transaction.CommitAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
                 await transaction.RollbackAsync();
-                Console.WriteLine(ex.Message);
                 return false;
             }
         }
