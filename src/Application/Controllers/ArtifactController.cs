@@ -159,4 +159,23 @@ public class ArtifactController : ControllerBase
     {
         return await _artifactService.HandleDeactivate(id);
     }
+
+    /// <summary>
+    /// Get artifacts by filter and sort
+    /// </summary>
+    /// <param name="filterSort">Filter and sort parameters</param>
+    /// <returns>A list of artifacts matching the filter and sort criteria</returns>
+    /// <response code="200">Returns the list of artifacts</response>
+    /// <response code="400">Invalid filter or sort parameters</response>
+    [HttpGet("filter-sort")]
+    public async Task<IActionResult> GetByFilterSort([FromQuery] ArtifactFilterSort filterSort)
+    {
+        return await _artifactService.HandleGetByFilterSort(filterSort);
+    }
+    [Protected]
+    [HttpPost("{id}/rate")]
+    public async Task<IActionResult> Rate(Guid id, [FromBody] FeedbackCreateDto dto)
+    {
+        return await _artifactService.HandleRate(id, dto.Rating, dto.Comment);
+    }
 }

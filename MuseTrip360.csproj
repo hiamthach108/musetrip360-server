@@ -37,6 +37,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="Google.Apis" Version="1.68.0" />
 		<PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
+		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.6" />
   </ItemGroup>
 
 </Project>
