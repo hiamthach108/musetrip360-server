@@ -24,7 +24,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(IEnumerable<Guid> artifactIds, Guid museumId, bool status);
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId);
         Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort);
-        Task<bool> UpdateRatingArtifacts(Guid artifactId, int rating, Guid userId, string comment);
+        Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment);
     }
     public class ArtifactList
     {
@@ -198,7 +198,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
                      a.Rating <= filterSort.Rating.Value + 0.5f))
                 .Where(a => filterSort.IsActive == null || a.IsActive == filterSort.IsActive)
                 .Where(a => filterSort.MuseumId == null || a.MuseumId == filterSort.MuseumId)
-                .OrderBy(sortString); // Giả sử bạn đang dùng một OrderBy helper hỗ trợ chuỗi
+                .OrderBy(sortString);
 
             var total = await queryable.CountAsync();
             var artifacts = await queryable
@@ -213,13 +213,13 @@ namespace MuseTrip360.src.Infrastructure.Repository
             };
         }
 
-        public async Task<bool> UpdateRatingArtifacts(Guid artifactId, int rating, Guid userId, string comment)
+        public async Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var artifact = await _context.Artifacts.FindAsync(artifactId);
-                if (artifact == null) return false;
+                if (artifact == null) throw new Exception("Artifact not found");
 
                 // find feedback of user
                 var userFeedback = await _context.Feedbacks
@@ -256,15 +256,13 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 // update artifact rating
                 artifact.Rating = (float)Math.Round(averageRating, 1);
                 await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-                return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
             }
+            await transaction.CommitAsync();
         }
     }
 }

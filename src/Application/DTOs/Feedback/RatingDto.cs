@@ -1,7 +1,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-public class FeedbackCreateDto
+public class RatingCreateDto
 {
     [Required]
     [Range(1, 5)]
