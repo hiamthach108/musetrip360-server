@@ -172,6 +172,7 @@ public class ArtifactController : ControllerBase
     {
         return await _artifactService.HandleGetByFilterSort(filterSort);
     }
+
     /// <summary>
     /// Feedback an artifact
     /// </summary>

@@ -264,6 +264,7 @@ public class ArtifactService : BaseService, IArtifactService
             return ErrorResp.InternalServerError(e.Message);
         }
     }
+    
     public async Task<IActionResult> HandleFeedback(Guid id, int rating, string comment)
     {
         try

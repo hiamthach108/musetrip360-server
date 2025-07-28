@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using Application.Shared.Enum;
