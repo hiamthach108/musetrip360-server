@@ -189,7 +189,7 @@ public class TourOnlineController : ControllerBase
     }
 
     /// <summary>
-    /// Rate an online tour
+    /// Feedback an online tour
     /// </summary>
     /// <param name="id">The unique identifier of the online tour</param>
     /// <param name="dto">The comment of the rating</param>
@@ -199,9 +199,9 @@ public class TourOnlineController : ControllerBase
     /// <response code="403">Forbidden - User does not have required privileges</response>
     /// <response code="404">Online tour not found</response>
     [Protected]
-    [HttpPatch("{id}/rate")]
-    public async Task<IActionResult> Rate([FromRoute] Guid id, [FromBody] FeedbackCreateDto dto)
+    [HttpPatch("{id}/feedback")]
+    public async Task<IActionResult> Feedback([FromRoute] Guid id, [FromBody] FeedbackCreateDto dto)
     {
-        return await _tourOnlineService.UpdateRatingAsync(id, dto.Comment);
+        return await _tourOnlineService.HandleFeedback(id, dto.Comment);
     }
 }

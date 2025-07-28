@@ -22,7 +22,7 @@ public interface IMuseumRepository
   Task<Museum> AddAsync(Museum museum);
   Task UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
-  Task UpdateRatingMuseums(Guid museumId, int rating, Guid userId, string comment);
+  Task FeedbackMuseums(Guid museumId, int rating, Guid userId, string comment);
 }
 
 public class MuseumList
@@ -132,7 +132,7 @@ public class MuseumRepository : IMuseumRepository
     await _context.SaveChangesAsync();
   }
 
-  public async Task UpdateRatingMuseums(Guid museumId, int rating, Guid userId, string comment)
+  public async Task FeedbackMuseums(Guid museumId, int rating, Guid userId, string comment)
   {
     using var transaction = await _context.Database.BeginTransactionAsync();
     try

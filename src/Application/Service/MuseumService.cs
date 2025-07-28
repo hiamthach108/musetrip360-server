@@ -26,7 +26,7 @@ public interface IMuseumService
   Task<IActionResult> HandleCreate(MuseumCreateDto dto);
   Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
   Task<IActionResult> HandleDelete(Guid id);
-  Task<IActionResult> HandleRate(Guid id, int rating, string comment);
+  Task<IActionResult> HandleFeedback(Guid id, int rating, string comment);
 
   // MuseumRequest endpoints
   Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query);
@@ -515,7 +515,7 @@ public class MuseumService : BaseService, IMuseumService
     });
   }
 
-  public async Task<IActionResult> HandleRate(Guid id, int rating, string comment)
+  public async Task<IActionResult> HandleFeedback(Guid id, int rating, string comment)
   {
     var payload = ExtractPayload();
     if (payload == null)
@@ -527,7 +527,7 @@ public class MuseumService : BaseService, IMuseumService
     {
       return ErrorResp.NotFound("Museum not found");
     }
-    await _museumRepository.UpdateRatingMuseums(id, rating, payload.UserId, comment);
+    await _museumRepository.FeedbackMuseums(id, rating, payload.UserId, comment);
     return SuccessResp.Ok("Rating museum successfully");
   }
 }

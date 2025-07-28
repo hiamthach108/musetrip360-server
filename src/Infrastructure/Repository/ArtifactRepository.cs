@@ -24,7 +24,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(IEnumerable<Guid> artifactIds, Guid museumId, bool status);
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId);
         Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort);
-        Task UpdateRatingArtifacts(Guid artifactId, int rating, Guid userId, string comment);
+        Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment);
     }
     public class ArtifactList
     {
@@ -213,7 +213,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             };
         }
 
-        public async Task UpdateRatingArtifacts(Guid artifactId, int rating, Guid userId, string comment)
+        public async Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try

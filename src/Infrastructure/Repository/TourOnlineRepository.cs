@@ -16,7 +16,7 @@ public interface ITourOnlineRepository
     Task<bool> IsTourOnlineExists(Guid id);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool IsActive);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId);
-    Task UpdateRatingTourOnlines(Guid tourOnlineId, Guid userId, string comment);
+    Task FeedbackTourOnlines(Guid tourOnlineId, Guid userId, string comment);
 }
 public class TourOnlineList
 {
@@ -167,7 +167,7 @@ public class TourOnlineRepository : ITourOnlineRepository
         };
     }
 
-    public async Task UpdateRatingTourOnlines(Guid tourOnlineId, Guid userId, string comment)
+    public async Task FeedbackTourOnlines(Guid tourOnlineId, Guid userId, string comment)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try

@@ -19,7 +19,7 @@ namespace Infrastructure.Repository
         Task<EventList> GetEventsByMuseumIdAsync(Guid museumId, EventAdminQuery query);
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
         Task<bool> IsOwner(Guid userId, Guid eventId);
-        Task UpdateRatingEvents(Guid eventId, Guid userId, string comment);
+        Task FeedbackEvents(Guid eventId, Guid userId, string comment);
     }
 
     public class EventList
@@ -170,7 +170,7 @@ namespace Infrastructure.Repository
             return await _context.Events.AnyAsync(e => e.CreatedBy == userId && e.Id == eventId);
         }
 
-        public async Task UpdateRatingEvents(Guid eventId, Guid userId, string comment)
+        public async Task FeedbackEvents(Guid eventId, Guid userId, string comment)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try

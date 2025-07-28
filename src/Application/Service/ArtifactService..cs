@@ -22,7 +22,7 @@ public interface IArtifactService
     Task<IActionResult> HandleActivate(Guid id);
     Task<IActionResult> HandleDeactivate(Guid id);
     Task<IActionResult> HandleGetByFilterSort(ArtifactFilterSort filterSort);
-    Task<IActionResult> HandleRate(Guid id, int rating, string comment);
+    Task<IActionResult> HandleFeedback(Guid id, int rating, string comment);
 }
 
 public class ArtifactService : BaseService, IArtifactService
@@ -264,7 +264,7 @@ public class ArtifactService : BaseService, IArtifactService
             return ErrorResp.InternalServerError(e.Message);
         }
     }
-    public async Task<IActionResult> HandleRate(Guid id, int rating, string comment)
+    public async Task<IActionResult> HandleFeedback(Guid id, int rating, string comment)
     {
         try
         {
@@ -280,7 +280,7 @@ public class ArtifactService : BaseService, IArtifactService
                 return ErrorResp.NotFound("Artifact not found");
             }
             // rate the artifact
-            await _artifactRepository.UpdateRatingArtifacts(id, rating, payload.UserId, comment);
+            await _artifactRepository.FeedbackArtifacts(id, rating, payload.UserId, comment);
             // return the success response
             return SuccessResp.Ok("Rating artifact successfully");
         }

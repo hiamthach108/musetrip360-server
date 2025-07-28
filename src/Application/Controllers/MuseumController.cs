@@ -185,10 +185,10 @@ public class MuseumController : ControllerBase
   }
 
   [Protected]
-  [HttpPatch("{id}/rate")]
-  public async Task<IActionResult> RateMuseum(Guid id, [FromBody] RatingCreateDto dto)
+  [HttpPatch("{id}/feedback")]
+  public async Task<IActionResult> FeedbackMuseum(Guid id, [FromBody] RatingCreateDto dto)
   {
-    _logger.LogInformation("Rate museum received");
-    return await _museumService.HandleRate(id, dto.Rating, dto.Comment);
+    _logger.LogInformation("Feedback museum received");
+    return await _museumService.HandleFeedback(id, dto.Rating, dto.Comment);
   }
 }

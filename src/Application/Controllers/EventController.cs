@@ -354,7 +354,7 @@ public class EventController : ControllerBase
         return await _adminEventService.HandleRemoveTourGuideFromEvent(id, tourGuideIds);
     }
     /// <summary>
-    /// Rate an event
+    /// Feedback an event
     /// </summary>
     /// <param name="id">The unique identifier of the event</param>
     /// <param name="comment">The comment of the event</param>
@@ -364,9 +364,9 @@ public class EventController : ControllerBase
     /// <response code="401">Unauthorized - User is not authenticated</response>
     /// <response code="404">Event not found</response>
     [Protected]
-    [HttpPatch("{id}/rate")]
-    public async Task<IActionResult> Rate(Guid id, string comment)
+    [HttpPatch("{id}/feedback")]
+    public async Task<IActionResult> Feedback(Guid id, string comment)
     {
-        return await _eventService.HandleRate(id, comment);
+        return await _eventService.HandleFeedback(id, comment);
     }
 }
