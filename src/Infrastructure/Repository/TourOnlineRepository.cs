@@ -1,4 +1,6 @@
+using Application.Shared.Enum;
 using Database;
+using Domain.Reviews;
 using Domain.Tours;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,7 @@ public interface ITourOnlineRepository
     Task<bool> IsTourOnlineExists(Guid id);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool IsActive);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId);
+    Task UpdateRatingTourOnlines(Guid tourOnlineId, Guid userId, string comment);
 }
 public class TourOnlineList
 {
@@ -162,5 +165,45 @@ public class TourOnlineRepository : ITourOnlineRepository
             IsAllFound = tourOnlineIdsList.Count == total,
             MissingIds = tourOnlineIdsList.Except(tours.Select(t => t.Id)).ToList()
         };
+    }
+
+    public async Task UpdateRatingTourOnlines(Guid tourOnlineId, Guid userId, string comment)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var tourOnline = await _context.TourOnlines.FindAsync(tourOnlineId);
+            if (tourOnline == null) throw new Exception("Tour online not found");
+
+            // find feedback of user
+            var userFeedback = await _context.Feedbacks
+                .FirstOrDefaultAsync(f => f.TargetId == tourOnlineId && f.CreatedBy == userId);
+
+            if (userFeedback != null)
+            {
+                // update feedback
+                userFeedback.Comment = comment;
+            }
+            else
+            {
+                // create new feedback
+                var newFeedback = new Feedback
+                {
+                    TargetId = tourOnlineId,
+                    Type = DataEntityType.TourOnline,
+                    Rating = 0,
+                    Comment = comment,
+                    CreatedBy = userId
+                };
+                await _context.Feedbacks.AddAsync(newFeedback);
+                await _context.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw new Exception(ex.Message);
+        }
+        await transaction.CommitAsync();
     }
 }

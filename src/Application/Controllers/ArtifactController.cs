@@ -172,9 +172,19 @@ public class ArtifactController : ControllerBase
     {
         return await _artifactService.HandleGetByFilterSort(filterSort);
     }
+    /// <summary>
+    /// Rate an artifact
+    /// </summary>
+    /// <param name="id">The unique identifier of the artifact</param>
+    /// <param name="dto">The comment of the rating</param>
+    /// <returns>The updated artifact</returns>
+    /// <response code="200">Returns the updated artifact</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="403">Forbidden - User does not have required privileges</response>
+    /// <response code="404">Artifact not found</response>
     [Protected]
     [HttpPost("{id}/rate")]
-    public async Task<IActionResult> Rate(Guid id, [FromBody] FeedbackCreateDto dto)
+    public async Task<IActionResult> Rate(Guid id, [FromBody] RatingCreateDto dto)
     {
         return await _artifactService.HandleRate(id, dto.Rating, dto.Comment);
     }

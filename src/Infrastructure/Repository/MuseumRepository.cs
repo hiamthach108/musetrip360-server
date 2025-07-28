@@ -7,6 +7,8 @@ using Application.DTOs.Museum;
 using Application.Shared.Enum;
 using Database;
 using Domain.Museums;
+using Domain.Reviews;
+using Microsoft.EntityFrameworkCore;
 
 public interface IMuseumRepository
 {
@@ -20,6 +22,7 @@ public interface IMuseumRepository
   Task<Museum> AddAsync(Museum museum);
   Task UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
+  Task UpdateRatingMuseums(Guid museumId, int rating, Guid userId, string comment);
 }
 
 public class MuseumList
@@ -127,5 +130,58 @@ public class MuseumRepository : IMuseumRepository
   {
     _context.Museums.Remove(museum);
     await _context.SaveChangesAsync();
+  }
+
+  public async Task UpdateRatingMuseums(Guid museumId, int rating, Guid userId, string comment)
+  {
+    using var transaction = await _context.Database.BeginTransactionAsync();
+    try
+    {
+      var museum = await _context.Museums.FindAsync(museumId);
+      if (museum == null) throw new Exception("Museum not found");
+
+      // find feedback of user
+      var userFeedback = await _context.Feedbacks
+        .FirstOrDefaultAsync(f => f.TargetId == museumId && f.CreatedBy == userId);
+
+      if (userFeedback != null)
+      {
+        // update feedback
+        userFeedback.Rating = rating;
+        userFeedback.Comment = comment;
+      }
+      else
+      {
+        // create new feedback
+        var newFeedback = new Feedback
+        {
+          TargetId = museumId,
+          Type = DataEntityType.Museum,
+          Rating = rating,
+          Comment = comment,
+          CreatedBy = userId
+        };
+        await _context.Feedbacks.AddAsync(newFeedback);
+      }
+
+      // save changes
+      await _context.SaveChangesAsync();
+
+      // calculate average rating
+      var listFeedback = await _context.Feedbacks
+        .Where(f => f.TargetId == museumId)
+        .ToListAsync();
+      var averageRating = listFeedback.Average(f => f.Rating);
+
+      // update museum rating
+      museum.Rating = (float)Math.Round(averageRating, 1);
+      await _context.SaveChangesAsync();
+    }
+    catch (Exception ex)
+    {
+      await transaction.RollbackAsync();
+      throw new Exception(ex.Message);
+    }
+    await transaction.CommitAsync();
   }
 }

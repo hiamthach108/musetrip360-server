@@ -280,11 +280,7 @@ public class ArtifactService : BaseService, IArtifactService
                 return ErrorResp.NotFound("Artifact not found");
             }
             // rate the artifact
-            var result = await _artifactRepository.UpdateRatingArtifacts(id, rating, payload.UserId, comment);
-            if (!result)
-            {
-                return ErrorResp.BadRequest("Rating artifact failed");
-            }
+            await _artifactRepository.UpdateRatingArtifacts(id, rating, payload.UserId, comment);
             // return the success response
             return SuccessResp.Ok("Rating artifact successfully");
         }

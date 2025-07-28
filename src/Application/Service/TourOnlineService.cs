@@ -10,6 +10,7 @@ public interface ITourOnlineService
 {
     Task<IActionResult> GetAllAsync(TourOnlineQuery query);
     Task<IActionResult> GetByIdAsync(Guid id);
+    Task<IActionResult> UpdateRatingAsync(Guid tourOnlineId, string comment);
 }
 
 public interface IAdminTourOnlineService : ITourOnlineService
@@ -50,6 +51,30 @@ public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMap
             var tour = await _tourOnlineRepository.GetByIdAsync(id);
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tourDto);
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> UpdateRatingAsync(Guid tourOnlineId, string comment)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            var userId = payload.UserId;
+            var isTourOnlineExists = await _tourOnlineRepository.IsTourOnlineExists(tourOnlineId);
+            if (!isTourOnlineExists)
+            {
+                return ErrorResp.NotFound("Tour not found");
+            }
+            await _tourOnlineRepository.UpdateRatingTourOnlines(tourOnlineId, userId, comment);
+            return SuccessResp.Ok(new { Message = "Rating tour online successfully" });
         }
         catch (Exception e)
         {
