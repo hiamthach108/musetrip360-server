@@ -198,7 +198,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
                      a.Rating <= filterSort.Rating.Value + 0.5f))
                 .Where(a => filterSort.IsActive == null || a.IsActive == filterSort.IsActive)
                 .Where(a => filterSort.MuseumId == null || a.MuseumId == filterSort.MuseumId)
-                .OrderBy(sortString); // Giả sử bạn đang dùng một OrderBy helper hỗ trợ chuỗi
+                .OrderBy(sortString);
 
             var total = await queryable.CountAsync();
             var artifacts = await queryable
