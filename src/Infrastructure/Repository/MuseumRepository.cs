@@ -180,7 +180,7 @@ public class MuseumRepository : IMuseumRepository
     catch (Exception ex)
     {
       await transaction.RollbackAsync();
-      throw new Exception(ex.Message);
+      throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
     }
     await transaction.CommitAsync();
   }
