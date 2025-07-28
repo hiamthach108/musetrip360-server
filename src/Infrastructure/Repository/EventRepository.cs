@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Application.Shared.Enum;
 using Database;
 using Domain.Events;
+using Domain.Reviews;
 using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Repository
 {
@@ -18,6 +19,7 @@ namespace Infrastructure.Repository
         Task<EventList> GetEventsByMuseumIdAsync(Guid museumId, EventAdminQuery query);
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
         Task<bool> IsOwner(Guid userId, Guid eventId);
+        Task FeedbackEvents(Guid eventId, Guid userId, string comment);
     }
 
     public class EventList
@@ -166,6 +168,46 @@ namespace Infrastructure.Repository
         public async Task<bool> IsOwner(Guid userId, Guid eventId)
         {
             return await _context.Events.AnyAsync(e => e.CreatedBy == userId && e.Id == eventId);
+        }
+
+        public async Task FeedbackEvents(Guid eventId, Guid userId, string comment)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var eventItem = await _context.Events.FindAsync(eventId);
+                if (eventItem == null) throw new Exception("Event not found");
+
+                // find feedback of user
+                var userFeedback = await _context.Feedbacks
+                    .FirstOrDefaultAsync(f => f.TargetId == eventId && f.CreatedBy == userId);
+
+                if (userFeedback != null)
+                {
+                    // update feedback
+                    userFeedback.Comment = comment;
+                }
+                else
+                {
+                    var newFeedback = new Feedback
+                    {
+                        TargetId = eventId,
+                        Type = DataEntityType.Event,
+                        Rating = 0,
+                        Comment = comment,
+                        CreatedBy = userId
+                    };
+                    await _context.Feedbacks.AddAsync(newFeedback);
+                }
+                // save changes
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
+            }
+            await transaction.CommitAsync();
         }
     }
 }

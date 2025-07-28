@@ -17,6 +17,7 @@ public interface IEventService
     Task<IActionResult> HandleGetAll(EventQuery query);
     Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId, EventAdminQuery query);
     Task<bool> IsOwner(Guid userId, Guid eventId);
+    Task<IActionResult> HandleFeedback(Guid id, string comment);
 }
 
 // Admin, Manager operations
@@ -99,6 +100,30 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IMapper map
         return await _eventRepository.IsOwner(userId, eventId);
     }
 
+    public async Task<IActionResult> HandleFeedback(Guid id, string comment)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            // check if the event is exists
+            var isEventExists = await _eventRepository.IsEventExistsAsync(id);
+            if (!isEventExists)
+            {
+                return ErrorResp.NotFound("Event not found");
+            }
+            // rate the event
+            await _eventRepository.FeedbackEvents(id, payload.UserId, comment);
+            return SuccessResp.Ok("Event rated successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
 }
 
 public class EventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IEventService
