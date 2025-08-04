@@ -1,3 +1,5 @@
+namespace MuseTrip360.src.Application.DTOs.Artifact;
+
 using System.Collections.Generic;
 using AutoMapper;
 using Domain.Artifacts;
