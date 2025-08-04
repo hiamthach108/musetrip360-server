@@ -1,3 +1,4 @@
+namespace MuseTrip360.src.Application.DTOs.Artifact;
 
 using System.ComponentModel.DataAnnotations;
 

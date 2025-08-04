@@ -2,6 +2,7 @@ using System.Text.Json;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Events;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 public class EventDto
 {

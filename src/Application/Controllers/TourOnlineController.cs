@@ -1,6 +1,7 @@
 using Application.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 using Domain.Tours;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 /// <summary>
 /// Controller for managing online tours and virtual museum experiences

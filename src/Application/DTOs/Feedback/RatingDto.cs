@@ -1,3 +1,4 @@
+namespace MuseTrip360.src.Application.DTOs.Feedback;
 
 using System.ComponentModel.DataAnnotations;
 

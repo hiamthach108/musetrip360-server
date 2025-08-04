@@ -3,6 +3,7 @@ using Application.Shared.Constant;
 using Core.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Application.DTOs.Artifact;
+using MuseTrip360.src.Application.DTOs.Feedback;
 using MuseTrip360.src.Application.Service;
 
 namespace MuseTrip360.src.Application.Controllers;
