@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Application.DTOs.User;
 using AutoMapper;
 using Domain.Tours;
+using Domain.Users;
 
 public class TourGuideDto
 {
@@ -13,6 +15,8 @@ public class TourGuideDto
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    public UserDto User { get; set; } = null!;
 }
 public class TourGuideProfile : Profile
 {
