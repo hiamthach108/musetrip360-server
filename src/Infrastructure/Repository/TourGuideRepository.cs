@@ -1,8 +1,8 @@
+namespace Infrastructure.Repository;
+
 using Database;
 using Domain.Tours;
 using Microsoft.EntityFrameworkCore;
-
-namespace Infrastructure.Repository;
 
 public interface ITourGuideRepository
 {
@@ -58,6 +58,7 @@ public class TourGuideRepository : ITourGuideRepository
   public async Task<TourGuideList> GetAllTourGuidesAsync(TourGuideQuery query)
   {
     var queryable = _context.TourGuides
+    .Include(t => t.User)
     .Where(t => query.Name == null || t.Name.Contains(query.Name))
     .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
     .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
@@ -76,7 +77,8 @@ public class TourGuideRepository : ITourGuideRepository
 
   public async Task<TourGuide?> GetTourGuideByIdAsync(Guid id)
   {
-    return await _context.TourGuides.FindAsync(id);
+    return await _context.TourGuides.Include(t => t.User)
+      .FirstOrDefaultAsync(t => t.Id == id);
   }
 
   public async Task<TourGuideListWithMissingIds> GetTourGuideByListId(IEnumerable<Guid> tourGuideIds)
@@ -91,6 +93,7 @@ public class TourGuideRepository : ITourGuideRepository
   {
     var tourGuideIdsList = tourGuideIds.ToList();
     var tourGuides = await _context.TourGuides
+    .Include(t => t.User)
     .Where(t => tourGuideIdsList.Contains(t.Id))
     .Where(t => t.Events.Any(e => e.Id == eventId))
     .Where(t => t.IsAvailable == isAvailable)
@@ -104,6 +107,7 @@ public class TourGuideRepository : ITourGuideRepository
   public async Task<TourGuideList> GetTourGuideByMuseumIdAsync(TourGuideQuery query, Guid museumId)
   {
     var queryable = _context.TourGuides
+    .Include(t => t.User)
     .Where(t => query.Name == null || t.Name.Contains(query.Name))
     .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
     .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
@@ -119,6 +123,7 @@ public class TourGuideRepository : ITourGuideRepository
   public async Task<TourGuideList> GetTourGuideByEventIdAsync(TourGuideQuery query, Guid eventId)
   {
     var queryable = _context.TourGuides
+    .Include(t => t.User)
     .Where(t => query.Name == null || t.Name.Contains(query.Name))
     .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
     .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
@@ -134,6 +139,7 @@ public class TourGuideRepository : ITourGuideRepository
   public async Task<TourGuideList> GetTourGuideByUserIdAsync(TourGuideQuery query, Guid userId)
   {
     var queryable = _context.TourGuides
+    .Include(t => t.User)
     .Where(t => query.Name == null || t.Name.Contains(query.Name))
     .Where(t => query.Bio == null || t.Bio.Contains(query.Bio))
     .Where(t => query.IsAvailable == null || t.IsAvailable == query.IsAvailable)
