@@ -12,6 +12,6 @@ public class EventParticipant : BaseEntity
   public ParticipantRoleEnum Role { get; set; }
   public ParticipantStatusEnum Status { get; set; }
 
-  public Event Event { get; set; } = new();
-  public User User { get; set; } = new();
+  public Event Event { get; set; } = null!;
+  public User User { get; set; } = null!;
 }

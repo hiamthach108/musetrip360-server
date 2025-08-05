@@ -49,7 +49,6 @@ public class JwtService : IJwtService
 
   public Payload? ValidateToken(string token)
   {
-
     _handler.ValidateToken(token, new TokenValidationParameters
     {
       ValidateIssuerSigningKey = true,

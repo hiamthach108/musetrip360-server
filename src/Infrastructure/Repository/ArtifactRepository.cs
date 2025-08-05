@@ -64,7 +64,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
         {
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search))
                 .Include(a => a.Events);
             //return the artifacts and the total
             var total = queryable.Count();
@@ -81,7 +81,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             //return the artifacts and the total
             var total = queryable.Count();
             var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -112,7 +112,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             var queryable = _context.Artifacts
                 .Where(a => a.MuseumId == museumId)
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             var total = queryable.Count();
             var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList

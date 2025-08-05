@@ -9,6 +9,7 @@ using Domain.Events;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Infrastructure.Repository;
+using StackExchange.Redis;
 
 // Normal user operations
 public interface IEventService
@@ -48,17 +49,22 @@ public interface IOrganizerEventService : IEventService
 }
 
 // Base implementation for common operations
-public abstract class BaseEventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), IEventService
+public abstract class BaseEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), IEventService
 {
     protected readonly IEventRepository _eventRepository = new EventRepository(context);
     protected readonly IMuseumRepository _museumRepository = new MuseumRepository(context);
+    private readonly IRoomRepository _roomRepository = new RoomRepository(redisConnection);
 
     public virtual async Task<IActionResult> HandleGetEventById(Guid id)
     {
         try
         {
             var eventItem = await _eventRepository.GetEventById(id);
+            var roomItems = await _roomRepository.GetRoomByEventId(id);
             var eventDto = _mapper.Map<EventDto>(eventItem);
+            var roomDtos = _mapper.Map<List<RoomDto>>(roomItems);
+            // attach rooms to event
+            eventDto.Rooms = roomDtos;
             return SuccessResp.Ok(eventDto);
         }
         catch (Exception e)
@@ -126,12 +132,12 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IMapper map
     }
 }
 
-public class EventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IEventService
+public class EventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IEventService
 {
 }
 
 // Admin implementation
-public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IAdminEventService
+public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IAdminEventService
 {
     protected readonly IArtifactRepository _artifactRepository = new ArtifactRepository(context);
     protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(context);
@@ -460,7 +466,7 @@ public class AdminEventService(MuseTrip360DbContext context, IMapper mapper, IHt
 }
 
 // Organizer implementation
-public class OrganizerEventService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, mapper, httpContextAccessor), IOrganizerEventService
+public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IOrganizerEventService
 {
     public async Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto)
     {
