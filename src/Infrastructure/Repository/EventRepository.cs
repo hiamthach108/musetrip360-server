@@ -111,6 +111,8 @@ namespace Infrastructure.Repository
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
             .Include(e => e.TourGuides)
+            .Include(e => e.RepresentationMaterials)
+            .Include(e => e.EventParticipants)
             .FirstOrDefaultAsync(e => e.Id == id);
         }
 
@@ -205,7 +207,7 @@ namespace Infrastructure.Repository
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
+                throw new InvalidOperationException("An error occurred while providing feedback for the event.", ex);
             }
             await transaction.CommitAsync();
         }

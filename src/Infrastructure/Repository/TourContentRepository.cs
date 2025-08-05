@@ -59,7 +59,7 @@ public class TourContentRepository : ITourContentRepository
     {
         var queryable = _context.TourContents
         .Where(x => query.TourId == null || x.TourId == query.TourId)
-        .Where(x => query.SearchKeyword == null || x.Content.Contains(query.SearchKeyword));
+        .Where(x => query.Search == null || x.Content.Contains(query.Search));
 
         var total = await queryable.CountAsync();
 
@@ -76,7 +76,7 @@ public class TourContentRepository : ITourContentRepository
         var queryable = _context.TourContents
         .Where(x => query.IsActive == null || x.IsActive == query.IsActive)
         .Where(x => query.TourId == null || x.TourId == query.TourId)
-        .Where(x => query.SearchKeyword == null || x.Content.Contains(query.SearchKeyword));
+        .Where(x => query.Search == null || x.Content.Contains(query.Search));
 
         var total = await queryable.CountAsync();
 
@@ -108,7 +108,7 @@ public class TourContentRepository : ITourContentRepository
         .Where(x => x.TourId == tourOnlineId)
         .Where(x => query.IsActive == null || x.IsActive == query.IsActive)
         .Where(x => query.TourId == null || x.TourId == query.TourId)
-        .Where(x => query.SearchKeyword == null || x.Content.Contains(query.SearchKeyword));
+        .Where(x => query.Search == null || x.Content.Contains(query.Search));
 
         var total = await queryable.CountAsync();
 

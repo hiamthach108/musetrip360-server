@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Text.Json;
 using Core.Jwt;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,13 +10,19 @@ public class SignalingHub : Hub
     private static ConcurrentDictionary<string, SfuConnection> _connections = new();
     private static ConcurrentDictionary<string, string> _peerIdToStreamId = new();
     private static ConcurrentDictionary<string, string> _streamIdToPeerId = new();
+    private readonly IRoomService _roomService;
     private readonly IHubContext<SignalingHub> _hubContext;
     private readonly IJwtService _jwtSvc;
-    public SignalingHub(ILogger<SignalingHub> logger, IHubContext<SignalingHub> hubContext, IJwtService jwtSvc)
+    private readonly IRoomStateManager _roomStateManager;
+    private readonly string _sfuUrl;
+    public SignalingHub(IConfiguration config, IRoomStateManager roomStateManager, IRoomService roomService, ILogger<SignalingHub> logger, IHubContext<SignalingHub> hubContext, IJwtService jwtSvc)
     {
+        _roomService = roomService;
         _logger = logger;
         _hubContext = hubContext;
         _jwtSvc = jwtSvc;
+        _roomStateManager = roomStateManager;
+        _sfuUrl = config["SFU:WebSocketUrl"] ?? "";
     }
 
     // when client connect to hub, init sfu connection and add to dictionary
@@ -42,7 +48,7 @@ public class SignalingHub : Hub
             var sfu = new SfuConnection(socket, _logger, _hubContext);
             // set connection id for sfu connection
             sfu.SetConnectionId(Context.ConnectionId);
-            await sfu.ConnectAsync(new Uri("ws://musetrip360-server-sfu-1:7000/ws"));
+            await sfu.ConnectAsync(new Uri(_sfuUrl));
             // add sfu connection to dictionary
             _connections.TryAdd(Context.ConnectionId, sfu);
             _logger.LogInformation($"SFU connected for {Context.ConnectionId}");
@@ -55,7 +61,23 @@ public class SignalingHub : Hub
         {
             _logger.LogError(ex, "Error in OnConnectedAsync");
         }
+    }
 
+    public async Task UpdateRoomState(string metadata)
+    {
+        _connections.TryGetValue(Context.ConnectionId, out var sfu);
+        if (sfu == null)
+        {
+            _logger.LogError("SFU connection not found");
+            return;
+        }
+        //send metadata to room 
+        await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("ReceiveRoomState", metadata);
+        var dto = new RoomUpdateMetadataDto
+        {
+            Metadata = JsonDocument.Parse(metadata)
+        };
+        await _roomStateManager.UpdateRoomState(sfu.GetRoomId(), dto);
     }
 
     public void SetStreamPeerId(string streamId)
@@ -109,6 +131,14 @@ public class SignalingHub : Hub
         {
             if (_connections.TryGetValue(Context.ConnectionId, out var sfu))
             {
+                // validate user before join room
+                var payload = Context.Items["payload"] as Payload ?? new Payload();
+                var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
+                if (!isValid)
+                {
+                    await Clients.Caller.SendAsync("Error", "User not authorized to join room");
+                    return;
+                }
                 // send offer to sfu
                 await sfu.JoinRoomAsync(roomId, Context.ConnectionId, offer);
                 // set room id for sfu connection
@@ -118,6 +148,9 @@ public class SignalingHub : Hub
                 // notify other peers in room that new peer joined
                 await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", Context.ConnectionId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
+                // get room state and send to peer
+                var roomState = await _roomStateManager.GetRoomState(roomId);
+                await Clients.Caller.SendAsync("ReceiveRoomState", JsonSerializer.Serialize(roomState));
             }
         }
         catch (Exception ex)

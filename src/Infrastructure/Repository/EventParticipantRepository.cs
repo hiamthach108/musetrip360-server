@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Database;
 using Domain.Events;
+using Microsoft.EntityFrameworkCore;
 
 public interface IEventParticipantRepository
 {
@@ -16,6 +17,7 @@ public interface IEventParticipantRepository
   Task<EventParticipant> AddAsync(EventParticipant eventParticipant);
   Task<EventParticipant> UpdateAsync(Guid eventParticipantId, EventParticipant eventParticipant);
   Task<EventParticipant> DeleteAsync(EventParticipant eventParticipant);
+  Task<bool> ValidateUser(Guid userId, Guid eventId);
 }
 
 public class EventParticipantRepository : IEventParticipantRepository
@@ -86,5 +88,11 @@ public class EventParticipantRepository : IEventParticipantRepository
     var result = _dbContext.EventParticipants.Remove(eventParticipant);
     await _dbContext.SaveChangesAsync();
     return result.Entity;
+  }
+
+  public async Task<bool> ValidateUser(Guid userId, Guid eventId)
+  {
+    var eventParticipant = await _dbContext.EventParticipants.FirstOrDefaultAsync(ep => ep.UserId == userId && ep.EventId == eventId);
+    return eventParticipant != null;
   }
 }

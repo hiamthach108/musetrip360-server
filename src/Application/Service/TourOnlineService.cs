@@ -74,7 +74,7 @@ public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMap
                 return ErrorResp.NotFound("Tour not found");
             }
             await _tourOnlineRepository.FeedbackTourOnlines(tourOnlineId, userId, comment);
-            return SuccessResp.Ok(new { Message = "Feedback submmited successfully" });
+            return SuccessResp.Ok(new { Message = "Feedback submitted successfully" });
         }
         catch (Exception e)
         {

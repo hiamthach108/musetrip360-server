@@ -226,7 +226,7 @@ services:
     networks:
       - default
       - elastic
-  # MuseTrip360 API Application
+  #MuseTrip360 API Application
   musetrip360-api:
     build:
       context: .

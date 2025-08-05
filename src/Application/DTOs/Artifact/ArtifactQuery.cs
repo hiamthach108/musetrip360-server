@@ -7,7 +7,7 @@ namespace MuseTrip360.src.Application.DTOs.Artifact
     public class ArtifactQuery : PaginationReq
     {
         [MaxLength(100)]
-        public string? SearchKeyword { get; set; }
+        public string? Search { get; set; }
         // // rating is between 0 and 5
         // [Range(0, 5)]
         // public float? Rating { get; set; }
