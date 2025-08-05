@@ -20,9 +20,9 @@ public class RoomStateManager : IRoomStateManager
             var room = await _roomRepository.GetRoomById(roomId);
             return room;
         }
-        catch (Exception e)
+        catch
         {
-            throw new Exception(e.Message);
+            throw;
         }
     }
 
@@ -38,9 +38,9 @@ public class RoomStateManager : IRoomStateManager
             room.Metadata = dto.Metadata;
             await _roomRepository.UpdateRoom(roomId, room);
         }
-        catch (Exception e)
+        catch
         {
-            throw new Exception(e.Message);
+            throw;
         }
     }
 }
