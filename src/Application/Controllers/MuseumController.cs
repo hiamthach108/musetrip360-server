@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Application.DTOs.MuseumRequest;
 using Application.DTOs.Pagination;
 using Application.DTOs.MuseumPolicy;
+using MuseTrip360.src.Application.DTOs.Feedback;
 
 [ApiController]
 [Route("/api/v1/museums")]
@@ -182,5 +183,13 @@ public class MuseumController : ControllerBase
   {
     _logger.LogInformation("Bulk create/update museum policies received");
     return await _museumService.HandleBulkCreateUpdatePolicies(dto);
+  }
+
+  [Protected]
+  [HttpPatch("{id}/feedback")]
+  public async Task<IActionResult> FeedbackMuseum(Guid id, [FromBody] RatingCreateDto dto)
+  {
+    _logger.LogInformation("Feedback museum received");
+    return await _museumService.HandleFeedback(id, dto.Rating, dto.Comment);
   }
 }

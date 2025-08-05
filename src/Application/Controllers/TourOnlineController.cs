@@ -1,6 +1,7 @@
 using Application.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 using Domain.Tours;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 /// <summary>
 /// Controller for managing online tours and virtual museum experiences
@@ -186,5 +187,22 @@ public class TourOnlineController : ControllerBase
     public async Task<IActionResult> RemoveTourContents([FromRoute] Guid id, [FromBody] IEnumerable<Guid> tourContentIds)
     {
         return await _adminTourOnlineService.RemoveTourContentFromTourAsync(id, tourContentIds);
+    }
+
+    /// <summary>
+    /// Feedback an online tour
+    /// </summary>
+    /// <param name="id">The unique identifier of the online tour</param>
+    /// <param name="dto">The comment of the rating</param>
+    /// <returns>The updated online tour</returns>
+    /// <response code="200">Returns the updated online tour</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="403">Forbidden - User does not have required privileges</response>
+    /// <response code="404">Online tour not found</response>
+    [Protected]
+    [HttpPatch("{id}/feedback")]
+    public async Task<IActionResult> Feedback([FromRoute] Guid id, [FromBody] FeedbackCreateDto dto)
+    {
+        return await _tourOnlineService.HandleFeedback(id, dto.Comment);
     }
 }

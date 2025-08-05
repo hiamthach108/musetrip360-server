@@ -138,6 +138,7 @@ builder.Services.AddScoped<IMessagingService, MessagingService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
+builder.Services.AddScoped<IEventParticipantService, EventParticipantService>();
 builder.Services.AddScoped<ISearchItemService, SearchItemService>();
 
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
@@ -149,6 +150,10 @@ builder.Services.AddScoped<IAdminTourGuideService, AdminTourGuideService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAiService, AiService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRepresentationMaterialService, RepresentationMaterialService>();
+// Singleton for RoomStateManager
+builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddHostedService<OrderWorker>();

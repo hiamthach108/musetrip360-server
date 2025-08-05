@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Application.DTOs.RepresentationMaterial;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Events;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 public class EventDto
 {
@@ -25,6 +27,9 @@ public class EventDto
     public ICollection<ArtifactDto>? Artifacts { get; set; }
     public ICollection<TourOnlineDto>? TourOnlines { get; set; }
     public ICollection<TourGuideDto>? TourGuides { get; set; }
+    public ICollection<RepresentationMaterialDto>? RepresentationMaterials { get; set; }
+    public ICollection<EventParticipantDto>? EventParticipants { get; set; }
+    public ICollection<RoomDto>? Rooms { get; set; }
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
     public class EventProfile : Profile
     {

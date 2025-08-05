@@ -24,8 +24,8 @@ public class Event : BaseEntity
   public Guid CreatedBy { get; set; }
   public EventStatusEnum Status { get; set; }
 
-  public Museum Museum { get; set; } = new();
-  public User CreatedByUser { get; set; } = new();
+  public Museum Museum { get; set; } = null!;
+  public User CreatedByUser { get; set; } = null!;
 
   public ICollection<Artifact> Artifacts { get; set; } = [];
   public ICollection<TourOnline> TourOnlines { get; set; } = [];

@@ -54,8 +54,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("HistoricalPeriod")
                         .IsRequired()
@@ -178,8 +177,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
@@ -486,8 +484,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -561,8 +558,7 @@ namespace MuseTrip360.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Latitude")
                         .HasColumnType("numeric");
@@ -707,8 +703,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("MuseumDescription")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<string>("MuseumName")
                         .IsRequired()
@@ -1042,9 +1037,6 @@ namespace MuseTrip360.Migrations
                         .HasColumnType("jsonb")
                         .HasDefaultValueSql("'{}'::jsonb");
 
-                    b.Property<Guid>("MuseumId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
@@ -1066,8 +1058,6 @@ namespace MuseTrip360.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.HasIndex("MuseumId");
-
                     b.ToTable("Feedbacks");
                 });
 
@@ -1087,8 +1077,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<JsonDocument>("Metadata")
                         .ValueGeneratedOnAdd()
@@ -1130,8 +1119,7 @@ namespace MuseTrip360.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1174,8 +1162,7 @@ namespace MuseTrip360.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1215,8 +1202,7 @@ namespace MuseTrip360.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("DiscountPercent")
                         .HasColumnType("numeric");
@@ -1419,8 +1405,7 @@ namespace MuseTrip360.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -2005,15 +1990,7 @@ namespace MuseTrip360.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Museums.Museum", "Museum")
-                        .WithMany()
-                        .HasForeignKey("MuseumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Museum");
                 });
 
             modelBuilder.Entity("Domain.Reviews.SystemReport", b =>

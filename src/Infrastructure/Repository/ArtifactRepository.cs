@@ -1,6 +1,10 @@
-﻿using System.Diagnostics.Eventing.Reader;
+using System.Diagnostics.Eventing.Reader;
+using System.Linq;
+using System.Linq.Dynamic.Core;
+using Application.Shared.Enum;
 using Database;
 using Domain.Artifacts;
+using Domain.Reviews;
 using Microsoft.EntityFrameworkCore;
 using MuseTrip360.src.Application.DTOs.Artifact;
 
@@ -19,6 +23,8 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task<bool> IsArtifactExistsAsync(Guid artifactId);
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdMuseumIdStatus(IEnumerable<Guid> artifactIds, Guid museumId, bool status);
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId);
+        Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort);
+        Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment);
     }
     public class ArtifactList
     {
@@ -58,7 +64,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
         {
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword))
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search))
                 .Include(a => a.Events);
             //return the artifacts and the total
             var total = queryable.Count();
@@ -75,7 +81,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             //return the artifacts and the total
             var total = queryable.Count();
             var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -106,7 +112,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             var queryable = _context.Artifacts
                 .Where(a => a.MuseumId == museumId)
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.SearchKeyword) || a.Name.Contains(query.SearchKeyword) || a.Description.Contains(query.SearchKeyword) || a.HistoricalPeriod.Contains(query.SearchKeyword));
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             var total = queryable.Count();
             var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
             return new ArtifactList
@@ -177,6 +183,86 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 IsAllFound = missingIds.Count == 0,
                 MissingIds = missingIds
             };
+        }
+
+        public async Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort)
+        {
+            var direction = (filterSort.IsDescending == true ? "descending" : "ascending") ?? "descending";
+            var sortFields = ArtifactFilterSort.GetNonNullFields(filterSort);
+            var sortString = string.Join(", ", sortFields.Select(f => $"{f} {direction}"));
+
+            var queryable = _context.Artifacts
+                .Where(a =>
+                    filterSort.Rating == null ||
+                    (a.Rating >= filterSort.Rating.Value - 0.5f &&
+                     a.Rating <= filterSort.Rating.Value + 0.5f))
+                .Where(a => filterSort.IsActive == null || a.IsActive == filterSort.IsActive)
+                .Where(a => filterSort.MuseumId == null || a.MuseumId == filterSort.MuseumId)
+                .OrderBy(sortString);
+
+            var total = await queryable.CountAsync();
+            var artifacts = await queryable
+                .Skip((filterSort.Page - 1) * filterSort.PageSize)
+                .Take(filterSort.PageSize)
+                .ToListAsync();
+
+            return new ArtifactList
+            {
+                Artifacts = artifacts,
+                Total = total
+            };
+        }
+
+        public async Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var artifact = await _context.Artifacts.FindAsync(artifactId);
+                if (artifact == null) throw new Exception("Artifact not found");
+
+                // find feedback of user
+                var userFeedback = await _context.Feedbacks
+                    .FirstOrDefaultAsync(f => f.TargetId == artifactId && f.CreatedBy == userId);
+
+                if (userFeedback != null)
+                {
+                    // update feedback
+                    userFeedback.Rating = rating;
+                    userFeedback.Comment = comment;
+                }
+                else
+                {
+                    // create new feedback
+                    var newFeedback = new Feedback
+                    {
+                        TargetId = artifactId,
+                        Type = DataEntityType.Artifact,
+                        Rating = rating,
+                        Comment = comment,
+                        CreatedBy = userId
+                    };
+                    await _context.Feedbacks.AddAsync(newFeedback);
+                }
+                // save changes
+                await _context.SaveChangesAsync();
+
+                // calculate average rating
+                var listFeedback = await _context.Feedbacks
+                    .Where(f => f.TargetId == artifactId)
+                    .ToListAsync();
+                var averageRating = listFeedback.Average(f => f.Rating);
+
+                // update artifact rating
+                artifact.Rating = (float)Math.Round(averageRating, 1);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
+            }
+            await transaction.CommitAsync();
         }
     }
 }

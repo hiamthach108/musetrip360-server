@@ -72,7 +72,7 @@ public class UserRepository : IUserRepository
     int pageSize = query.PageSize <= 0 ? 10 : query.PageSize;
 
     var q = _dbContext.Users
-      .Where(u => u.Email.Contains(searchKeyword) || u.FullName.Contains(searchKeyword))
+      .Where(u => u.Email.ToLower().Contains(searchKeyword.ToLower()) || u.FullName.ToLower().Contains(searchKeyword.ToLower()))
       .AsQueryable();
 
     var total = q.Count();

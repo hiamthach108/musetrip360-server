@@ -3,6 +3,7 @@ using Application.Shared.Constant;
 using Core.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Application.DTOs.Artifact;
+using MuseTrip360.src.Application.DTOs.Feedback;
 using MuseTrip360.src.Application.Service;
 
 namespace MuseTrip360.src.Application.Controllers;
@@ -158,5 +159,35 @@ public class ArtifactController : ControllerBase
     public async Task<IActionResult> Deactivate(Guid id)
     {
         return await _artifactService.HandleDeactivate(id);
+    }
+
+    /// <summary>
+    /// Get artifacts by filter and sort
+    /// </summary>
+    /// <param name="filterSort">Filter and sort parameters</param>
+    /// <returns>A list of artifacts matching the filter and sort criteria</returns>
+    /// <response code="200">Returns the list of artifacts</response>
+    /// <response code="400">Invalid filter or sort parameters</response>
+    [HttpGet("filter-sort")]
+    public async Task<IActionResult> GetByFilterSort([FromQuery] ArtifactFilterSort filterSort)
+    {
+        return await _artifactService.HandleGetByFilterSort(filterSort);
+    }
+
+    /// <summary>
+    /// Feedback an artifact
+    /// </summary>
+    /// <param name="id">The unique identifier of the artifact</param>
+    /// <param name="dto">The comment of the rating</param>
+    /// <returns>The updated artifact</returns>
+    /// <response code="200">Returns the updated artifact</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="403">Forbidden - User does not have required privileges</response>
+    /// <response code="404">Artifact not found</response>
+    [Protected]
+    [HttpPost("{id}/feedback")]
+    public async Task<IActionResult> Feedback(Guid id, [FromBody] RatingCreateDto dto)
+    {
+        return await _artifactService.HandleFeedback(id, dto.Rating, dto.Comment);
     }
 }

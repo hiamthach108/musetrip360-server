@@ -12,7 +12,5 @@ public class Feedback : BaseEntity
   public Guid TargetId { get; set; }
   public DataEntityType Type { get; set; }
   public Guid CreatedBy { get; set; }
-
-  public Museum Museum { get; set; } = null!;
   public User CreatedByUser { get; set; } = null!;
 }

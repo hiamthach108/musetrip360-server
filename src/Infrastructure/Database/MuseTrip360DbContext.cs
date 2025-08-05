@@ -141,7 +141,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.Name).IsUnique();
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired(false);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -154,7 +154,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.Name).IsUnique();
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired(false);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -179,7 +179,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.Name).IsUnique();
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired(false);
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactEmail).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(20);
@@ -213,7 +213,7 @@ public class MuseTrip360DbContext : DbContext
     {
       e.HasKey(x => x.Id);
       e.Property(x => x.MuseumName).IsRequired().HasMaxLength(100);
-      e.Property(x => x.MuseumDescription).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.MuseumDescription).IsRequired();
       e.Property(x => x.Location).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactEmail).IsRequired().HasMaxLength(100);
       e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(20);
@@ -229,7 +229,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.Title).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Content).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Content).IsRequired();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.Museum).WithMany(x => x.Articles).HasForeignKey(x => x.MuseumId);
@@ -243,7 +243,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.Title).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired();
       e.Property(x => x.EventType).HasConversion<string>().HasDefaultValue(EventTypeEnum.SpecialEvent);
       e.Property(x => x.StartTime).IsRequired();
       e.Property(x => x.EndTime).IsRequired();
@@ -281,7 +281,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired();
       e.Property(x => x.HistoricalPeriod).IsRequired().HasMaxLength(100);
       e.Property(x => x.ImageUrl).IsRequired().HasMaxLength(1000);
       e.Property(x => x.Model3DUrl).IsRequired().HasMaxLength(1000);
@@ -300,7 +300,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired();
       e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.HasOne(x => x.Museum).WithMany(x => x.TourOnlines).HasForeignKey(x => x.MuseumId);
@@ -459,7 +459,7 @@ public class MuseTrip360DbContext : DbContext
     {
       e.HasKey(x => x.Id);
       e.Property(x => x.Title).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(ReportStatusEnum.Pending);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
@@ -473,7 +473,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.Name).IsUnique();
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
-      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.Description).IsRequired(false);
       e.Property(x => x.Price).IsRequired();
       e.Property(x => x.DurationDays).IsRequired();
       e.Property(x => x.MaxEvents).IsRequired(false);
