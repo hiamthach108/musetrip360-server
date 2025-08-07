@@ -8,6 +8,7 @@ public interface ICategoryRepository
 {
   Task<Category?> GetByIdAsync(Guid id);
   Task<IEnumerable<Category>> GetAllAsync();
+  IEnumerable<Category> GetByIds(IEnumerable<Guid> ids);
   Task<Category> AddAsync(Category category);
   Task<Category?> UpdateAsync(Guid id, Category category);
   Task<bool> DeleteAsync(Guid id);
@@ -84,5 +85,12 @@ public class CategoryRepository : ICategoryRepository
       query = query.Where(c => c.Id != excludeId.Value);
     }
     return await query.AnyAsync();
+  }
+
+  public IEnumerable<Category> GetByIds(IEnumerable<Guid> ids)
+  {
+    return [.. _context.Categories
+      .Where(c => ids.Contains(c.Id))
+      .Include(c => c.Museums)];
   }
 }

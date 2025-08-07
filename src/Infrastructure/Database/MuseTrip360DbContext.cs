@@ -222,6 +222,7 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(20);
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(RequestStatusEnum.Pending);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.MuseumRequests).HasForeignKey(x => x.CreatedBy);
+      e.HasMany(x => x.Categories).WithMany();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

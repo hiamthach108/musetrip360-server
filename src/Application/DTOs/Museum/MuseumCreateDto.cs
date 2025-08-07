@@ -28,4 +28,6 @@ public class MuseumCreateDto
   public decimal Longitude { get; set; }
 
   public JsonDocument? Metadata { get; set; }
+  
+  public List<Guid>? CategoryIds { get; set; }
 }
