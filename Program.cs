@@ -46,7 +46,7 @@ builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddDbContext<MuseTrip360DbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DatabaseConnection") ?? "");
-});
+}, ServiceLifetime.Transient);
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("RedisConnection") ?? throw new ArgumentNullException("RedisConnection")));
 
@@ -152,6 +152,9 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRepresentationMaterialService, RepresentationMaterialService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IHistoricalPeriodService, HistoricalPeriodService>();
+
 // Singleton for RoomStateManager
 builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();
 // Workers

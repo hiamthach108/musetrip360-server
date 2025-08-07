@@ -20,4 +20,6 @@ public class MuseumUpdateDto
   public MuseumStatusEnum? Status { get; set; }
 
   public JsonDocument? Metadata { get; set; }
+  
+  public List<Guid>? CategoryIds { get; set; }
 }

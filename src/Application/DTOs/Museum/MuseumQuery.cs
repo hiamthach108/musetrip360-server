@@ -8,4 +8,5 @@ public class MuseumQuery : PaginationReq
 {
   public string? Search { get; set; }
   public MuseumStatusEnum? Status { get; set; }
+  public Guid? CategoryId { get; set; }
 }

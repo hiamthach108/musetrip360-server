@@ -6,6 +6,7 @@ using Application.DTOs.Pagination;
 using System.Text.Json;
 using AutoMapper;
 using Domain.Museums;
+using Application.DTOs.Category;
 
 public class MuseumRequestDto
 {
@@ -21,8 +22,11 @@ public class MuseumRequestDto
   public UserDto CreatedByUser { get; set; } = null!;
 
   public JsonDocument? Metadata { get; set; }
+
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
+
+  public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
 }
 
 public class MuseumRequestCreateDto
@@ -33,6 +37,7 @@ public class MuseumRequestCreateDto
   public string ContactEmail { get; set; } = null!;
   public string ContactPhone { get; set; } = null!;
   public JsonDocument? Metadata { get; set; }
+  public List<Guid>? CategoryIds { get; set; }
 }
 
 public class MuseumRequestUpdateDto
@@ -42,6 +47,7 @@ public class MuseumRequestUpdateDto
   public string? Location { get; set; }
   public string? ContactEmail { get; set; }
   public string? ContactPhone { get; set; }
+  public List<Guid>? CategoryIds { get; set; }
 }
 
 public class MuseumRequestQuery : PaginationReq
@@ -53,9 +59,16 @@ public class MuseumRequestProfile : Profile
 {
   public MuseumRequestProfile()
   {
-    CreateMap<MuseumRequest, MuseumRequestDto>().ReverseMap();
+    CreateMap<MuseumRequest, MuseumRequestDto>()
+      .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.Categories));
+    CreateMap<MuseumRequestDto, MuseumRequest>()
+      .ForMember(dest => dest.Categories, opt => opt.Ignore());
 
-    CreateMap<MuseumRequestCreateDto, MuseumRequest>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-    CreateMap<MuseumRequestUpdateDto, MuseumRequest>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<MuseumRequestCreateDto, MuseumRequest>()
+      .ForMember(dest => dest.Categories, opt => opt.Ignore())
+      .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<MuseumRequestUpdateDto, MuseumRequest>()
+      .ForMember(dest => dest.Categories, opt => opt.Ignore())
+      .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
   }
 }

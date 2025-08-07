@@ -33,16 +33,25 @@ public class MuseumRequestRepository : IMuseumRequestRepository
 
   public MuseumRequest? GetById(Guid id)
   {
-    return _dbContext.MuseumRequests
+    var request = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
         .FirstOrDefault(r => r.Id == id);
+    
+    if (request != null)
+    {
+      // Load categories separately to avoid complex joins
+      _dbContext.Entry(request)
+        .Collection(r => r.Categories)
+        .Load();
+    }
+    
+    return request;
   }
 
   public MuseumRequestList GetAll(MuseumRequestQuery query)
   {
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
-        .OrderByDescending(r => r.UpdatedAt)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(query.Search))
@@ -54,13 +63,23 @@ public class MuseumRequestRepository : IMuseumRequestRepository
 
     var total = requests.Count();
 
-    requests = requests
+    var requestList = requests
+        .OrderByDescending(r => r.UpdatedAt)
         .Skip((query.Page - 1) * query.PageSize)
-        .Take(query.PageSize);
+        .Take(query.PageSize)
+        .ToList();
+
+    // Load categories separately to avoid complex joins
+    foreach (var request in requestList)
+    {
+      _dbContext.Entry(request)
+        .Collection(r => r.Categories)
+        .Load();
+    }
 
     return new MuseumRequestList
     {
-      Requests = requests.ToList(),
+      Requests = requestList,
       Total = total
     };
   }
@@ -70,7 +89,6 @@ public class MuseumRequestRepository : IMuseumRequestRepository
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
         .Where(r => r.CreatedBy == userId)
-        .OrderByDescending(r => r.UpdatedAt)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(query.Search))
@@ -82,13 +100,23 @@ public class MuseumRequestRepository : IMuseumRequestRepository
 
     var total = requests.Count();
 
-    requests = requests
+    var requestList = requests
+        .OrderByDescending(r => r.UpdatedAt)
         .Skip((query.Page - 1) * query.PageSize)
-        .Take(query.PageSize);
+        .Take(query.PageSize)
+        .ToList();
+
+    // Load categories separately to avoid complex joins
+    foreach (var request in requestList)
+    {
+      _dbContext.Entry(request)
+        .Collection(r => r.Categories)
+        .Load();
+    }
 
     return new MuseumRequestList
     {
-      Requests = requests.ToList(),
+      Requests = requestList,
       Total = total
     };
   }

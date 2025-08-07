@@ -6,6 +6,7 @@ using Domain.Museums;
 using System.Text.Json.Serialization;
 using Application.Shared.Enum;
 using System.Text.Json;
+using Application.DTOs.Category;
 
 public class MuseumDto
 {
@@ -26,14 +27,18 @@ public class MuseumDto
 
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
+
+  public List<CategoryDto> Categories { get; set; } = new List<CategoryDto>();
 }
 
 public class MuseumProfile : Profile
 {
   public MuseumProfile()
   {
-    CreateMap<Museum, MuseumDto>();
-    CreateMap<MuseumDto, Museum>();
+    CreateMap<Museum, MuseumDto>()
+      .ForMember(dest => dest.Categories, opt => opt.MapFrom(src => src.Categories));
+    CreateMap<MuseumDto, Museum>()
+      .ForMember(dest => dest.Categories, opt => opt.Ignore());
 
     // Elasticsearch mapping
     CreateMap<Museum, MuseumIndexDto>();
@@ -41,11 +46,14 @@ public class MuseumProfile : Profile
 
     // ignore null
     CreateMap<Museum, MuseumCreateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-    CreateMap<MuseumCreateDto, Museum>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+    CreateMap<MuseumCreateDto, Museum>()
+      .ForMember(dest => dest.Categories, opt => opt.Ignore())
+      .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
     CreateMap<Museum, MuseumUpdateDto>().ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     CreateMap<MuseumUpdateDto, Museum>()
       .ForMember(dest => dest.Status, opt => opt.PreCondition(src => src.Status.HasValue))
+      .ForMember(dest => dest.Categories, opt => opt.Ignore())
       .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
   }
 }
