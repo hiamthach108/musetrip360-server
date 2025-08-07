@@ -3,6 +3,7 @@ namespace Domain.Museums;
 using Application.Shared.Enum;
 using Application.Shared.Type;
 using Domain.Artifacts;
+using Domain.Content;
 using Domain.Events;
 using Domain.Payment;
 using Domain.Reviews;
@@ -33,4 +34,7 @@ public class Museum : BaseEntity
   public ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>();
   public ICollection<Payout> Payouts { get; set; } = new List<Payout>();
   public ICollection<MuseumWallet> MuseumWallets { get; set; } = new List<MuseumWallet>();
+
+  public ICollection<Category> Categories { get; set; } = new List<Category>();
+  public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

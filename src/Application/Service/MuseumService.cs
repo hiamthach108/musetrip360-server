@@ -54,6 +54,7 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IMuseumPolicyRepository _museumPolicyRepository;
   private readonly IUserRoleRepository _userRoleRepository;
   private readonly IRoleRepository _roleRepository;
+  private readonly ICategoryRepository _categoryRepository;
   private readonly IUserService _userSvc;
   private readonly ISearchItemService _searchItemService;
   public MuseumService(
@@ -70,6 +71,7 @@ public class MuseumService : BaseService, IMuseumService
     _museumPolicyRepository = new MuseumPolicyRepository(dbContext);
     _userRoleRepository = new UserRoleRepository(dbContext);
     _roleRepository = new RoleRepository(dbContext);
+    _categoryRepository = new CategoryRepository(dbContext);
     _userSvc = userSvc;
     _searchItemService = searchItemService;
   }
@@ -148,9 +150,24 @@ public class MuseumService : BaseService, IMuseumService
     var museum = _mapper.Map<Museum>(dto);
     museum.CreatedBy = payload.UserId;
     museum.Status = MuseumStatusEnum.NotVerified;
+
+    // Assign categories
+    if (dto.CategoryIds != null)
+    {
+
+      var categories = _categoryRepository.GetByIds(dto.CategoryIds);
+      if (categories != null && categories.Any())
+      {
+        museum.Categories = [.. categories];
+      }
+    }
+
     await _museumRepository.AddAsync(museum);
     // Index in Elasticsearch service
-    await _searchItemService.IndexMuseumAsync(museum.Id);
+    var _ = Task.Run(async () =>
+    {
+      await _searchItemService.IndexMuseumAsync(museum.Id);
+    });
 
     var museumDto = _mapper.Map<MuseumDto>(museum);
 
@@ -158,15 +175,27 @@ public class MuseumService : BaseService, IMuseumService
     return SuccessResp.Created(museumDto);
   }
 
-  public async Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto)
+  public virtual async Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto)
   {
-    var museum = _museumRepository.GetById(id);
+    var museum = await _museumRepository.GetByIdAsync(id);
     if (museum == null)
     {
       return ErrorResp.NotFound("Museum not found");
     }
+
     _mapper.Map(dto, museum);
-    await _museumRepository.UpdateAsync(id, museum);
+
+    // Update categories if provided
+    if (dto.CategoryIds != null)
+    {
+      var categories = _categoryRepository.GetByIds(dto.CategoryIds);
+      if (categories != null && categories.Any())
+      {
+        museum.Categories = [.. categories];
+      }
+    }
+
+    var updated = await _museumRepository.UpdateAsync(id, museum);
 
     // Update in Elasticsearch in separate thread
     if (museum.Status != MuseumStatusEnum.Active)
@@ -184,7 +213,7 @@ public class MuseumService : BaseService, IMuseumService
       });
     }
 
-    var museumDto = _mapper.Map<MuseumDto>(museum);
+    var museumDto = _mapper.Map<MuseumDto>(updated);
     return SuccessResp.Ok(museumDto);
   }
 
@@ -266,6 +295,16 @@ public class MuseumService : BaseService, IMuseumService
     request.Status = RequestStatusEnum.Pending;
     request.SubmittedAt = DateTime.UtcNow;
 
+    // Assign categories
+    if (dto.CategoryIds != null)
+    {
+      var categories = _categoryRepository.GetByIds(dto.CategoryIds);
+      if (categories != null && categories.Any())
+      {
+        request.Categories = [.. categories];
+      }
+    }
+
     await _museumRequestRepository.AddAsync(request);
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
@@ -286,6 +325,17 @@ public class MuseumService : BaseService, IMuseumService
     }
 
     _mapper.Map(dto, request);
+
+    // Update categories if provided
+    if (dto.CategoryIds != null)
+    {
+      var categories = _categoryRepository.GetByIds(dto.CategoryIds);
+      if (categories != null && categories.Any())
+      {
+        request.Categories = [.. categories];
+      }
+    }
+
     await _museumRequestRepository.UpdateAsync(id, request);
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
@@ -329,7 +379,8 @@ public class MuseumService : BaseService, IMuseumService
       ContactEmail = request.ContactEmail,
       ContactPhone = request.ContactPhone,
       Status = MuseumStatusEnum.Active,
-      CreatedBy = request.CreatedBy
+      CreatedBy = request.CreatedBy,
+      Categories = request.Categories
     };
 
     museum = await _museumRepository.AddAsync(museum);

@@ -4,6 +4,7 @@ using System.Text.Json;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MuseTrip360.Migrations
 {
     [DbContext(typeof(MuseTrip360DbContext))]
-    partial class MuseTrip360DbContextModelSnapshot : ModelSnapshot
+    [Migration("20250806164202_AddCategoryAndHistoricalPeriod")]
+    partial class AddCategoryAndHistoricalPeriod
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,21 +54,6 @@ namespace MuseTrip360.Migrations
                     b.HasIndex("MuseumsId");
 
                     b.ToTable("CategoryMuseum");
-                });
-
-            modelBuilder.Entity("CategoryMuseumRequest", b =>
-                {
-                    b.Property<Guid>("CategoriesId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MuseumRequestId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("CategoriesId", "MuseumRequestId");
-
-                    b.HasIndex("MuseumRequestId");
-
-                    b.ToTable("CategoryMuseumRequest");
                 });
 
             modelBuilder.Entity("Domain.Artifacts.Artifact", b =>
@@ -184,16 +172,12 @@ namespace MuseTrip360.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("EndDate")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<JsonDocument>("Metadata")
                         .ValueGeneratedOnAdd()
@@ -205,9 +189,8 @@ namespace MuseTrip360.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("StartDate")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -1835,21 +1818,6 @@ namespace MuseTrip360.Migrations
                     b.HasOne("Domain.Museums.Museum", null)
                         .WithMany()
                         .HasForeignKey("MuseumsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CategoryMuseumRequest", b =>
-                {
-                    b.HasOne("Domain.Content.Category", null)
-                        .WithMany()
-                        .HasForeignKey("CategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Museums.MuseumRequest", null)
-                        .WithMany()
-                        .HasForeignKey("MuseumRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

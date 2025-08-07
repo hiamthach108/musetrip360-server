@@ -54,6 +54,7 @@ public class MuseTrip360DbContext : DbContext
   public DbSet<BankAccount> BankAccounts { get; set; }
   public DbSet<Payout> Payouts { get; set; }
   public DbSet<MuseumWallet> MuseumWallets { get; set; }
+  public DbSet<Transaction> Transactions { get; set; }
 
   // Messaging
   public DbSet<Message> Messages { get; set; }
@@ -71,6 +72,8 @@ public class MuseTrip360DbContext : DbContext
 
   // Content
   public DbSet<RepresentationMaterial> RepresentationMaterials { get; set; }
+  public DbSet<Category> Categories { get; set; }
+  public DbSet<HistoricalPeriod> HistoricalPeriods { get; set; }
 
   public MuseTrip360DbContext(DbContextOptions<MuseTrip360DbContext> options) : base(options) { }
 
@@ -219,6 +222,7 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.ContactPhone).IsRequired().HasMaxLength(20);
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(RequestStatusEnum.Pending);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.MuseumRequests).HasForeignKey(x => x.CreatedBy);
+      e.HasMany(x => x.Categories).WithMany();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -540,6 +544,21 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
 
+    builder.Entity<Transaction>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.HasIndex(x => x.MuseumId);
+      e.Property(x => x.ReferenceId).IsRequired().HasMaxLength(100);
+      e.Property(x => x.TransactionType).IsRequired().HasMaxLength(100);
+      e.Property(x => x.Amount).IsRequired();
+      e.Property(x => x.BalanceBefore).IsRequired();
+      e.Property(x => x.BalanceAfter).IsRequired();
+      e.HasOne(x => x.Museum).WithMany(x => x.Transactions).HasForeignKey(x => x.MuseumId);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
     builder.Entity<RepresentationMaterial>(e =>
     {
       e.HasKey(x => x.Id);
@@ -550,6 +569,29 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.RepresentationMaterials).HasForeignKey(x => x.CreatedBy);
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+
+    builder.Entity<Category>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.HasMany(x => x.Museums).WithMany(x => x.Categories);
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
+      e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+      e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
+    });
+    builder.Entity<HistoricalPeriod>(e =>
+    {
+      e.HasKey(x => x.Id);
+      e.Property(x => x.Name).IsRequired().HasMaxLength(100);
+      e.Property(x => x.Description).IsRequired(false).HasMaxLength(1000);
+      e.Property(x => x.StartDate).IsRequired(false).HasMaxLength(100);
+      e.Property(x => x.EndDate).IsRequired(false).HasMaxLength(100);
+      e.Property(x => x.CreatedBy).IsRequired();
+      e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
     });
