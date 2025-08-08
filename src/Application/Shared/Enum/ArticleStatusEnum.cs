@@ -5,5 +5,5 @@ public enum ArticleStatusEnum
   Draft,
   Pending,
   Published,
-  Rejected
+  Rejected,
 }
