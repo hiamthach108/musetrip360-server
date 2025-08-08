@@ -154,6 +154,7 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRepresentationMaterialService, RepresentationMaterialService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IHistoricalPeriodService, HistoricalPeriodService>();
+builder.Services.AddScoped<IArticleService, ArticleService>();
 
 // Singleton for RoomStateManager
 builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();
