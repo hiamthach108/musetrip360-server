@@ -82,7 +82,8 @@ public class GeminiSvc : ILLM
             }
           }
         },
-        taskType = "SEMANTIC_SIMILARITY"
+        taskType = "SEMANTIC_SIMILARITY",
+        outputDimensionality = 768
       },
       _apiHeader
     );

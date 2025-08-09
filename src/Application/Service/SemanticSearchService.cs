@@ -15,13 +15,13 @@ public interface ISemanticSearchService
   Task<IActionResult> HandleSemanticSearchAsync(SemanticSearchQuery query);
   Task<IActionResult> GenerateEmbeddingAsync(EmbeddingRequestDto request);
   Task<IActionResult> GetSimilarItemsAsync(Guid itemId, string itemType, int size = 5);
-  
+
   Task<bool> IndexItemWithEmbeddingAsync(SemanticSearchItemDto item);
   Task<bool> DeleteItemFromSemanticIndexAsync(Guid id);
   Task<bool> BulkIndexItemsWithEmbeddingsAsync(IEnumerable<SemanticSearchItemDto> items);
   Task<bool> CreateSemanticSearchIndexAsync();
   Task<bool> RecreateSemanticSearchIndexAsync();
-  
+
   Task<bool> IndexMuseumSemanticAsync(Guid museumId);
   Task<bool> IndexArtifactSemanticAsync(Guid artifactId);
   Task<bool> IndexEventSemanticAsync(Guid eventId);
@@ -39,7 +39,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
   private readonly ITourContentRepository _tourContentRepository;
   private readonly ITourOnlineRepository _tourOnlineRepository;
   private readonly string _semanticSearchIndex = "semantic_search_items";
-  private readonly int _vectorDimensions = 768;
+  private readonly int _vectorDimensions = 3072;
 
   public SemanticSearchService(
     MuseTrip360DbContext dbContext,
@@ -155,7 +155,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
     try
     {
       string searchText = "";
-      
+
       switch (itemType.ToLower())
       {
         case "museum":
@@ -163,31 +163,31 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
           if (museum == null) return ErrorResp.NotFound("Museum not found");
           searchText = $"{museum.Name} {museum.Description} {museum.Location}";
           break;
-          
+
         case "artifact":
           var artifact = await _artifactRepository.GetByIdAsync(itemId);
           if (artifact == null) return ErrorResp.NotFound("Artifact not found");
           searchText = $"{artifact.Name} {artifact.Description}";
           break;
-          
+
         case "event":
           var eventEntity = await _eventRepository.GetEventById(itemId);
           if (eventEntity == null) return ErrorResp.NotFound("Event not found");
           searchText = $"{eventEntity.Title} {eventEntity.Description} {eventEntity.Location}";
           break;
-          
+
         case "tourcontent":
           var tourContent = await _tourContentRepository.GetTourContentById(itemId);
           if (tourContent == null) return ErrorResp.NotFound("Tour content not found");
           searchText = tourContent.Content;
           break;
-          
+
         case "touronline":
           var tourOnline = await _tourOnlineRepository.GetByIdAsync(itemId);
           if (tourOnline == null) return ErrorResp.NotFound("Tour online not found");
           searchText = $"{tourOnline.Name} {tourOnline.Description}";
           break;
-          
+
         default:
           return ErrorResp.BadRequest("Invalid item type");
       }
@@ -204,7 +204,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       }
 
       var additionalFilter = $"NOT id:{itemId}";
-      
+
       var (searchResults, totalHits, scores) = await _vectorSearchService.VectorSearchAsync<SemanticSearchItemDto>(
         _semanticSearchIndex,
         queryEmbedding.ToArray(),
@@ -254,7 +254,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
         embedding.ToArray()
       );
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -266,7 +266,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
     {
       return await _vectorSearchService.DeleteIndexAsync(id.ToString());
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -277,20 +277,20 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
     try
     {
       var itemsWithEmbeddings = new List<(SemanticSearchItemDto, float[])>();
-      
+
       foreach (var item in items)
       {
         if (string.IsNullOrWhiteSpace(item.SearchText))
         {
           continue;
         }
-        
+
         var embedding = await _llm.EmbedAsync(item.SearchText);
         if (embedding != null && embedding.Any())
         {
           itemsWithEmbeddings.Add((item, embedding.ToArray()));
         }
-        
+
         await Task.Delay(100);
       }
 
@@ -301,7 +301,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
 
       return await _vectorSearchService.BulkIndexWithVectorsAsync(_semanticSearchIndex, itemsWithEmbeddings);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -318,7 +318,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
 
       return await _vectorSearchService.CreateVectorIndexAsync(_semanticSearchIndex, _vectorDimensions);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -342,7 +342,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
 
       return created;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -358,7 +358,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       var searchItem = _mapper.Map<SemanticSearchItemDto>(museum);
       return await IndexItemWithEmbeddingAsync(searchItem);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -374,7 +374,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       var searchItem = _mapper.Map<SemanticSearchItemDto>(artifact);
       return await IndexItemWithEmbeddingAsync(searchItem);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -390,7 +390,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       var searchItem = _mapper.Map<SemanticSearchItemDto>(eventEntity);
       return await IndexItemWithEmbeddingAsync(searchItem);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -406,7 +406,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       var searchItem = _mapper.Map<SemanticSearchItemDto>(tourContent);
       return await IndexItemWithEmbeddingAsync(searchItem);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -422,7 +422,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       var searchItem = _mapper.Map<SemanticSearchItemDto>(tourOnline);
       return await IndexItemWithEmbeddingAsync(searchItem);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -471,7 +471,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
 
       return await BulkIndexItemsWithEmbeddingsAsync(allItems);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -486,6 +486,6 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
       filterParts.Add($"type:{query.Type}");
     }
 
-    return filterParts.Any() ? string.Join(" AND ", filterParts) : null;
+    return filterParts.Count != 0 ? string.Join(" AND ", filterParts) : string.Empty;
   }
 }

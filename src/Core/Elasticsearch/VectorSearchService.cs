@@ -9,7 +9,7 @@ using Elastic.Clients.Elasticsearch.Core.Bulk;
 
 public interface IVectorSearchService : IDisposable
 {
-  Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 768);
+  Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 3072);
   Task<bool> IndexExistsAsync(string indexName);
   Task<bool> DeleteIndexAsync(string indexName);
   Task<(IEnumerable<T> documents, long totalHits, IEnumerable<float> scores)> VectorSearchAsync<T>(string indexName, float[] queryVector, int from = 0, int size = 10, float minScore = 0.7f, string? additionalFilter = null) where T : class;
@@ -33,7 +33,7 @@ public class VectorSearchService : IVectorSearchService
     var settings = new ElasticsearchClientSettings(new Uri(_config.ConnectionString))
         .Authentication(new BasicAuthentication(_config.Username, _config.Password))
         .DefaultIndex(_config.DefaultIndex)
-        .RequestTimeout(TimeSpan.FromMinutes(2));
+        .RequestTimeout(TimeSpan.FromMinutes(5));
 
     _client = new ElasticsearchClient(settings);
   }
@@ -52,7 +52,7 @@ public class VectorSearchService : IVectorSearchService
     }
   }
 
-  public async Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 768)
+  public async Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 3072)
   {
     try
     {
