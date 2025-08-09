@@ -236,6 +236,8 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Content).IsRequired();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
+      e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(ArticleStatusEnum.Draft);
+      e.Property(x => x.DataEntityType).HasConversion<string>().HasDefaultValue(DataEntityType.Museum);
       e.HasOne(x => x.Museum).WithMany(x => x.Articles).HasForeignKey(x => x.MuseumId);
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Articles).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -255,6 +257,7 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Capacity).IsRequired();
       e.Property(x => x.AvailableSlots).IsRequired();
       e.Property(x => x.BookingDeadline).IsRequired();
+      e.Property(x => x.Price).IsRequired().HasDefaultValue(0);
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(EventStatusEnum.Draft);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();
@@ -305,6 +308,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasIndex(x => x.MuseumId);
       e.Property(x => x.Name).IsRequired().HasMaxLength(100);
       e.Property(x => x.Description).IsRequired();
+      e.Property(x => x.Price).IsRequired().HasDefaultValue(0);
       e.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.HasOne(x => x.Museum).WithMany(x => x.TourOnlines).HasForeignKey(x => x.MuseumId);
@@ -359,6 +363,8 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.TotalAmount).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(PaymentStatusEnum.Pending);
       e.Property(x => x.OrderType).HasConversion<string>().HasDefaultValue(OrderTypeEnum.Subscription);
+      e.Property(x => x.OrderCode).IsRequired(false).HasMaxLength(100);
+      e.Property(x => x.ExpiredAt).IsRequired();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

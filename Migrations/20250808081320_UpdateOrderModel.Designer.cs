@@ -4,6 +4,7 @@ using System.Text.Json;
 using Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MuseTrip360.Migrations
 {
     [DbContext(typeof(MuseTrip360DbContext))]
-    partial class MuseTrip360DbContextModelSnapshot : ModelSnapshot
+    [Migration("20250808081320_UpdateOrderModel")]
+    partial class UpdateOrderModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -312,11 +315,6 @@ namespace MuseTrip360.Migrations
                     b.Property<Guid>("MuseumId")
                         .HasColumnType("uuid");
 
-                    b.Property<float>("Price")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("real")
-                        .HasDefaultValue(0f);
-
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone");
 
@@ -610,11 +608,8 @@ namespace MuseTrip360.Migrations
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("DataEntityType")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Museum");
+                    b.Property<int>("DataEntityType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("EntityId")
                         .HasColumnType("uuid");
@@ -630,11 +625,8 @@ namespace MuseTrip360.Migrations
                     b.Property<DateTime>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Draft");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -1603,11 +1595,6 @@ namespace MuseTrip360.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<float>("Price")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("real")
-                        .HasDefaultValue(0f);
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
