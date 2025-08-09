@@ -1,5 +1,7 @@
 namespace Application.Service;
 
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text.Json;
 using Application.DTOs.Order;
 using Application.DTOs.Payment;
@@ -8,11 +10,13 @@ using Application.Shared.Enum;
 using Application.Shared.Helpers;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Payos;
 using Core.Queue;
 using Database;
 using Domain.Payment;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Net.payOS.Types;
 
 public interface IPaymentService
 {
@@ -32,22 +36,34 @@ public interface IPaymentService
 
 public class PaymentService : BaseService, IPaymentService
 {
+  private readonly IPayOSService _payOSService;
+  private readonly IConfiguration _configuration;
   private readonly ILogger<PaymentService> _logger;
   private readonly IQueuePublisher _queuePub;
   private readonly IOrderRepository _orderRepo;
   private readonly IBankAccountRepository _bankAccountRepo;
+  private readonly IEventRepository _eventRepo;
+  private readonly ITourOnlineRepository _tourRepo;
 
   public PaymentService(
+    IConfiguration configuration,
     ILogger<PaymentService> logger,
     IMapper mapper,
     MuseTrip360DbContext dbContext,
     IQueuePublisher queuePublisher,
+    IPayOSService payOSService,
+    IEventRepository eventRepo,
+    ITourOnlineRepository tourRepo,
     IHttpContextAccessor httpContextAccessor) : base(dbContext, mapper, httpContextAccessor)
   {
+    _configuration = configuration;
     _logger = logger;
     _queuePub = queuePublisher;
     _orderRepo = new OrderRepository(dbContext);
     _bankAccountRepo = new BankAccountRepository(dbContext);
+    _payOSService = payOSService;
+    _eventRepo = eventRepo;
+    _tourRepo = tourRepo;
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderQuery query)
@@ -81,18 +97,51 @@ public class PaymentService : BaseService, IPaymentService
     {
       return ErrorResp.Unauthorized("Invalid token");
     }
+    var listItem = new List<ItemData>();
+    if (req.OrderType == OrderTypeEnum.Event)
+    {
+      var listEvent = req.ItemIds.Select(async itemId => await _eventRepo.GetEventById(itemId)).ToList();
+      // price set to 0
+      listItem.AddRange(listEvent.Select(e => new ItemData(e.Id.ToString(), 1, 0)).ToList());
+    }
+    else if (req.OrderType == OrderTypeEnum.Tour)
+    {
+      var listTour = req.ItemIds.Select(async itemId => await _tourRepo.GetByIdAsync(itemId)).ToList();
+      listItem.AddRange(listTour.Select(t => new ItemData(t.Id.ToString(), 1, 0)).ToList());
+    }
 
-    // TODO: validate req and params
+    var snowflake = new SnowflakeId(1);
+    var paymentData = new PaymentData(
+      orderCode: snowflake.GenerateOrderId(),
+      amount: (int)req.TotalAmount,
+      description: "Payment for order",
+      items: listItem,
+      cancelUrl: $"{_configuration["Frontend:Url"]}/payment/cancel",
+      returnUrl: $"{_configuration["Frontend:Url"]}/payment/success"
+    );
+
+    var paymentResult = await _payOSService.CreatePayment(paymentData);
 
     var msg = _mapper.Map<CreateOrderMsg>(req);
     msg.CreatedBy = payload.UserId;
 
     await _queuePub.Publish(QueueConst.Order, msg);
 
-    return SuccessResp.Ok("Order created successfully");
+    return SuccessResp.Ok(new
+    {
+      paymentResult.checkoutUrl,
+      paymentResult.orderCode,
+      paymentResult.expiredAt,
+      paymentResult.paymentLinkId,
+      paymentResult.status,
+      paymentResult.currency,
+      paymentResult.amount,
+      paymentResult.description,
+      paymentResult.bin,
+      paymentResult.accountNumber,
+      paymentResult.qrCode,
+    });
   }
-
-
 
   public async Task<OrderDto> CreateOrder(CreateOrderMsg msg)
   {

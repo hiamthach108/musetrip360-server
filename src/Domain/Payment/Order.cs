@@ -9,6 +9,8 @@ public class Order : BaseEntity
 {
   public Guid CreatedBy { get; set; }
   public float TotalAmount { get; set; }
+  public string OrderCode { get; set; } = null!;
+  public DateTime ExpiredAt { get; set; }
   public PaymentStatusEnum Status { get; set; }
   public OrderTypeEnum OrderType { get; set; }
 
