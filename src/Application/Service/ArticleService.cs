@@ -87,13 +87,6 @@ public class ArticleService : BaseService, IArticleService
             if (article == null)
                 return ErrorResp.NotFound("Article not found");
 
-            if (article.Status != ArticleStatusEnum.Published)
-            {
-                var payload = ExtractPayload();
-                if (payload == null)
-                    return ErrorResp.Unauthorized("Authentication required");
-            }
-
             var articleDto = _mapper.Map<ArticleDto>(article);
             return SuccessResp.Ok(articleDto);
         }
