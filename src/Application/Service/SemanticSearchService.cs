@@ -39,7 +39,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
   private readonly ITourContentRepository _tourContentRepository;
   private readonly ITourOnlineRepository _tourOnlineRepository;
   private readonly string _semanticSearchIndex = "semantic_search_items";
-  private readonly int _vectorDimensions = 3072;
+  private readonly int _vectorDimensions = 768;
 
   public SemanticSearchService(
     MuseTrip360DbContext dbContext,

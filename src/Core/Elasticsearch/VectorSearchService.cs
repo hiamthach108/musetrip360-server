@@ -9,7 +9,7 @@ using Elastic.Clients.Elasticsearch.Core.Bulk;
 
 public interface IVectorSearchService : IDisposable
 {
-  Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 3072);
+  Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 768);
   Task<bool> IndexExistsAsync(string indexName);
   Task<bool> DeleteIndexAsync(string indexName);
   Task<(IEnumerable<T> documents, long totalHits, IEnumerable<float> scores)> VectorSearchAsync<T>(string indexName, float[] queryVector, int from = 0, int size = 10, float minScore = 0.7f, string? additionalFilter = null) where T : class;
@@ -52,7 +52,7 @@ public class VectorSearchService : IVectorSearchService
     }
   }
 
-  public async Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 3072)
+  public async Task<bool> CreateVectorIndexAsync(string indexName, int vectorDimensions = 768)
   {
     try
     {
@@ -128,49 +128,32 @@ public class VectorSearchService : IVectorSearchService
     float[] queryVector,
     int from = 0,
     int size = 10,
-    float minScore = 0.7f,
+    float minScore = 0.0f, // Adjust for knn
     string? additionalFilter = null) where T : class
   {
     try
     {
-      _logger.LogDebug("Performing vector search in index {IndexName} with query vector of {Dimensions} dimensions",
-        indexName, queryVector.Length);
+      _logger.LogDebug("Performing knn vector search in index {IndexName} with query vector of {Dimensions} dimensions",
+          indexName, queryVector.Length);
+
+      // Validate query vector
+      const int ExpectedVectorDimensions = 768;
+      if (queryVector.Length != ExpectedVectorDimensions)
+      {
+        _logger.LogError("Query vector has invalid length {Length}, expected {Expected}", queryVector.Length, ExpectedVectorDimensions);
+        return (Enumerable.Empty<T>(), 0, Enumerable.Empty<float>());
+      }
 
       var searchRequestDescriptor = new SearchRequestDescriptor<T>()
-        .Index(indexName)
-        .From(from)
-        .Size(size)
-        .MinScore(minScore);
-
-      if (!string.IsNullOrEmpty(additionalFilter))
-      {
-        searchRequestDescriptor = searchRequestDescriptor.Query(q => q
-          .Bool(b => b
-            .Must(m => m
-              .Script(s => s
-                .Script(ss => ss
-                  .Source($"cosineSimilarity(params.query_vector, 'embedding') + 1.0")
-                  .Params(p => p.Add("query_vector", queryVector))
-                )
-              )
-            )
-            .Filter(f => f
-              .QueryString(qs => qs.Query(additionalFilter))
-            )
-          )
-        );
-      }
-      else
-      {
-        searchRequestDescriptor = searchRequestDescriptor.Query(q => q
-          .Script(s => s
-            .Script(ss => ss
-              .Source($"cosineSimilarity(params.query_vector, 'embedding') + 1.0")
-              .Params(p => p.Add("query_vector", queryVector))
-            )
-          )
-        );
-      }
+          .Index(indexName)
+          .From(from)
+          .Size(size)
+          .Knn(k => k
+              .Field("embedding")
+              .QueryVector(queryVector)
+              .K(size)
+              .NumCandidates(size * 10) // Search more candidates for better accuracy
+          );
 
       var response = await _client.SearchAsync<T>(searchRequestDescriptor);
 
@@ -184,8 +167,7 @@ public class VectorSearchService : IVectorSearchService
       var totalHits = response.Total;
       var scores = response.Hits.Select(hit => (float)(hit.Score ?? 0f));
 
-      _logger.LogDebug("Vector search returned {Count} documents with total hits: {TotalHits}",
-        documents.Count(), totalHits);
+      _logger.LogDebug("Vector search returned {Count} documents with total hits: {TotalHits}", documents.Count(), totalHits);
 
       return (documents, totalHits, scores);
     }
