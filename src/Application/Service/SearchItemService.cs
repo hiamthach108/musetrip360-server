@@ -27,7 +27,6 @@ public interface ISearchItemService
   Task<bool> IndexEventAsync(Guid eventId);
   Task<bool> IndexTourContentAsync(Guid tourContentId);
   Task<bool> IndexTourOnlineAsync(Guid tourOnlineId);
-  Task<bool> IndexTourGuideAsync(Guid tourGuideId);
 }
 
 public class SearchItemService : BaseService, ISearchItemService
@@ -38,7 +37,6 @@ public class SearchItemService : BaseService, ISearchItemService
   private readonly IEventRepository _eventRepository;
   private readonly ITourContentRepository _tourContentRepository;
   private readonly ITourOnlineRepository _tourOnlineRepository;
-  private readonly ITourGuideRepository _tourGuideRepository;
   private readonly string _searchIndex = "search_items";
 
   public SearchItemService(
@@ -53,7 +51,6 @@ public class SearchItemService : BaseService, ISearchItemService
     _eventRepository = new EventRepository(dbContext);
     _tourContentRepository = new TourContentRepository(dbContext);
     _tourOnlineRepository = new TourOnlineRepository(dbContext);
-    _tourGuideRepository = new TourGuideRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleUnifiedSearchAsync(SearchQuery query)
@@ -364,23 +361,6 @@ public class SearchItemService : BaseService, ISearchItemService
       return false;
     }
   }
-
-  public async Task<bool> IndexTourGuideAsync(Guid tourGuideId)
-  {
-    try
-    {
-      var tourGuide = await _tourGuideRepository.GetTourGuideByIdAsync(tourGuideId);
-      if (tourGuide == null) return false;
-
-      var searchItem = _mapper.Map<SearchItemIndexDto>(tourGuide);
-      return await IndexItemAsync(searchItem);
-    }
-    catch (Exception ex)
-    {
-      return false;
-    }
-  }
-
   private async Task<bool> BulkIndexAllItemsAsync()
   {
     try
@@ -401,9 +381,6 @@ public class SearchItemService : BaseService, ISearchItemService
 
       var tourOnlines = await _tourOnlineRepository.GetAllAdminAsync(new TourOnlineAdminQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(tourOnlines.Tours.Select(to => _mapper.Map<SearchItemIndexDto>(to)));
-
-      var tourGuides = await _tourGuideRepository.GetAllTourGuidesAsync(new TourGuideQuery { Page = 1, PageSize = int.MaxValue });
-      allItems.AddRange(tourGuides.TourGuides.Select(tg => _mapper.Map<SearchItemIndexDto>(tg)));
 
       return await BulkIndexItemsAsync(allItems);
     }

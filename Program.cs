@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.Configure<ElasticsearchConfiguration>(
     builder.Configuration.GetSection("Elasticsearch"));
 builder.Services.AddSingleton<IElasticsearchService, ElasticsearchService>();
+builder.Services.AddSingleton<IVectorSearchService, VectorSearchService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
