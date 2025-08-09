@@ -6,9 +6,9 @@ public static class FileConst
   public const string VIDEO = "video";
   public const string DOCUMENT = "document";
 
-  public const int MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  public const int MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 5MB
   public const int MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
-  public const int MAX_DOCUMENT_SIZE = 5 * 1024 * 1024; // 5MB
+  public const int MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 5MB
 
   public static readonly string[] IMAGE_CONTENT_TYPES = { "image/jpeg", "image/png", "image/gif", "image/webp", "image/jpg", "image/svg+xml", "image/bmp", "image/tiff", "image/x-icon", "image/heic", "image/heif", "image/avif" };
   public static readonly string[] VIDEO_CONTENT_TYPES = { "video/mp4", "video/avi", "video/quicktime", "video/x-ms-wmv", "video/x-flv", "video/x-matroska", "video/quicktime", "video/webm" };
