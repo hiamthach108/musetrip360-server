@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.Configure<ElasticsearchConfiguration>(
     builder.Configuration.GetSection("Elasticsearch"));
 builder.Services.AddSingleton<IElasticsearchService, ElasticsearchService>();
+builder.Services.AddSingleton<IVectorSearchService, VectorSearchService>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddCors(options =>
@@ -140,7 +141,7 @@ builder.Services.AddScoped<IAdminEventService, AdminEventService>();
 builder.Services.AddScoped<IOrganizerEventService, OrganizerEventService>();
 builder.Services.AddScoped<IEventParticipantService, EventParticipantService>();
 builder.Services.AddScoped<ISearchItemService, SearchItemService>();
-
+builder.Services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 builder.Services.AddScoped<ITourOnlineService, TourOnlineService>();
 builder.Services.AddScoped<IAdminTourOnlineService, TourOnlineAdminService>();
 builder.Services.AddScoped<ITourContentService, TourContentService>();
@@ -161,6 +162,7 @@ builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();
 // Workers
 builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddHostedService<OrderWorker>();
+builder.Services.AddHostedService<SearchIndexWorker>();
 var app = builder.Build();
 
 app.UseInitializeDatabase();

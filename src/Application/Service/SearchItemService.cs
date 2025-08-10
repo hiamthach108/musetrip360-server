@@ -8,7 +8,8 @@ using Infrastructure.Repository;
 using Database;
 using MuseTrip360.src.Infrastructure.Repository;
 using Application.Shared.Type;
-
+using Application.DTOs.Museum;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 public interface ISearchItemService
 {
@@ -27,33 +28,33 @@ public interface ISearchItemService
   Task<bool> IndexEventAsync(Guid eventId);
   Task<bool> IndexTourContentAsync(Guid tourContentId);
   Task<bool> IndexTourOnlineAsync(Guid tourOnlineId);
-  Task<bool> IndexTourGuideAsync(Guid tourGuideId);
 }
 
 public class SearchItemService : BaseService, ISearchItemService
 {
   private readonly IElasticsearchService _elasticsearchService;
+  private readonly ISemanticSearchService _semanticSearchService;
   private readonly IMuseumRepository _museumRepository;
   private readonly IArtifactRepository _artifactRepository;
   private readonly IEventRepository _eventRepository;
   private readonly ITourContentRepository _tourContentRepository;
   private readonly ITourOnlineRepository _tourOnlineRepository;
-  private readonly ITourGuideRepository _tourGuideRepository;
   private readonly string _searchIndex = "search_items";
 
   public SearchItemService(
     MuseTrip360DbContext dbContext,
     IElasticsearchService elasticsearchService,
+    ISemanticSearchService semanticSearchService,
     IMapper mapper,
     IHttpContextAccessor httpCtx) : base(dbContext, mapper, httpCtx)
   {
     _elasticsearchService = elasticsearchService;
+    _semanticSearchService = semanticSearchService;
     _museumRepository = new MuseumRepository(dbContext);
     _artifactRepository = new ArtifactRepository(dbContext);
     _eventRepository = new EventRepository(dbContext);
     _tourContentRepository = new TourContentRepository(dbContext);
     _tourOnlineRepository = new TourOnlineRepository(dbContext);
-    _tourGuideRepository = new TourGuideRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleUnifiedSearchAsync(SearchQuery query)
@@ -131,7 +132,7 @@ public class SearchItemService : BaseService, ISearchItemService
         return SuccessResp.Ok(response);
       }
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while performing unified search");
     }
@@ -162,7 +163,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return SuccessResp.Ok(suggestions);
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while getting search suggestions");
     }
@@ -198,7 +199,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return SuccessResp.Ok(aggregations);
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while getting search aggregations");
     }
@@ -214,7 +215,7 @@ public class SearchItemService : BaseService, ISearchItemService
         item
       );
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -224,9 +225,12 @@ public class SearchItemService : BaseService, ISearchItemService
   {
     try
     {
-      return await _elasticsearchService.DeleteDocumentAsync(_searchIndex, id.ToString());
+      var elasticResult = await _elasticsearchService.DeleteDocumentAsync(_searchIndex, id.ToString());
+      var semanticResult = await _semanticSearchService.DeleteItemFromSemanticIndexAsync(id);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -238,7 +242,7 @@ public class SearchItemService : BaseService, ISearchItemService
     {
       return await _elasticsearchService.BulkIndexAsync(_searchIndex, items);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -255,7 +259,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return await _elasticsearchService.CreateIndexAsync(_searchIndex);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -274,12 +278,16 @@ public class SearchItemService : BaseService, ISearchItemService
 
       if (created)
       {
-        await BulkIndexAllItemsAsync();
+        var bulkResult = await BulkIndexAllItemsAsync();
+        // Uncomment the following line if you want to recreate the semantic search index as well
+        // var semanticResult = await _semanticSearchService.RecreateSemanticSearchIndexAsync();
+
+        return bulkResult;
       }
 
       return created;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -293,9 +301,14 @@ public class SearchItemService : BaseService, ISearchItemService
       if (museum == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(museum);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(museum);
+
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -309,9 +322,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (artifact == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(artifact);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(artifact);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -325,9 +342,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (eventEntity == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(eventEntity);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(eventEntity);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -341,9 +362,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (tourContent == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(tourContent);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(tourContent);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -357,57 +382,41 @@ public class SearchItemService : BaseService, ISearchItemService
       if (tourOnline == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(tourOnline);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(tourOnline);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
   }
-
-  public async Task<bool> IndexTourGuideAsync(Guid tourGuideId)
-  {
-    try
-    {
-      var tourGuide = await _tourGuideRepository.GetTourGuideByIdAsync(tourGuideId);
-      if (tourGuide == null) return false;
-
-      var searchItem = _mapper.Map<SearchItemIndexDto>(tourGuide);
-      return await IndexItemAsync(searchItem);
-    }
-    catch (Exception ex)
-    {
-      return false;
-    }
-  }
-
   private async Task<bool> BulkIndexAllItemsAsync()
   {
     try
     {
       var allItems = new List<SearchItemIndexDto>();
 
-      var museums = _museumRepository.GetAllAdmin(new Application.DTOs.Museum.MuseumQuery { Page = 1, PageSize = int.MaxValue });
+      var museums = _museumRepository.GetAll(new MuseumQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(museums.Museums.Select(m => _mapper.Map<SearchItemIndexDto>(m)));
 
-      var artifacts = await _artifactRepository.GetAllAdminAsync(new MuseTrip360.src.Application.DTOs.Artifact.ArtifactAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var artifacts = await _artifactRepository.GetAllAsync(new ArtifactQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(artifacts.Artifacts.Select(a => _mapper.Map<SearchItemIndexDto>(a)));
 
-      var events = await _eventRepository.GetAllAdminAsync(new EventAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var events = await _eventRepository.GetAllAsync(new EventQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(events.Events.Select(e => _mapper.Map<SearchItemIndexDto>(e)));
 
-      var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
-      allItems.AddRange(tourContents.Contents.Select(tc => _mapper.Map<SearchItemIndexDto>(tc)));
+      // var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
+      // allItems.AddRange(tourContents.Contents.Select(tc => _mapper.Map<SearchItemIndexDto>(tc)));
 
-      var tourOnlines = await _tourOnlineRepository.GetAllAdminAsync(new TourOnlineAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var tourOnlines = await _tourOnlineRepository.GetAllAsync(new TourOnlineQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(tourOnlines.Tours.Select(to => _mapper.Map<SearchItemIndexDto>(to)));
-
-      var tourGuides = await _tourGuideRepository.GetAllTourGuidesAsync(new TourGuideQuery { Page = 1, PageSize = int.MaxValue });
-      allItems.AddRange(tourGuides.TourGuides.Select(tg => _mapper.Map<SearchItemIndexDto>(tg)));
 
       return await BulkIndexItemsAsync(allItems);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
