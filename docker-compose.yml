@@ -264,6 +264,7 @@ services:
       - PayOS__ClientId=${PAYOS_CLIENT_ID:-}
       - PayOS__ApiKey=${PAYOS_API_KEY:-}
       - PayOS__ChecksumKey=${PAYOS_CHECKSUM_KEY:-}
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
       
     depends_on:
       postgres:
