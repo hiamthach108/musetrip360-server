@@ -82,7 +82,7 @@ public class SearchController : ControllerBase
   public async Task<IActionResult> IndexItemSemantic(string itemType, Guid itemId)
   {
     _logger.LogInformation("Indexing {ItemType} with ID: {ItemId} for semantic search", itemType, itemId);
-    
+
     bool result = itemType.ToLower() switch
     {
       "museum" => await _semanticSearchService.IndexMuseumSemanticAsync(itemId),
@@ -99,5 +99,19 @@ public class SearchController : ControllerBase
     }
 
     return BadRequest(new { success = false, message = $"Failed to index {itemType} for semantic search" });
+  }
+
+  [HttpDelete("index/{id}")]
+  public async Task<IActionResult> DeleteIndexItem(Guid id)
+  {
+    _logger.LogInformation("Deleting search index item with ID: {Id}", id);
+    bool result = await _searchItemService.DeleteItemFromIndexAsync(id);
+
+    if (result)
+    {
+      return Ok(new { success = true, message = "Search index item deleted successfully" });
+    }
+
+    return BadRequest(new { success = false, message = "Failed to delete search index item" });
   }
 }

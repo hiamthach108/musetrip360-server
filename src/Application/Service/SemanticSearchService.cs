@@ -282,7 +282,7 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
   {
     try
     {
-      return await _vectorSearchService.DeleteIndexAsync(id.ToString());
+      return await _vectorSearchService.DeleteItemFromIndexAsync(_semanticSearchIndex, id.ToString());
     }
     catch
     {

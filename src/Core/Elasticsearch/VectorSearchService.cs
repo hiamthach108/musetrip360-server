@@ -17,6 +17,7 @@ public interface IVectorSearchService : IDisposable
   Task<bool> BulkIndexWithVectorsAsync<T>(string indexName, IEnumerable<(T document, float[] vector)> documentsWithVectors) where T : class;
   Task<bool> RefreshIndexAsync(string indexName);
   Task<bool> TestConnectionAsync();
+  Task<bool> DeleteItemFromIndexAsync(string indexName, string id);
 }
 
 public class VectorSearchService : IVectorSearchService
@@ -32,7 +33,7 @@ public class VectorSearchService : IVectorSearchService
 
     var settings = new ElasticsearchClientSettings(new Uri(_config.ConnectionString))
         .Authentication(new BasicAuthentication(_config.Username, _config.Password))
-        .DefaultIndex(_config.DefaultIndex)
+        .DefaultIndex("semantic_search_items")
         .RequestTimeout(TimeSpan.FromMinutes(5));
 
     _client = new ElasticsearchClient(settings);
@@ -385,5 +386,32 @@ public class VectorSearchService : IVectorSearchService
   {
     // ElasticsearchClient in the new library doesn't implement IDisposable
 
+  }
+
+  public async Task<bool> DeleteItemFromIndexAsync(string indexName, string id)
+  {
+    try
+    {
+      _logger.LogInformation("Deleting item with ID {Id} from index {IndexName}", id, indexName);
+
+      var response = await _client.DeleteAsync(indexName, id);
+
+      if (response.IsValidResponse)
+      {
+        _logger.LogInformation("Successfully deleted item with ID {Id} from index {IndexName}", id, indexName);
+        return true;
+      }
+      else
+      {
+        _logger.LogError("Failed to delete item with ID {Id} from index {IndexName}: {Error}",
+          id, indexName, response.DebugInformation);
+        return false;
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error deleting item with ID {Id} from index {IndexName}", id, indexName);
+      return false;
+    }
   }
 }

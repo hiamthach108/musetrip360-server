@@ -37,7 +37,7 @@ public class ElasticsearchService : IElasticsearchService
 
     var settings = new ElasticsearchClientSettings(new Uri(_config.ConnectionString))
         .Authentication(new BasicAuthentication(_config.Username, _config.Password))
-        .DefaultIndex(_config.DefaultIndex)
+        .DefaultIndex("search_items")
         .RequestTimeout(TimeSpan.FromMinutes(2)); // Keep only essential settings
 
     _client = new ElasticsearchClient(settings);
