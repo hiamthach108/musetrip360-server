@@ -59,7 +59,6 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IRoleRepository _roleRepository;
   private readonly ICategoryRepository _categoryRepository;
   private readonly IUserService _userSvc;
-  private readonly ISearchItemService _searchItemService;
   private readonly IQueuePublisher _queuePub;
 
   public MuseumService(
@@ -67,7 +66,6 @@ public class MuseumService : BaseService, IMuseumService
     IMapper mapper,
     IHttpContextAccessor httpCtx,
     IUserService userSvc,
-    ISearchItemService searchItemService,
     IQueuePublisher queuePublisher
   )
     : base(dbContext, mapper, httpCtx)
@@ -79,7 +77,6 @@ public class MuseumService : BaseService, IMuseumService
     _roleRepository = new RoleRepository(dbContext);
     _categoryRepository = new CategoryRepository(dbContext);
     _userSvc = userSvc;
-    _searchItemService = searchItemService;
     _queuePub = queuePublisher;
   }
 
