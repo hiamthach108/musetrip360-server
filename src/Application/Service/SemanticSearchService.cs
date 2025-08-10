@@ -473,12 +473,12 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
         allItems.Add(searchItem);
       }
 
-      var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
-      foreach (var tourContent in tourContents.Contents)
-      {
-        var searchItem = _mapper.Map<SemanticSearchItemDto>(tourContent);
-        allItems.Add(searchItem);
-      }
+      // var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
+      // foreach (var tourContent in tourContents.Contents)
+      // {
+      //   var searchItem = _mapper.Map<SemanticSearchItemDto>(tourContent);
+      //   allItems.Add(searchItem);
+      // }
 
       var tourOnlines = await _tourOnlineRepository.GetAllAdminAsync(new TourOnlineAdminQuery { Page = 1, PageSize = int.MaxValue });
       foreach (var tourOnline in tourOnlines.Tours)

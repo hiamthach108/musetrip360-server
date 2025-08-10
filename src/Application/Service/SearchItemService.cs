@@ -32,6 +32,7 @@ public interface ISearchItemService
 public class SearchItemService : BaseService, ISearchItemService
 {
   private readonly IElasticsearchService _elasticsearchService;
+  private readonly ISemanticSearchService _semanticSearchService;
   private readonly IMuseumRepository _museumRepository;
   private readonly IArtifactRepository _artifactRepository;
   private readonly IEventRepository _eventRepository;
@@ -42,10 +43,12 @@ public class SearchItemService : BaseService, ISearchItemService
   public SearchItemService(
     MuseTrip360DbContext dbContext,
     IElasticsearchService elasticsearchService,
+    ISemanticSearchService semanticSearchService,
     IMapper mapper,
     IHttpContextAccessor httpCtx) : base(dbContext, mapper, httpCtx)
   {
     _elasticsearchService = elasticsearchService;
+    _semanticSearchService = semanticSearchService;
     _museumRepository = new MuseumRepository(dbContext);
     _artifactRepository = new ArtifactRepository(dbContext);
     _eventRepository = new EventRepository(dbContext);
@@ -128,7 +131,7 @@ public class SearchItemService : BaseService, ISearchItemService
         return SuccessResp.Ok(response);
       }
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while performing unified search");
     }
@@ -159,7 +162,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return SuccessResp.Ok(suggestions);
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while getting search suggestions");
     }
@@ -195,7 +198,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return SuccessResp.Ok(aggregations);
     }
-    catch (Exception ex)
+    catch
     {
       return ErrorResp.InternalServerError("Error occurred while getting search aggregations");
     }
@@ -211,7 +214,7 @@ public class SearchItemService : BaseService, ISearchItemService
         item
       );
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -221,9 +224,12 @@ public class SearchItemService : BaseService, ISearchItemService
   {
     try
     {
-      return await _elasticsearchService.DeleteDocumentAsync(_searchIndex, id.ToString());
+      var elasticResult = await _elasticsearchService.DeleteDocumentAsync(_searchIndex, id.ToString());
+      var semanticResult = await _semanticSearchService.DeleteItemFromSemanticIndexAsync(id);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -235,7 +241,7 @@ public class SearchItemService : BaseService, ISearchItemService
     {
       return await _elasticsearchService.BulkIndexAsync(_searchIndex, items);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -252,7 +258,7 @@ public class SearchItemService : BaseService, ISearchItemService
 
       return await _elasticsearchService.CreateIndexAsync(_searchIndex);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -271,12 +277,16 @@ public class SearchItemService : BaseService, ISearchItemService
 
       if (created)
       {
-        await BulkIndexAllItemsAsync();
+        var bulkResult = await BulkIndexAllItemsAsync();
+        // Uncomment the following line if you want to recreate the semantic search index as well
+        // var semanticResult = await _semanticSearchService.RecreateSemanticSearchIndexAsync();
+
+        return bulkResult;
       }
 
       return created;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -290,9 +300,14 @@ public class SearchItemService : BaseService, ISearchItemService
       if (museum == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(museum);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(museum);
+
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -306,9 +321,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (artifact == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(artifact);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(artifact);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -322,9 +341,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (eventEntity == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(eventEntity);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(eventEntity);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -338,9 +361,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (tourContent == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(tourContent);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(tourContent);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -354,9 +381,13 @@ public class SearchItemService : BaseService, ISearchItemService
       if (tourOnline == null) return false;
 
       var searchItem = _mapper.Map<SearchItemIndexDto>(tourOnline);
-      return await IndexItemAsync(searchItem);
+      var searchEmbeddedItem = _mapper.Map<SemanticSearchItemDto>(tourOnline);
+      var elasticResult = await IndexItemAsync(searchItem);
+      var semanticResult = await _semanticSearchService.IndexItemWithEmbeddingAsync(searchEmbeddedItem);
+
+      return elasticResult && semanticResult;
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }
@@ -376,15 +407,15 @@ public class SearchItemService : BaseService, ISearchItemService
       var events = await _eventRepository.GetAllAdminAsync(new EventAdminQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(events.Events.Select(e => _mapper.Map<SearchItemIndexDto>(e)));
 
-      var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
-      allItems.AddRange(tourContents.Contents.Select(tc => _mapper.Map<SearchItemIndexDto>(tc)));
+      // var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
+      // allItems.AddRange(tourContents.Contents.Select(tc => _mapper.Map<SearchItemIndexDto>(tc)));
 
       var tourOnlines = await _tourOnlineRepository.GetAllAdminAsync(new TourOnlineAdminQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(tourOnlines.Tours.Select(to => _mapper.Map<SearchItemIndexDto>(to)));
 
       return await BulkIndexItemsAsync(allItems);
     }
-    catch (Exception ex)
+    catch
     {
       return false;
     }

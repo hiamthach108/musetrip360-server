@@ -16,6 +16,8 @@ using Application.DTOs.Pagination;
 using Application.DTOs.MuseumPolicy;
 using Application.Shared.Constant;
 using Domain.Users;
+using Core.Queue;
+using Application.DTOs.Search;
 
 public interface IMuseumService
 {
@@ -27,6 +29,7 @@ public interface IMuseumService
   Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
   Task<IActionResult> HandleDelete(Guid id);
   Task<IActionResult> HandleFeedback(Guid id, int rating, string comment);
+  Task<IActionResult> HandleTriggerIndexing(Guid id);
 
   // MuseumRequest endpoints
   Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query);
@@ -57,12 +60,15 @@ public class MuseumService : BaseService, IMuseumService
   private readonly ICategoryRepository _categoryRepository;
   private readonly IUserService _userSvc;
   private readonly ISearchItemService _searchItemService;
+  private readonly IQueuePublisher _queuePub;
+
   public MuseumService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
     IUserService userSvc,
-    ISearchItemService searchItemService
+    ISearchItemService searchItemService,
+    IQueuePublisher queuePublisher
   )
     : base(dbContext, mapper, httpCtx)
   {
@@ -74,6 +80,7 @@ public class MuseumService : BaseService, IMuseumService
     _categoryRepository = new CategoryRepository(dbContext);
     _userSvc = userSvc;
     _searchItemService = searchItemService;
+    _queuePub = queuePublisher;
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -162,15 +169,17 @@ public class MuseumService : BaseService, IMuseumService
       }
     }
 
-    await _museumRepository.AddAsync(museum);
-    // Index in Elasticsearch service
-    var _ = Task.Run(async () =>
+    var result = await _museumRepository.AddAsync(museum);
+
+    // push to queue for index data
+    await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
     {
-      await _searchItemService.IndexMuseumAsync(museum.Id);
+      Id = result.Id,
+      Type = IndexConst.MUSEUM_TYPE,
+      Action = IndexConst.CREATE_ACTION
     });
 
-    var museumDto = _mapper.Map<MuseumDto>(museum);
-
+    var museumDto = _mapper.Map<MuseumDto>(result);
 
     return SuccessResp.Created(museumDto);
   }
@@ -200,16 +209,21 @@ public class MuseumService : BaseService, IMuseumService
     // Update in Elasticsearch in separate thread
     if (museum.Status != MuseumStatusEnum.Active)
     {
-      _ = Task.Run(async () =>
+      // push to queue for index data
+      await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
       {
-        await _searchItemService.DeleteItemFromIndexAsync(id);
+        Id = id,
+        Type = IndexConst.MUSEUM_TYPE,
+        Action = IndexConst.DELETE_ACTION
       });
     }
     else
     {
-      _ = Task.Run(async () =>
+      await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
       {
-        await _searchItemService.IndexMuseumAsync(id);
+        Id = id,
+        Type = IndexConst.MUSEUM_TYPE,
+        Action = IndexConst.CREATE_ACTION
       });
     }
 
@@ -226,13 +240,33 @@ public class MuseumService : BaseService, IMuseumService
     }
     await _museumRepository.DeleteAsync(museum);
 
-    // Remove from Elasticsearch
-    _ = Task.Run(async () =>
+    // push to queue for index data
+    await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
     {
-      await _searchItemService.DeleteItemFromIndexAsync(id);
+      Id = id,
+      Type = IndexConst.MUSEUM_TYPE,
+      Action = IndexConst.DELETE_ACTION
     });
-
     return SuccessResp.Ok("Museum deleted successfully");
+  }
+
+  public async Task<IActionResult> HandleTriggerIndexing(Guid id)
+  {
+    var museum = _museumRepository.GetById(id);
+    if (museum == null)
+    {
+      return ErrorResp.NotFound("Museum not found");
+    }
+
+    // Index in Elasticsearch
+    // push to queue for index data
+    await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+    {
+      Id = id,
+      Type = IndexConst.MUSEUM_TYPE,
+      Action = IndexConst.CREATE_ACTION
+    });
+    return SuccessResp.Ok("Museum indexed successfully");
   }
 
   public async Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query)
@@ -400,7 +434,14 @@ public class MuseumService : BaseService, IMuseumService
     }
 
     // Index in Elasticsearch
-    await _searchItemService.IndexMuseumAsync(museum.Id);
+    // await _searchItemService.IndexMuseumAsync(museum.Id);
+    // push to queue for index data
+    await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+    {
+      Id = museum.Id,
+      Type = IndexConst.MUSEUM_TYPE,
+      Action = IndexConst.CREATE_ACTION
+    });
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
