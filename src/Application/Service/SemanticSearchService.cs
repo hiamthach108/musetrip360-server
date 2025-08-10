@@ -16,6 +16,7 @@ public interface ISemanticSearchService
   Task<IActionResult> GenerateEmbeddingAsync(EmbeddingRequestDto request);
   Task<IActionResult> GetSimilarItemsAsync(Guid itemId, string itemType, int size = 5);
 
+  Task<SemanticSearchResultDto> SearchByQueryAsync(SemanticSearchQuery query);
   Task<bool> IndexItemWithEmbeddingAsync(SemanticSearchItemDto item);
   Task<bool> DeleteItemFromSemanticIndexAsync(Guid id);
   Task<bool> BulkIndexItemsWithEmbeddingsAsync(IEnumerable<SemanticSearchItemDto> items);
@@ -66,51 +67,11 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
         return ErrorResp.BadRequest("Search query cannot be empty");
       }
 
-      var queryEmbedding = await _llm.EmbedAsync(query.Query);
-      if (queryEmbedding == null || !queryEmbedding.Any())
+      var response = await SearchByQueryAsync(query);
+      if (response == null)
       {
-        return ErrorResp.InternalServerError("Failed to generate embedding for search query");
+        return ErrorResp.InternalServerError("Failed to perform semantic search");
       }
-
-      var additionalFilter = BuildAdditionalFilter(query);
-      var minScore = (float)(query.MinSimilarity ?? 0.7m);
-      var from = (query.Page - 1) * query.PageSize;
-
-      var (searchResults, totalHits, scores) = await _vectorSearchService.VectorSearchAsync<SemanticSearchItemDto>(
-        _semanticSearchIndex,
-        queryEmbedding.ToArray(),
-        from,
-        query.PageSize,
-        minScore,
-        additionalFilter
-      );
-
-      var items = searchResults.ToList();
-      var scoresArray = scores.ToArray();
-
-      for (int i = 0; i < items.Count && i < scoresArray.Length; i++)
-      {
-        items[i].SimilarityScore = scoresArray[i];
-        if (!query.IncludeEmbeddings)
-        {
-          items[i].Embedding = null;
-        }
-      }
-
-      var typeAggregations = items.GroupBy(x => x.Type)
-        .ToDictionary(g => g.Key, g => g.Count());
-
-      var response = new SemanticSearchResultDto
-      {
-        Items = items,
-        Total = (int)totalHits,
-        Page = query.Page,
-        PageSize = query.PageSize,
-        Query = query.Query,
-        MaxSimilarityScore = scoresArray.Length > 0 ? scoresArray.Max() : 0f,
-        MinSimilarityScore = scoresArray.Length > 0 ? scoresArray.Min() : 0f,
-        TypeAggregations = typeAggregations
-      };
 
       return SuccessResp.Ok(response);
     }
@@ -235,6 +196,63 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
     {
       return ErrorResp.InternalServerError($"Error finding similar items: {ex.Message}");
     }
+  }
+
+
+  public async Task<SemanticSearchResultDto> SearchByQueryAsync(SemanticSearchQuery query)
+  {
+    if (string.IsNullOrWhiteSpace(query.Query))
+    {
+      throw new ArgumentException("Search query cannot be empty", nameof(query.Query));
+    }
+
+    var queryEmbedding = await _llm.EmbedAsync(query.Query);
+    if (queryEmbedding == null || !queryEmbedding.Any())
+    {
+      throw new InvalidOperationException("Failed to generate embedding for search query");
+    }
+
+    var additionalFilter = BuildAdditionalFilter(query);
+    var minScore = (float)(query.MinSimilarity ?? 0.7m);
+    var from = (query.Page - 1) * query.PageSize;
+
+    var (searchResults, totalHits, scores) = await _vectorSearchService.VectorSearchAsync<SemanticSearchItemDto>(
+      _semanticSearchIndex,
+      queryEmbedding.ToArray(),
+      from,
+      query.PageSize,
+      minScore,
+      additionalFilter
+    );
+
+    var items = searchResults.ToList();
+    var scoresArray = scores.ToArray();
+
+    for (int i = 0; i < items.Count && i < scoresArray.Length; i++)
+    {
+      items[i].SimilarityScore = scoresArray[i];
+      if (!query.IncludeEmbeddings)
+      {
+        items[i].Embedding = null;
+      }
+    }
+
+    var typeAggregations = items.GroupBy(x => x.Type)
+      .ToDictionary(g => g.Key, g => g.Count());
+
+    var response = new SemanticSearchResultDto
+    {
+      Items = items,
+      Total = (int)totalHits,
+      Page = query.Page,
+      PageSize = query.PageSize,
+      Query = query.Query,
+      MaxSimilarityScore = scoresArray.Length > 0 ? scoresArray.Max() : 0f,
+      MinSimilarityScore = scoresArray.Length > 0 ? scoresArray.Min() : 0f,
+      TypeAggregations = typeAggregations
+    };
+
+    return response;
   }
 
   public async Task<bool> IndexItemWithEmbeddingAsync(SemanticSearchItemDto item)

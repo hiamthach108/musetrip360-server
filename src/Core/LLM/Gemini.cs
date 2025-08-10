@@ -1,11 +1,13 @@
 namespace Core.LLM;
 
+using System.Text.Json;
 using Application.Shared.Constant;
 using Core.HttpClient;
 
 public class GeminiSvc : ILLM
 {
-  private readonly string DEFAULT_PROMPT = "";
+  private readonly string DEFAULT_PROMPT = "Bạn là một trợ lý AI cho MuseTrip360, một hệ thống quản lý bảo tàng hiện đại, có khả năng mở rộng. Nhiệm vụ chính của bạn là cung cấp thông tin, giải thích và hỗ trợ liên quan đến dự án MuseTrip360. MuseTrip360 là một hệ thống quản lý bảo tàng hiện đại, được thiết kế để tối ưu hóa hoạt động và nâng cao trải nghiệm của du khách. Nền tảng này hỗ trợ nhân viên bảo tàng quản lý hiện vật, sự kiện, vé và các chuyến tham quan ảo, đồng thời giúp du khách dễ dàng tiếp cận nội dung bảo tàng cùng với các đề xuất cá nhân hóa. MuseTrip360 hướng tới việc số hóa quy trình quản lý và làm phong phú thêm trải nghiệm văn hóa cho mọi người.";
+  private readonly string DEFAULT_ERR_RESP = "Xin lỗi, tôi không thể xử lý yêu cầu của bạn ngay bây giờ. Vui lòng thử lại sau.";
   private Dictionary<string, string> _apiHeader = [];
   private readonly IHttpClientService _httpClient;
 
@@ -29,6 +31,9 @@ public class GeminiSvc : ILLM
         contents = new
         {
           parts = new[] {
+            new {
+              text = DEFAULT_PROMPT
+            },
             new {
               text = prompt
             }
@@ -88,6 +93,58 @@ public class GeminiSvc : ILLM
       _apiHeader
     );
     return response?.Embedding?.Values ?? [];
+  }
+
+  public async Task<string> CompleteWithDataAsync(string prompt, List<object> data)
+  {
+    // convert data to JSON string
+    var dataJson = JsonSerializer.Serialize(data);
+
+    var promptWithData = $"{prompt}\n\n Và bạn có thể dựa trên những dữ liệu liên quan từ hệ thống. Dữ liệu liên quan: ```{dataJson}```";
+
+
+    var response = await _httpClient.PostAsync<GeminiResponse>(
+      $"/{AiModelConst.GEMINI_GENERATIVE}:generateContent",
+      new
+      {
+        model = AiModelConst.GEMINI_GENERATIVE,
+        contents = new
+        {
+          parts = new[] {
+            new {
+              text = DEFAULT_PROMPT
+            },
+            new {
+              text = promptWithData
+            }
+          }
+        }
+      },
+      _apiHeader
+    );
+
+    var contents = "";
+    if (response != null && response.Candidates != null && response.Candidates.Count > 0)
+    {
+      // loop through parts
+      foreach (var candidate in response.Candidates)
+      {
+        if (candidate.Content != null && candidate.Content.Parts != null && candidate.Content.Parts.Count > 0)
+        {
+          foreach (var part in candidate.Content.Parts)
+          {
+            contents += part.Text;
+          }
+        }
+      }
+    }
+
+    if (string.IsNullOrEmpty(contents))
+    {
+      contents = DEFAULT_ERR_RESP;
+    }
+
+    return contents;
   }
 }
 
