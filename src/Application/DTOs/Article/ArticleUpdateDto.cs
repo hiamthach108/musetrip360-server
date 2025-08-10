@@ -12,8 +12,6 @@ public class ArticleUpdateDto
 
     public string? Content { get; set; }
 
-    public Guid? MuseumId { get; set; }
-
     public ArticleStatusEnum? Status { get; set; }
 
     public DataEntityType? DataEntityType { get; set; }

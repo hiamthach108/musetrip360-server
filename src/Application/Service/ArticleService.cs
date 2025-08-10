@@ -134,19 +134,21 @@ public class ArticleService : BaseService, IArticleService
             if (existingArticle == null)
                 return ErrorResp.NotFound("Article not found");
 
-            if (updateDto.MuseumId.HasValue && !_museumRepository.IsMuseumExists(updateDto.MuseumId.Value))
-                return ErrorResp.BadRequest("Museum not found");
-
             if (updateDto.Status == ArticleStatusEnum.Published && existingArticle.Status != ArticleStatusEnum.Pending)
                 return ErrorResp.BadRequest("Article must be in Pending status to be published");
             if (updateDto.Status == ArticleStatusEnum.Rejected && existingArticle.Status != ArticleStatusEnum.Pending)
                 return ErrorResp.BadRequest("Article must be in Pending status to be rejected");
 
 
-            var articleToUpdate = _mapper.Map<Article>(updateDto);
-            articleToUpdate.Id = id;
+            // map to existing article
+            _mapper.Map(updateDto, existingArticle);
 
-            var updatedArticle = await _articleRepository.UpdateAsync(id, articleToUpdate);
+            if (updateDto.Status == ArticleStatusEnum.Published)
+            {
+                existingArticle.PublishedAt = DateTime.UtcNow;
+            }
+
+            var updatedArticle = await _articleRepository.UpdateAsync(id, existingArticle);
             var articleDto = _mapper.Map<ArticleDto>(updatedArticle);
 
             return SuccessResp.Ok(articleDto);

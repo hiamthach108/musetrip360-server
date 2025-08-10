@@ -92,9 +92,6 @@ public class ArticleController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] ArticleUpdateDto updateDto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         return await _articleService.HandleUpdate(id, updateDto);
     }
 
