@@ -4,4 +4,5 @@ public class ChatReq
 {
   public string Prompt { get; set; } = "";
   public bool? IsVector { get; set; } = false;
+  public string? EntityType { get; set; }
 }

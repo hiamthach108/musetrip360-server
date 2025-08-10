@@ -501,7 +501,8 @@ public class SemanticSearchService : BaseService, ISemanticSearchService
 
     if (!string.IsNullOrEmpty(query.Type))
     {
-      filterParts.Add($"type:{query.Type}");
+      // Use proper field:value syntax with quotes if needed
+      filterParts.Add($"type:\"{query.Type}\"");
     }
 
     return filterParts.Count != 0 ? string.Join(" AND ", filterParts) : string.Empty;

@@ -3,7 +3,6 @@ namespace Application.Service;
 using Application.DTOs.Ai;
 using Application.DTOs.Search;
 using Application.Shared.Type;
-using Core.Elasticsearch;
 using Core.LLM;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,7 +35,8 @@ public class AiService : IAiService
           Page = 1,
           PageSize = 10,
           MinSimilarity = 0.7m,
-          IncludeEmbeddings = false
+          IncludeEmbeddings = false,
+          Type = req.EntityType
         });
 
       var resultWithData = await _llm.CompleteWithDataAsync(req.Prompt, [.. semanticResult.Items.Cast<object>()]);

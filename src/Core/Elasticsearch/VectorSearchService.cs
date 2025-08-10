@@ -145,16 +145,44 @@ public class VectorSearchService : IVectorSearchService
         return (Enumerable.Empty<T>(), 0, Enumerable.Empty<float>());
       }
 
+      // var searchRequestDescriptor = new SearchRequestDescriptor<T>()
+      //     .Index(indexName)
+      //     .From(from)
+      //     .Size(size)
+      //     .Knn(k => k
+      //         .Field("embedding")
+      //         .QueryVector(queryVector)
+      //         .K(size)
+      //         .NumCandidates(size * 10) // Search more candidates for better accuracy
+      //     );
+
       var searchRequestDescriptor = new SearchRequestDescriptor<T>()
-          .Index(indexName)
-          .From(from)
-          .Size(size)
-          .Knn(k => k
-              .Field("embedding")
-              .QueryVector(queryVector)
-              .K(size)
-              .NumCandidates(size * 10) // Search more candidates for better accuracy
-          );
+      .Index(indexName)
+      .From(from)
+      .Size(size);
+
+      // Apply KNN search with optional filter
+      if (!string.IsNullOrEmpty(additionalFilter))
+      {
+        // Use KNN with filter - this is the correct way to combine them
+        searchRequestDescriptor.Knn(k => k
+            .Field("embedding")
+            .QueryVector(queryVector)
+            .K(size)
+            .NumCandidates(size * 10)
+            .Filter(f => f.QueryString(qs => qs.Query(additionalFilter)))
+        );
+      }
+      else
+      {
+        // Pure KNN search without filter
+        searchRequestDescriptor.Knn(k => k
+            .Field("embedding")
+            .QueryVector(queryVector)
+            .K(size)
+            .NumCandidates(size * 10)
+        );
+      }
 
       var response = await _client.SearchAsync<T>(searchRequestDescriptor);
 

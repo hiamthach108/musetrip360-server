@@ -8,7 +8,8 @@ using Infrastructure.Repository;
 using Database;
 using MuseTrip360.src.Infrastructure.Repository;
 using Application.Shared.Type;
-
+using Application.DTOs.Museum;
+using MuseTrip360.src.Application.DTOs.Artifact;
 
 public interface ISearchItemService
 {
@@ -398,19 +399,19 @@ public class SearchItemService : BaseService, ISearchItemService
     {
       var allItems = new List<SearchItemIndexDto>();
 
-      var museums = _museumRepository.GetAllAdmin(new Application.DTOs.Museum.MuseumQuery { Page = 1, PageSize = int.MaxValue });
+      var museums = _museumRepository.GetAll(new MuseumQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(museums.Museums.Select(m => _mapper.Map<SearchItemIndexDto>(m)));
 
-      var artifacts = await _artifactRepository.GetAllAdminAsync(new MuseTrip360.src.Application.DTOs.Artifact.ArtifactAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var artifacts = await _artifactRepository.GetAllAsync(new ArtifactQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(artifacts.Artifacts.Select(a => _mapper.Map<SearchItemIndexDto>(a)));
 
-      var events = await _eventRepository.GetAllAdminAsync(new EventAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var events = await _eventRepository.GetAllAsync(new EventQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(events.Events.Select(e => _mapper.Map<SearchItemIndexDto>(e)));
 
       // var tourContents = await _tourContentRepository.GetTourContentsAdmin(new TourContentAdminQuery { Page = 1, PageSize = int.MaxValue });
       // allItems.AddRange(tourContents.Contents.Select(tc => _mapper.Map<SearchItemIndexDto>(tc)));
 
-      var tourOnlines = await _tourOnlineRepository.GetAllAdminAsync(new TourOnlineAdminQuery { Page = 1, PageSize = int.MaxValue });
+      var tourOnlines = await _tourOnlineRepository.GetAllAsync(new TourOnlineQuery { Page = 1, PageSize = int.MaxValue });
       allItems.AddRange(tourOnlines.Tours.Select(to => _mapper.Map<SearchItemIndexDto>(to)));
 
       return await BulkIndexItemsAsync(allItems);
