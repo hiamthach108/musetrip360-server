@@ -409,6 +409,7 @@ public class MuseTrip360DbContext : DbContext
     {
       e.HasKey(x => x.Id);
       e.Property(x => x.Content).IsRequired().HasMaxLength(1000);
+      e.HasOne(x => x.CreatedByUser).WithMany(x => x.Messages).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

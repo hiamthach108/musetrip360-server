@@ -25,11 +25,7 @@ public class SearchItemIndexDto
 
   public string SearchText { get; set; } = "";
   public string[] Tags { get; set; } = Array.Empty<string>();
-
-  // Geo location for geo distance queries
-  public GeoLocationDto? GeoLocation { get; set; }
 }
-
 public class SearchResultDto
 {
   public List<SearchItem> Items { get; set; } = new();
@@ -56,11 +52,7 @@ public class SearchItemProfile : Profile
       .ForMember(dest => dest.Type, opt => opt.MapFrom(src => "Museum"))
       .ForMember(dest => dest.SearchText, opt => opt.MapFrom(src => $"{src.Name} {src.Description} {src.Location}"))
       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-      .ForMember(dest => dest.RelatedEntityId, opt => opt.MapFrom(src => (Guid?)null))
-      .ForMember(dest => dest.GeoLocation, opt => opt.MapFrom(src =>
-        src.Latitude != null && src.Longitude != null
-          ? new GeoLocationDto { Lat = (double)src.Latitude, Lon = (double)src.Longitude }
-          : null));
+      .ForMember(dest => dest.RelatedEntityId, opt => opt.MapFrom(src => (Guid?)null));
 
     CreateMap<Artifact, SearchItemIndexDto>()
       .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
@@ -94,14 +86,6 @@ public class SearchItemProfile : Profile
       .ForMember(dest => dest.SearchText, opt => opt.MapFrom(src => $"{src.Name} {src.Description}"))
       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsActive ? "Active" : "Inactive"));
 
-    CreateMap<TourGuide, SearchItemIndexDto>()
-      .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Name))
-      .ForMember(dest => dest.Type, opt => opt.MapFrom(src => "TourGuide"))
-      .ForMember(dest => dest.RelatedEntityId, opt => opt.MapFrom(src => src.MuseumId))
-      .ForMember(dest => dest.SearchText, opt => opt.MapFrom(src => $"{src.Name} {src.Bio}"))
-      .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsAvailable ? "Available" : "Unavailable"))
-      .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Bio));
-
     CreateMap<SearchItemIndexDto, SearchItem>()
       .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title))
       .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Type))
@@ -110,10 +94,4 @@ public class SearchItemProfile : Profile
       .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
       .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude));
   }
-}
-
-public class GeoLocationDto
-{
-  public double Lat { get; set; }
-  public double Lon { get; set; }
 }

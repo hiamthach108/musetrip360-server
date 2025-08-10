@@ -1,6 +1,9 @@
+using Application.DTOs.Search;
 using Application.Service;
+using Application.Shared.Constant;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Queue;
 using Database;
 using Domain.Artifacts;
 using Infrastructure.Repository;
@@ -29,15 +32,20 @@ public class ArtifactService : BaseService, IArtifactService
 {
     private readonly IArtifactRepository _artifactRepository;
     private readonly IMuseumRepository _museumRepository;
+    private readonly IQueuePublisher _queuePub;
+
 
     public ArtifactService(
         MuseTrip360DbContext dbContext,
         IMapper mapper,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        IQueuePublisher queuePub
+    )
         : base(dbContext, mapper, httpContextAccessor)
     {
         _artifactRepository = new ArtifactRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
+        _queuePub = queuePub;
     }
 
     public async Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto)
@@ -62,6 +70,16 @@ public class ArtifactService : BaseService, IArtifactService
             // create the artifact
             await _artifactRepository.AddAsync(artifact);
             var artifactDto = _mapper.Map<ArtifactDto>(artifact);
+
+            // publish the artifact created event
+            // push to queue for index data
+            await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = artifactDto.Id,
+                Type = IndexConst.ARTIFACT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
+
             return SuccessResp.Created(artifactDto);
         }
         catch (Exception e)
@@ -103,6 +121,15 @@ public class ArtifactService : BaseService, IArtifactService
             }
             // delete the artifact
             await _artifactRepository.DeleteAsync(id);
+
+            // publish the artifact deleted event
+            // push to queue for index data
+            await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = id,
+                Type = IndexConst.ARTIFACT_TYPE,
+                Action = IndexConst.DELETE_ACTION
+            });
             // return the success response
             return SuccessResp.Ok("Artifact deleted successfully");
         }
@@ -189,6 +216,14 @@ public class ArtifactService : BaseService, IArtifactService
             var artifact = _mapper.Map(dto, await _artifactRepository.GetByIdAsync(id));
 
             await _artifactRepository.UpdateAsync(id, artifact!);
+            // publish the artifact updated event
+            // push to queue for index data
+            await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = id,
+                Type = IndexConst.ARTIFACT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             // return the success response
             return SuccessResp.Ok("Artifact updated successfully");
         }
@@ -212,6 +247,14 @@ public class ArtifactService : BaseService, IArtifactService
             var artifact = await _artifactRepository.GetByIdAsync(id);
             artifact!.IsActive = true;
             await _artifactRepository.UpdateAsync(id, artifact);
+            // publish the artifact activated event
+            // push to queue for index data
+            await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = id,
+                Type = IndexConst.ARTIFACT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             // return the success response
             return SuccessResp.Ok("Artifact activated successfully");
         }
@@ -235,6 +278,14 @@ public class ArtifactService : BaseService, IArtifactService
             var artifact = await _artifactRepository.GetByIdAsync(id);
             artifact!.IsActive = false;
             await _artifactRepository.UpdateAsync(id, artifact);
+            // publish the artifact deactivated event
+            // push to queue for index data
+            await _queuePub.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = id,
+                Type = IndexConst.ARTIFACT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             // return the success response
             return SuccessResp.Ok("Artifact deactivated successfully");
         }

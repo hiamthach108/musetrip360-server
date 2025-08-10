@@ -6,7 +6,6 @@ using Domain.Artifacts;
 using Domain.Content;
 using Domain.Events;
 using Domain.Payment;
-using Domain.Reviews;
 using Domain.Tours;
 using Domain.Users;
 
