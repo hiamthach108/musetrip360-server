@@ -5,6 +5,7 @@ using Application.DTOs.Payment;
 using Application.Middlewares;
 using Application.Service;
 using Microsoft.AspNetCore.Mvc;
+using Net.payOS.Types;
 
 [ApiController]
 [Route("/api/v1/orders")]
@@ -84,5 +85,13 @@ public class OrderController : ControllerBase
         _logger.LogInformation("Get orders for admin request received");
 
         return await _service.HandleAdminGetOrders(query);
+    }
+
+    [HttpPost("payos-webhook")]
+    public async Task<IActionResult> PayosWebhook([FromBody] WebhookType data)
+    {
+        _logger.LogInformation("Callback request received");
+
+        return await _service.HandlePayosWebhook(data);
     }
 }

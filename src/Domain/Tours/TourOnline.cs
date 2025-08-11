@@ -11,6 +11,7 @@ public class TourOnline : BaseEntity
   public string Name { get; set; } = null!;
   public string Description { get; set; } = null!;
   public bool IsActive { get; set; }
+  public float Price { get; set; }
   public TourStatusEnum Status { get; set; }
   public Guid MuseumId { get; set; }
 

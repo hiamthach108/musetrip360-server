@@ -18,6 +18,7 @@ public interface IEventParticipantRepository
   Task<EventParticipant> UpdateAsync(Guid eventParticipantId, EventParticipant eventParticipant);
   Task<EventParticipant> DeleteAsync(EventParticipant eventParticipant);
   Task<bool> ValidateUser(Guid userId, Guid eventId);
+  Task AddRangeAsync(IEnumerable<EventParticipant> eventParticipants);
 }
 
 public class EventParticipantRepository : IEventParticipantRepository
@@ -94,5 +95,11 @@ public class EventParticipantRepository : IEventParticipantRepository
   {
     var eventParticipant = await _dbContext.EventParticipants.FirstOrDefaultAsync(ep => ep.UserId == userId && ep.EventId == eventId);
     return eventParticipant != null;
+  }
+
+  public async Task AddRangeAsync(IEnumerable<EventParticipant> eventParticipants)
+  {
+    await _dbContext.EventParticipants.AddRangeAsync(eventParticipants);
+    await _dbContext.SaveChangesAsync();
   }
 }

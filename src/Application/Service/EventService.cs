@@ -205,11 +205,6 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.Status != EventStatusEnum.Pending && eventItem.Status != EventStatusEnum.Draft)
-            {
-                return ErrorResp.BadRequest("Event is not in pending or draft status");
-            }
-
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
             await _eventRepository.UpdateAsync(id, eventItem);
             return SuccessResp.Ok("Event evaluated successfully");
@@ -508,11 +503,6 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.Status != EventStatusEnum.Draft)
-            {
-                return ErrorResp.BadRequest("Event is not in draft status");
-            }
-
             eventItem.Status = EventStatusEnum.Pending;
             await _eventRepository.UpdateAsync(id, eventItem);
             return SuccessResp.Ok("Event submitted successfully");
@@ -552,11 +542,6 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
                 return ErrorResp.NotFound("Event not found");
             }
 
-            if (eventItem.Status != EventStatusEnum.Draft && eventItem.Status != EventStatusEnum.Pending)
-            {
-                return ErrorResp.BadRequest("Event is not in draft or pending status");
-            }
-
             var mappedEvent = _mapper.Map(dto, eventItem);
             await _eventRepository.UpdateAsync(id, mappedEvent);
             return SuccessResp.Ok("Event updated successfully");
@@ -575,11 +560,6 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
-            }
-
-            if (eventItem.Status != EventStatusEnum.Draft && eventItem.Status != EventStatusEnum.Pending)
-            {
-                return ErrorResp.BadRequest("Event is not in draft or pending status");
             }
 
             await _eventRepository.DeleteAsync(id);
