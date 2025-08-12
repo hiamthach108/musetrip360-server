@@ -7,6 +7,7 @@ using Database;
 using Domain.Payment;
 using Application.Shared.Enum;
 using Application.DTOs.Order;
+using Microsoft.EntityFrameworkCore;
 
 public interface IOrderRepository
 {
@@ -17,6 +18,7 @@ public interface IOrderRepository
   Task<IEnumerable<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType);
   Task<Order> AddAsync(Order order);
   Task<Order> UpdateAsync(Guid orderId, Order order);
+  Task<Order> GetByOrderCodeAsync(long orderCode);
 }
 
 public class OrderRepository : IOrderRepository
@@ -99,5 +101,11 @@ public class OrderRepository : IOrderRepository
     _dbContext.Entry(existingOrder).CurrentValues.SetValues(order);
     await _dbContext.SaveChangesAsync();
     return existingOrder;
+  }
+
+  public async Task<Order> GetByOrderCodeAsync(long orderCode)
+  {
+    var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderCode == orderCode.ToString());
+    return order;
   }
 }

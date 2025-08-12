@@ -14,6 +14,7 @@ public interface IRoomService
     Task<IActionResult> HandleDelete(string id);
     Task<IActionResult> HandleUpdateMetadata(string id, RoomUpdateMetadataDto dto);
     Task<bool> ValidateUser(Guid userId, string roomId);
+    Task<IActionResult> HandleGetRoomByEventId(Guid eventId);
 }
 
 public class RoomService(MuseTrip360DbContext dbContext, IMapper mapper, IConnectionMultiplexer redisConnection, IHttpContextAccessor httpContextAccessor) : BaseService(dbContext, mapper, httpContextAccessor), IRoomService
@@ -129,5 +130,15 @@ public class RoomService(MuseTrip360DbContext dbContext, IMapper mapper, IConnec
             return false;
         }
         return true;
+    }
+
+    public async Task<IActionResult> HandleGetRoomByEventId(Guid eventId)
+    {
+        var room = await _roomRepository.GetRoomByEventId(eventId);
+        if (room == null)
+        {
+            return ErrorResp.NotFound("Room not found");
+        }
+        return SuccessResp.Ok(room);
     }
 }

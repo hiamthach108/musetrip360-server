@@ -20,6 +20,7 @@ public class EventDto
     public Guid MuseumId { get; set; }
     public Guid CreatedBy { get; set; }
     public EventStatusEnum Status { get; set; }
+    public float Price { get; set; }
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

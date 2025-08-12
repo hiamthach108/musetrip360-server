@@ -146,4 +146,24 @@ public class RoomController : ControllerBase
     {
         return await _roomService.HandleUpdateMetadata(id, dto);
     }
+
+    /// <summary>
+    /// Retrieves a room by its event id.
+    /// </summary>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <returns>
+    /// <list type="bullet">
+    /// <item><description>200 OK - Room found and returned</description></item>
+    /// <item><description>404 Not Found - Room not found</description></item>
+    /// <item><description>500 Internal Server Error - Server error occurred</description></item>
+    /// </list>
+    /// </returns>
+    [HttpGet("/api/v1/events/{eventId}/rooms")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetRoomByEventId(Guid eventId)
+    {
+        return await _roomService.HandleGetRoomByEventId(eventId);
+    }
 }

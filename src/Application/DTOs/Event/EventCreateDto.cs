@@ -27,6 +27,9 @@ public class EventCreateDto : IValidatableObject
     public int AvailableSlots { get; set; }
     [Required]
     public DateTime BookingDeadline { get; set; }
+    [Required]
+    [Range(0, float.MaxValue)]
+    public float Price { get; set; }
     public JsonDocument? Metadata { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
