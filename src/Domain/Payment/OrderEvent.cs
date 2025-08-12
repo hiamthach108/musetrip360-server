@@ -8,6 +8,6 @@ public class OrderEvent
   public Guid EventId { get; set; }
   public float UnitPrice { get; set; }
 
-  public Order Order { get; set; } = new();
-  public Event Event { get; set; } = new();
+  public Order Order { get; set; } = null!;
+  public Event Event { get; set; } = null!;
 }

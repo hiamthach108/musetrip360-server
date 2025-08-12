@@ -369,4 +369,16 @@ public class EventController : ControllerBase
     {
         return await _eventService.HandleFeedback(id, comment);
     }
+    /// <summary>
+    /// Get all events created by the current user
+    /// </summary>
+    /// <returns>A list of events created by the current user</returns>
+    /// <response code="200">Returns the list of events</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    [Protected]
+    [HttpGet("created-by/{userId}")]
+    public async Task<IActionResult> GetEventCreatedByUser(Guid userId)
+    {
+        return await _adminEventService.HandleGetEventCreatedByUser(userId);
+    }
 }
