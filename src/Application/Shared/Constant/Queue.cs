@@ -9,4 +9,5 @@ public static class QueueConst
   public const string AIChat = "ai-chat-mq";
 
   public const string Order = "order-mq";
+  public const string Indexing = "indexing-mq";
 }

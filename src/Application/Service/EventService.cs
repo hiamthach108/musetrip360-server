@@ -1,9 +1,12 @@
 namespace Application.Service;
 
+using Application.DTOs.Search;
 using Application.Service;
+using Application.Shared.Constant;
 using Application.Shared.Enum;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Queue;
 using Database;
 using Domain.Events;
 using Infrastructure.Repository;
@@ -36,6 +39,7 @@ public interface IAdminEventService : IEventService
     Task<IActionResult> HandleRemoveTourOnlineFromEvent(Guid eventId, IEnumerable<Guid> tourOnlineIds);
     Task<IActionResult> HandleAddTourGuideToEvent(Guid eventId, IEnumerable<Guid> tourGuideIds);
     Task<IActionResult> HandleRemoveTourGuideFromEvent(Guid eventId, IEnumerable<Guid> tourGuideIds);
+    Task<IActionResult> HandleGetEventCreatedByUser(Guid userId);
 }
 
 // Organizer, operations
@@ -53,7 +57,7 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IConnection
 {
     protected readonly IEventRepository _eventRepository = new EventRepository(context);
     protected readonly IMuseumRepository _museumRepository = new MuseumRepository(context);
-    private readonly IRoomRepository _roomRepository = new RoomRepository(redisConnection);
+    protected readonly IRoomRepository _roomRepository = new RoomRepository(redisConnection);
 
     public virtual async Task<IActionResult> HandleGetEventById(Guid id)
     {
@@ -137,8 +141,9 @@ public class EventService(MuseTrip360DbContext context, IConnectionMultiplexer r
 }
 
 // Admin implementation
-public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IAdminEventService
+public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor, IQueuePublisher queuePublisher) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IAdminEventService
 {
+    protected readonly IQueuePublisher _queuePublisher = queuePublisher;
     protected readonly IArtifactRepository _artifactRepository = new ArtifactRepository(context);
     protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(context);
     protected readonly ITourGuideRepository _tourGuideRepository = new TourGuideRepository(context);
@@ -207,6 +212,12 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
 
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
             await _eventRepository.UpdateAsync(id, eventItem);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = eventItem.Id,
+                Type = IndexConst.EVENT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             return SuccessResp.Ok("Event evaluated successfully");
         }
         catch (Exception e)
@@ -244,8 +255,13 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
-
             await _eventRepository.DeleteAsync(id);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = eventItem.Id,
+                Type = IndexConst.EVENT_TYPE,
+                Action = IndexConst.DELETE_ACTION
+            });
             return SuccessResp.Ok("Event deleted successfully");
         }
         catch (Exception e)
@@ -281,8 +297,13 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             }
             eventItem.CreatedBy = payload.UserId;
             eventItem.MuseumId = museumId;
-
             await _eventRepository.AddAsync(eventItem);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = eventItem.Id,
+                Type = IndexConst.EVENT_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             var eventDto = _mapper.Map<EventDto>(eventItem);
             return SuccessResp.Created(eventDto);
         }
@@ -312,7 +333,6 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 eventItem.Artifacts.Remove(artifact);
             }
-
             await _eventRepository.UpdateAsync(eventId, eventItem);
             return SuccessResp.Ok("Artifacts removed from event successfully");
         }
@@ -331,9 +351,14 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
-
             eventItem.Status = EventStatusEnum.Cancelled;
             await _eventRepository.UpdateAsync(id, eventItem);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = eventItem.Id,
+                Type = IndexConst.EVENT_TYPE,
+                Action = IndexConst.DELETE_ACTION
+            });
             return SuccessResp.Ok("Event cancelled successfully");
         }
         catch (Exception e)
@@ -449,7 +474,6 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 eventItem.TourGuides.Remove(tourGuide);
             }
-
             await _eventRepository.UpdateAsync(eventId, eventItem);
             return SuccessResp.Ok("Tour guide removed from event successfully");
         }
@@ -457,6 +481,13 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
         {
             return ErrorResp.InternalServerError(e.Message);
         }
+    }
+
+    public async Task<IActionResult> HandleGetEventCreatedByUser(Guid userId)
+    {
+        var events = await _eventRepository.GetEventCreatedByUser(userId);
+        var eventDtos = _mapper.Map<List<EventDto>>(events);
+        return SuccessResp.Ok(eventDtos);
     }
 }
 

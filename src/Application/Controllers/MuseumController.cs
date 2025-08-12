@@ -71,6 +71,14 @@ public class MuseumController : ControllerBase
     return await _museumService.HandleUpdate(id, dto);
   }
 
+  [Protected]
+  [HttpPost("reindex/{id}")]
+  public async Task<IActionResult> ReindexMuseum(Guid id)
+  {
+    _logger.LogInformation("Reindex museum request received");
+    return await _museumService.HandleTriggerIndexing(id);
+  }
+
   // MuseumRequest endpoints
   [Protected]
   [HttpGet("requests")]

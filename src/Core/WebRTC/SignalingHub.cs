@@ -146,7 +146,7 @@ public class SignalingHub : Hub
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
                 // notify other peers in room that new peer joined
-                await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", Context.ConnectionId);
+                await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
                 // get room state and send to peer
                 var roomState = await _roomStateManager.GetRoomState(roomId);

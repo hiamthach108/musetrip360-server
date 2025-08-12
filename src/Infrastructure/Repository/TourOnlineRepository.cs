@@ -58,6 +58,7 @@ public class TourOnlineRepository : ITourOnlineRepository
         .Where(t => t.IsActive == true)
         .Where(t => query.MuseumId == null || t.MuseumId == query.MuseumId)
         .Where(t => query.Search == null || t.Name.Contains(query.Search) || t.Description.Contains(query.Search))
+        .Where(t => query.Ids == null || query.Ids.Contains(t.Id))
         .Include(t => t.TourContents);
         var total = await queryable.CountAsync();
 
@@ -79,6 +80,7 @@ public class TourOnlineRepository : ITourOnlineRepository
         .Where(t => query.IsActive == null || t.IsActive == query.IsActive)
         .Where(t => query.MuseumId == null || t.MuseumId == query.MuseumId)
         .Where(t => query.Search == null || t.Name.Contains(query.Search) || t.Description.Contains(query.Search))
+        .Where(t => query.Ids == null || query.Ids.Contains(t.Id))
         .Include(t => t.TourContents);
         var total = await queryable.CountAsync();
 
@@ -96,6 +98,7 @@ public class TourOnlineRepository : ITourOnlineRepository
         .Where(t => query.IsActive == null || t.IsActive == query.IsActive)
         .Where(t => t.MuseumId == museumId)
         .Where(t => query.Search == null || t.Name.Contains(query.Search) || t.Description.Contains(query.Search))
+        .Where(t => query.Ids == null || query.Ids.Contains(t.Id))
         .Include(t => t.TourContents);
         var total = await queryable.CountAsync();
 
