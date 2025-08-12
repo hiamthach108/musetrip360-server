@@ -109,7 +109,7 @@ public class SignalingHub : Hub
             if (_connections.TryRemove(Context.ConnectionId, out var sfu))
             {
                 var payload = Context.Items["payload"] as Payload ?? new Payload();
-                await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("PeerDisconnected", payload.UserId, Context.ConnectionId);
+                await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("PeerDisconnected", payload.UserId, Context.ConnectionId, _peerIdToStreamId[Context.ConnectionId]);
                 // await for client to disconnect from sfu
                 await Task.Delay(1000);
                 RemoveStreamPeerId();
