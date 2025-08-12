@@ -36,7 +36,7 @@ public class MuseumRequestRepository : IMuseumRequestRepository
     var request = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
         .FirstOrDefault(r => r.Id == id);
-    
+
     if (request != null)
     {
       // Load categories separately to avoid complex joins
@@ -44,7 +44,7 @@ public class MuseumRequestRepository : IMuseumRequestRepository
         .Collection(r => r.Categories)
         .Load();
     }
-    
+
     return request;
   }
 
@@ -53,7 +53,10 @@ public class MuseumRequestRepository : IMuseumRequestRepository
     var requests = _dbContext.MuseumRequests
         .Include(r => r.CreatedByUser)
         .AsQueryable();
-
+    if (query.Status != null && query.Status.Any())
+    {
+      requests = requests.Where(r => query.Status.Contains(r.Status));
+    }
     if (!string.IsNullOrEmpty(query.Search))
     {
       requests = requests.Where(r =>

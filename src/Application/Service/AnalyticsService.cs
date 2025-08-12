@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 public interface IAnalyticsService
 {
   Task<IActionResult> GetOverview(Guid museumId);
+  Task<IActionResult> GetAdminOverview();
 }
 
 public class AnalyticsService : BaseService, IAnalyticsService
@@ -28,6 +29,20 @@ public class AnalyticsService : BaseService, IAnalyticsService
   {
     _analyticsRepository = new AnalyticsRepository(dbContext);
     _cacheService = cacheService;
+  }
+
+  public async Task<IActionResult> GetAdminOverview()
+  {
+    try
+    {
+      var overview = _analyticsRepository.GetAdminOverview();
+
+      return SuccessResp.Ok(overview);
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError(ex.Message);
+    }
   }
 
   public async Task<IActionResult> GetOverview(Guid museumId)
