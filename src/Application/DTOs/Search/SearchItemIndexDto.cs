@@ -92,6 +92,7 @@ public class SearchItemProfile : Profile
       .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src => src.Thumbnail))
       .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
       .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
-      .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude));
+      .ForMember(dest => dest.Longitude, opt => opt.MapFrom(src => src.Longitude))
+      .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location));
   }
 }
