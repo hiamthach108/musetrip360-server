@@ -133,12 +133,12 @@ public class SignalingHub : Hub
             {
                 // validate user before join room
                 var payload = Context.Items["payload"] as Payload ?? new Payload();
-                var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
-                if (!isValid)
-                {
-                    await Clients.Caller.SendAsync("Error", "User not authorized to join room");
-                    return;
-                }
+                // var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
+                // if (!isValid)
+                // {
+                //     await Clients.Caller.SendAsync("Error", "User not authorized to join room");
+                //     return;
+                // }
                 // send offer to sfu
                 await sfu.JoinRoomAsync(roomId, Context.ConnectionId, offer);
                 // set room id for sfu connection

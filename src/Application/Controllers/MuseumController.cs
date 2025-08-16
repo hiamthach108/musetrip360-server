@@ -47,7 +47,6 @@ public class MuseumController : ControllerBase
     return await _museumService.HandleGetUserMuseums();
   }
 
-  [Protected]
   [HttpGet("{id}")]
   public async Task<IActionResult> GetMuseumById(Guid id)
   {
