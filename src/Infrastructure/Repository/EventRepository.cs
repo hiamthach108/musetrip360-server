@@ -68,9 +68,11 @@ namespace Infrastructure.Repository
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Where(e => query.StartBookingDeadline == null || e.BookingDeadline >= query.StartBookingDeadline)
             .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
-            .Include(e => e.Artifacts)
-            .Include(e => e.TourOnlines)
-            .Include(e => e.CreatedByUser);
+            .OrderBy(e => e.StartTime < DateTime.UtcNow)
+            .ThenBy(e => e.StartTime);
+            // .Include(e => e.Artifacts)
+            // .Include(e => e.TourOnlines)
+            // .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -94,9 +96,11 @@ namespace Infrastructure.Repository
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .Include(e => e.Artifacts)
-            .Include(e => e.TourOnlines)
-            .Include(e => e.CreatedByUser);
+            .OrderBy(e => e.StartTime < DateTime.UtcNow)
+            .ThenBy(e => e.StartTime);
+            // .Include(e => e.Artifacts)
+            // .Include(e => e.TourOnlines)
+            // .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();

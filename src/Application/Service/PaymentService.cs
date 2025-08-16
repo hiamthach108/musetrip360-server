@@ -26,6 +26,7 @@ public interface IPaymentService
   Task<IActionResult> HandleGetOrdersByUser(OrderQuery query);
   Task<IActionResult> HandleAdminGetOrders(OrderQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
+  Task<IActionResult> HandleGetOrderByCode(string orderCode);
 
   // BankAccount management methods
   Task<IActionResult> HandleGetBankAccountsByMuseum(Guid museumId);
@@ -363,6 +364,23 @@ public class PaymentService : BaseService, IPaymentService
         await _eventParticipantRepo.AddRangeAsync(eventParticipants);
       }
       return SuccessResp.Ok(new { success = true });
+    }
+    catch (Exception e)
+    {
+      return ErrorResp.InternalServerError(e.Message);
+    }
+  }
+
+  public async Task<IActionResult> HandleGetOrderByCode(string orderCode)
+  {
+    try
+    {
+      var order = await _orderRepo.GetByOrderCodeAsync(long.Parse(orderCode));
+      if (order == null)
+      {
+        return ErrorResp.NotFound("Order not found");
+      }
+      return SuccessResp.Ok(_mapper.Map<OrderDto>(order));
     }
     catch (Exception e)
     {
