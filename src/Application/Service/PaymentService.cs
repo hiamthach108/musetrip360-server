@@ -163,6 +163,8 @@ public class PaymentService : BaseService, IPaymentService
       paymentResult.bin,
       paymentResult.accountNumber,
       paymentResult.qrCode,
+      req.CancelUrl,
+      req.ReturnUrl
     });
   }
 
