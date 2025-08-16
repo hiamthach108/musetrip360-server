@@ -23,7 +23,7 @@ public interface IPaymentService
 {
   Task<IActionResult> HandleCreateOrder(CreateOrderReq req);
   Task<IActionResult> HandleGetOrderById(Guid id);
-  Task<IActionResult> HandleGetAllOrders(OrderQuery query);
+  Task<IActionResult> HandleGetOrdersByUser(OrderQuery query);
   Task<IActionResult> HandleAdminGetOrders(OrderQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
 
@@ -76,7 +76,7 @@ public class PaymentService : BaseService, IPaymentService
     return SuccessResp.Ok(_mapper.Map<List<OrderDto>>(orders));
   }
 
-  public async Task<IActionResult> HandleGetAllOrders(OrderQuery query)
+  public async Task<IActionResult> HandleGetOrdersByUser(OrderQuery query)
   {
     var payload = ExtractPayload();
     if (payload == null)
@@ -342,7 +342,7 @@ public class PaymentService : BaseService, IPaymentService
         PaymentMethod = PaymentMethodEnum.PayOS,
         CreatedBy = order.CreatedBy,
       };
-      payment.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(payment));
+      payment.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(data));
       // add payment
       await _paymentRepo.AddAsync(payment);
       // update order status

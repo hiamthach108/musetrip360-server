@@ -63,11 +63,11 @@ public class OrderController : ControllerBase
     /// <response code="401">Unauthorized - Invalid or missing access token</response>
     [Protected]
     [HttpGet]
-    public async Task<IActionResult> GetAllOrders([FromQuery] OrderQuery query)
+    public async Task<IActionResult> GetOrdersByUser([FromQuery] OrderQuery query)
     {
-        _logger.LogInformation("Get all orders request received");
+        _logger.LogInformation("Get orders by user request received");
 
-        return await _service.HandleGetAllOrders(query);
+        return await _service.HandleGetOrdersByUser(query);
     }
 
     /// <summary>
