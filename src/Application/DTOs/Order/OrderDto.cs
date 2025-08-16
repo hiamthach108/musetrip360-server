@@ -1,9 +1,9 @@
 namespace Application.DTOs.Order;
 
 using Domain.Payment;
-using Application.DTOs.User;
 using Application.Shared.Enum;
 using AutoMapper;
+using Application.DTOs.User;
 
 public class OrderDto
 {
@@ -12,9 +12,10 @@ public class OrderDto
   public PaymentStatusEnum Status { get; set; }
   public OrderTypeEnum OrderType { get; set; }
   public string? Metadata { get; set; }
-  public UserDto CreatedBy { get; set; } = null!;
+  public Guid CreatedBy { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
+  public UserDto CreatedByUser { get; set; } = null!;
 }
 
 public class OrderProfile : Profile
