@@ -26,6 +26,7 @@ public interface IPaymentService
   Task<IActionResult> HandleGetOrdersByUser(OrderQuery query);
   Task<IActionResult> HandleAdminGetOrders(OrderQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
+  Task<IActionResult> HandleGetOrderByCode(string orderCode);
 
   // BankAccount management methods
   Task<IActionResult> HandleGetBankAccountsByMuseum(Guid museumId);
@@ -135,8 +136,8 @@ public class PaymentService : BaseService, IPaymentService
       amount: totalAmount,
       description: "Payment for order",
       items: listItem,
-      cancelUrl: $"{_configuration["Frontend:Url"]}/payment/cancel",
-      returnUrl: $"{_configuration["Frontend:Url"]}/payment/success"
+      cancelUrl: req.CancelUrl,
+      returnUrl: req.ReturnUrl
     );
 
     var paymentResult = await _payOSService.CreatePayment(paymentData);
@@ -146,6 +147,7 @@ public class PaymentService : BaseService, IPaymentService
     msg.OrderCode = paymentResult.orderCode.ToString();
     msg.TotalAmount = totalAmount;
     msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
+    msg.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult));
     await _queuePub.Publish(QueueConst.Order, msg);
 
     return SuccessResp.Ok(new
@@ -161,6 +163,8 @@ public class PaymentService : BaseService, IPaymentService
       paymentResult.bin,
       paymentResult.accountNumber,
       paymentResult.qrCode,
+      req.CancelUrl,
+      req.ReturnUrl
     });
   }
 
@@ -362,6 +366,23 @@ public class PaymentService : BaseService, IPaymentService
         await _eventParticipantRepo.AddRangeAsync(eventParticipants);
       }
       return SuccessResp.Ok(new { success = true });
+    }
+    catch (Exception e)
+    {
+      return ErrorResp.InternalServerError(e.Message);
+    }
+  }
+
+  public async Task<IActionResult> HandleGetOrderByCode(string orderCode)
+  {
+    try
+    {
+      var order = await _orderRepo.GetByOrderCodeAsync(long.Parse(orderCode));
+      if (order == null)
+      {
+        return ErrorResp.NotFound("Order not found");
+      }
+      return SuccessResp.Ok(_mapper.Map<OrderDto>(order));
     }
     catch (Exception e)
     {

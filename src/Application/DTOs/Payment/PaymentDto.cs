@@ -1,5 +1,7 @@
 namespace Application.DTOs.Payment;
 
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Application.Shared.Enum;
 using AutoMapper;
@@ -11,6 +13,10 @@ public class CreateOrderReq
 
   public JsonDocument? Metadata { get; set; }
   public List<Guid> ItemIds { get; set; } = [];
+  [Required]
+  public string CancelUrl { get; set; } = null!;
+  [Required]
+  public string ReturnUrl { get; set; } = null!;
 }
 
 public class CreateOrderMsg
