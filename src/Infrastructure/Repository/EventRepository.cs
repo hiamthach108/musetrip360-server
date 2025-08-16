@@ -70,7 +70,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -96,7 +96,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -116,6 +116,7 @@ namespace Infrastructure.Repository
             .Include(e => e.TourGuides)
             .Include(e => e.RepresentationMaterials)
             .Include(e => e.EventParticipants)
+            .Include(e => e.CreatedByUser)
             .FirstOrDefaultAsync(e => e.Id == id);
         }
 
@@ -148,7 +149,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -166,7 +167,7 @@ namespace Infrastructure.Repository
             .Where(e => e.CreatedBy == userId && (status == null || e.Status == status))
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
+            .Include(e => e.CreatedByUser)
             .ToListAsync();
         }
 

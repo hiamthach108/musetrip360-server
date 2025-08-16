@@ -19,6 +19,8 @@ public interface IOrderRepository
   Task<Order> AddAsync(Order order);
   Task<Order> UpdateAsync(Guid orderId, Order order);
   Task<Order> GetByOrderCodeAsync(long orderCode);
+  Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds);
+  Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds);
 }
 
 public class OrderRepository : IOrderRepository
@@ -105,7 +107,23 @@ public class OrderRepository : IOrderRepository
 
   public async Task<Order> GetByOrderCodeAsync(long orderCode)
   {
-    var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.OrderCode == orderCode.ToString());
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderEvents)
+    .FirstOrDefaultAsync(o => o.OrderCode == orderCode.ToString());
     return order;
+  }
+  public async Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderEvents)
+      .FirstOrDefaultAsync(o => o.CreatedBy == userId && o.OrderEvents.Any(oe => eventIds.Contains(oe.EventId)));
+    return order != null;
+  }
+  public async Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderTours)
+      .FirstOrDefaultAsync(o => o.CreatedBy == userId && o.OrderTours.Any(ot => tourIds.Contains(ot.TourId)));
+    return order != null;
   }
 }

@@ -134,9 +134,9 @@ public class MuseumRepository : IMuseumRepository
       queryable = queryable.Where(m => m.Name.Contains(query.Search));
     }
 
-    if (query.Status != null)
+    if (query.Status != null && query.Status.Count > 0)
     {
-      queryable = queryable.Where(m => m.Status == query.Status);
+      queryable = queryable.Where(m => query.Status.Contains(m.Status));
     }
 
     // For category filtering, we need to use a subquery to avoid complex joins

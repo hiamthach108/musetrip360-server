@@ -40,9 +40,9 @@ public class EventUpdateDto : IValidatableObject
         {
             yield return new ValidationResult("Available slots cannot be greater than capacity");
         }
-        if (BookingDeadline <= StartTime || BookingDeadline >= EndTime)
+        if (BookingDeadline >= EndTime)
         {
-            yield return new ValidationResult("Booking deadline must be between start and end time");
+            yield return new ValidationResult("Booking deadline must be before end time");
         }
     }
 }
