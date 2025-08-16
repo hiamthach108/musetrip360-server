@@ -102,26 +102,37 @@ public class PaymentService : BaseService, IPaymentService
       return ErrorResp.Unauthorized("Invalid token");
     }
     var listItem = new List<ItemData>();
+    var totalAmount = 0;
 
     if (req.OrderType == OrderTypeEnum.Event)
     {
+      var orderEventExists = await _orderRepo.VerifyOrderEventExists(payload.UserId, req.ItemIds);
+      if (orderEventExists)
+      {
+        return ErrorResp.BadRequest("Event already exists in order");
+      }
       var eventTasks = req.ItemIds.Select(async itemId => await _eventRepo.GetEventById(itemId));
       var events = await Task.WhenAll(eventTasks);
       listItem.AddRange(events.Where(e => e != null).Select(e => new ItemData(e!.Id.ToString(), 1, (int)e.Price)));
-      req.TotalAmount = events.Sum(e => e.Price);
+      totalAmount = (int)events.Sum(e => e.Price);
     }
     else if (req.OrderType == OrderTypeEnum.Tour)
     {
+      var orderTourExists = await _orderRepo.VerifyOrderTourExists(payload.UserId, req.ItemIds);
+      if (orderTourExists)
+      {
+        return ErrorResp.BadRequest("Tour already exists in order");
+      }
       var tourTasks = req.ItemIds.Select(async itemId => await _tourRepo.GetByIdAsync(itemId));
       var tours = await Task.WhenAll(tourTasks);
       listItem.AddRange(tours.Where(t => t != null).Select(t => new ItemData(t!.Id.ToString(), 1, (int)t.Price)));
-      req.TotalAmount = tours.Sum(t => t.Price);
+      totalAmount = (int)tours.Sum(t => t.Price);
     }
 
     var snowflake = new SnowflakeId(1);
     var paymentData = new PaymentData(
       orderCode: snowflake.GenerateOrderId(),
-      amount: (int)req.TotalAmount,
+      amount: totalAmount,
       description: "Payment for order",
       items: listItem,
       cancelUrl: $"{_configuration["Frontend:Url"]}/payment/cancel",
@@ -132,7 +143,9 @@ public class PaymentService : BaseService, IPaymentService
 
     var msg = _mapper.Map<CreateOrderMsg>(req);
     msg.CreatedBy = payload.UserId;
-
+    msg.OrderCode = paymentResult.orderCode.ToString();
+    msg.TotalAmount = totalAmount;
+    msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
     await _queuePub.Publish(QueueConst.Order, msg);
 
     return SuccessResp.Ok(new
@@ -158,6 +171,9 @@ public class PaymentService : BaseService, IPaymentService
     order.Status = PaymentStatusEnum.Pending;
     order.OrderType = msg.OrderType;
     order.Metadata = msg.Metadata;
+    order.TotalAmount = msg.TotalAmount;
+    order.ExpiredAt = msg.ExpiredAt;
+    order.OrderCode = msg.OrderCode;
 
     switch (order.OrderType)
     {
@@ -326,6 +342,7 @@ public class PaymentService : BaseService, IPaymentService
         PaymentMethod = PaymentMethodEnum.PayOS,
         CreatedBy = order.CreatedBy,
       };
+      payment.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(payment));
       // add payment
       await _paymentRepo.AddAsync(payment);
       // update order status

@@ -6,7 +6,6 @@ using AutoMapper;
 
 public class CreateOrderReq
 {
-  public float TotalAmount { get; set; }
 
   public OrderTypeEnum OrderType { get; set; }
 
@@ -16,7 +15,6 @@ public class CreateOrderReq
 
 public class CreateOrderMsg
 {
-  public float TotalAmount { get; set; }
 
   public OrderTypeEnum OrderType { get; set; }
 
@@ -24,6 +22,9 @@ public class CreateOrderMsg
   public List<Guid> ItemIds { get; set; } = [];
 
   public Guid CreatedBy { get; set; }
+  public string OrderCode { get; set; } = null!;
+  public float TotalAmount { get; set; }
+  public DateTime ExpiredAt { get; set; }
 }
 
 public class CreateOrderProfile : Profile
