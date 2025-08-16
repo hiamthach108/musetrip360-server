@@ -135,8 +135,8 @@ public class PaymentService : BaseService, IPaymentService
       amount: totalAmount,
       description: "Payment for order",
       items: listItem,
-      cancelUrl: $"{_configuration["Frontend:Url"]}/payment/cancel",
-      returnUrl: $"{_configuration["Frontend:Url"]}/payment/success"
+      cancelUrl: req.CancelUrl,
+      returnUrl: req.ReturnUrl
     );
 
     var paymentResult = await _payOSService.CreatePayment(paymentData);
@@ -146,6 +146,7 @@ public class PaymentService : BaseService, IPaymentService
     msg.OrderCode = paymentResult.orderCode.ToString();
     msg.TotalAmount = totalAmount;
     msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
+    msg.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult));
     await _queuePub.Publish(QueueConst.Order, msg);
 
     return SuccessResp.Ok(new
