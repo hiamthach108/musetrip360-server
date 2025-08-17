@@ -80,7 +80,7 @@ public class OrderController : ControllerBase
     /// <response code="403">Forbidden - Insufficient permissions for admin access</response>
     [Protected]
     [HttpGet("admin")]
-    public async Task<IActionResult> GetOrdersForAdmin([FromQuery] OrderQuery query)
+    public async Task<IActionResult> GetOrdersForAdmin([FromQuery] OrderAdminQuery query)
     {
         _logger.LogInformation("Get orders for admin request received");
 

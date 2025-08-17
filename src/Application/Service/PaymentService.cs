@@ -24,7 +24,7 @@ public interface IPaymentService
   Task<IActionResult> HandleCreateOrder(CreateOrderReq req);
   Task<IActionResult> HandleGetOrderById(Guid id);
   Task<IActionResult> HandleGetOrdersByUser(OrderQuery query);
-  Task<IActionResult> HandleAdminGetOrders(OrderQuery query);
+  Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
   Task<IActionResult> HandleGetOrderByCode(string orderCode);
 
@@ -71,10 +71,21 @@ public class PaymentService : BaseService, IPaymentService
     _eventParticipantRepo = new EventParticipantRepository(dbContext);
   }
 
-  public async Task<IActionResult> HandleAdminGetOrders(OrderQuery query)
+  public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
   {
-    var orders = await _orderRepo.GetAllAsync();
-    return SuccessResp.Ok(_mapper.Map<List<OrderDto>>(orders));
+    try
+    {
+      var orders = await _orderRepo.GetAllAdminAsync(query);
+      return SuccessResp.Ok(new
+      {
+        Lists = _mapper.Map<List<OrderDto>>(orders.Orders),
+        Total = orders.TotalCount
+      });
+    }
+    catch (Exception e)
+    {
+      return ErrorResp.InternalServerError(e.Message);
+    }
   }
 
   public async Task<IActionResult> HandleGetOrdersByUser(OrderQuery query)
@@ -86,7 +97,11 @@ public class PaymentService : BaseService, IPaymentService
     }
 
     var orders = await _orderRepo.GetByUserIdAsync(payload.UserId, query);
-    return SuccessResp.Ok(_mapper.Map<List<OrderDto>>(orders));
+    return SuccessResp.Ok(new
+    {
+      Lists = _mapper.Map<List<OrderDto>>(orders.Orders),
+      Total = orders.TotalCount
+    });
   }
 
   public async Task<IActionResult> HandleGetOrderById(Guid id)
