@@ -170,8 +170,11 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+<<<<<<< HEAD
       .Where(ep => ep.EventId == eventId)
       .OrderByDescending(ep => ep.JoinedAt)
+=======
+>>>>>>> 83b839101e229ac246323aebbd1cc254e07c6059
       .ToListAsync();
     return eventParticipants;
   }
@@ -220,8 +223,11 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+<<<<<<< HEAD
       .Where(ep => ep.UserId == userId)
       .OrderByDescending(ep => ep.CreatedAt)
+=======
+>>>>>>> 83b839101e229ac246323aebbd1cc254e07c6059
       .ToListAsync();
     return eventParticipants;
   }
@@ -270,8 +276,11 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+<<<<<<< HEAD
       .Where(ep => ep.UserId == userId && ep.EventId == eventId)
       .OrderByDescending(ep => ep.CreatedAt)
+=======
+>>>>>>> 83b839101e229ac246323aebbd1cc254e07c6059
       .ToListAsync();
     return eventParticipants.FirstOrDefault(ep => ep.UserId == userId && ep.EventId == eventId);
   }

@@ -13,6 +13,7 @@ public class EventParticipantDto
     public ParticipantStatusEnum Status { get; set; }
     public UserDto User { get; set; } = null!;
     public EventDto Event { get; set; } = null!;
+<<<<<<< HEAD
 }
 public class EventParticipantNoNavigateDto
 {
@@ -22,6 +23,8 @@ public class EventParticipantNoNavigateDto
     public DateTime JoinedAt { get; set; }
     public ParticipantRoleEnum Role { get; set; }
     public ParticipantStatusEnum Status { get; set; }
+=======
+>>>>>>> 83b839101e229ac246323aebbd1cc254e07c6059
 }
 public class EventParticipantProfile : Profile
 {
