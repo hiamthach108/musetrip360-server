@@ -95,7 +95,7 @@ public class OrderController : ControllerBase
         return await _service.HandlePayosWebhook(data);
     }
 
-    [HttpGet("{orderCode}")]
+    [HttpGet("code/{orderCode}")]
     public async Task<IActionResult> GetOrderByCode(string orderCode)
     {
         _logger.LogInformation("Callback request received");
