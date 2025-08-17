@@ -14,7 +14,8 @@ public interface IOrderRepository
 {
   Task<Order?> GetByIdAsync(Guid id);
   Task<List<Order>> GetAllAsync();
-  Task<List<Order>> GetByUserIdAsync(Guid userId, OrderQuery query);
+  Task<OrderList> GetByUserIdAsync(Guid userId, OrderQuery query);
+  Task<OrderList> GetAllAdminAsync(OrderAdminQuery query);
   Task<List<Order>> GetByStatusAsync(PaymentStatusEnum status);
   Task<List<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType);
   Task<Order> AddAsync(Order order);
@@ -22,6 +23,15 @@ public interface IOrderRepository
   Task<Order> GetByOrderCodeAsync(long orderCode);
   Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds);
   Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds);
+}
+
+public class OrderList
+{
+  public IEnumerable<Order> Orders { get; set; } = [];
+  public int TotalCount { get; set; }
+  public int Page { get; set; }
+  public int PageSize { get; set; }
+  public int TotalPages { get; set; }
 }
 
 public class OrderRepository : IOrderRepository
@@ -54,7 +64,7 @@ public class OrderRepository : IOrderRepository
     return orders;
   }
 
-  public async Task<List<Order>> GetByUserIdAsync(Guid userId, OrderQuery query)
+  public async Task<OrderList> GetByUserIdAsync(Guid userId, OrderQuery query)
   {
     var orders = _dbContext.Orders
       .Include(o => o.CreatedByUser)
@@ -81,7 +91,14 @@ public class OrderRepository : IOrderRepository
 
     orders = orders.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
 
-    return await orders.ToListAsync();
+    return new OrderList
+    {
+      Orders = await orders.ToListAsync(),
+      TotalCount = await orders.CountAsync(),
+      Page = query.Page,
+      PageSize = query.PageSize,
+      TotalPages = (int)Math.Ceiling((double)await orders.CountAsync() / query.PageSize)
+    };
   }
 
   public async Task<List<Order>> GetByStatusAsync(PaymentStatusEnum status)
@@ -145,5 +162,42 @@ public class OrderRepository : IOrderRepository
       .Include(o => o.OrderTours)
       .FirstOrDefaultAsync(o => o.CreatedBy == userId && o.OrderTours.Any(ot => tourIds.Contains(ot.TourId)));
     return order != null;
+  }
+
+  public async Task<OrderList> GetAllAdminAsync(OrderAdminQuery query)
+  {
+    var orders = _dbContext.Orders
+      .Include(o => o.CreatedByUser)
+      .Include(o => o.OrderEvents)
+      .ThenInclude(oe => oe.Event)
+      .Include(o => o.OrderTours)
+      .ThenInclude(ot => ot.TourOnline)
+      .AsQueryable();
+
+    if (!string.IsNullOrEmpty(query.Search))
+    {
+      orders = orders.Where(o => o.Id.ToString().Contains(query.Search));
+    }
+
+    if (query.Status != null)
+    {
+      orders = orders.Where(o => o.Status == query.Status);
+    }
+
+    if (query.OrderType != null)
+    {
+      orders = orders.Where(o => o.OrderType == query.OrderType);
+    }
+
+    orders = orders.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+
+    return new OrderList
+    {
+      Orders = await orders.ToListAsync(),
+      TotalCount = await orders.CountAsync(),
+      Page = query.Page,
+      PageSize = query.PageSize,
+      TotalPages = (int)Math.Ceiling((double)await orders.CountAsync() / query.PageSize)
+    };
   }
 }
