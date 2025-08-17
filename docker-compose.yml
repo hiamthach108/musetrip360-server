@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  # postgres:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7.4.1-alpine
@@ -227,64 +227,64 @@ services:
       - default
       - elastic
   #MuseTrip360 API Application
-  # musetrip360-api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5000:5000"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     # .NET Core Configuration overrides
-  #     - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=${POSTGRES_DB:-musetrip360db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-123456};CommandTimeout=20;Timeout=15;
-  #     - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD:-exeredis},abortConnect=false
-  #     - ConnectionStrings__ElasticsearchConnection=http://elastic:9200
-  #     - RabbitMQ__HostName=rabbitmq
-  #     - RabbitMQ__UserName=${RABBITMQ_USER:-user}
-  #     - RabbitMQ__Password=${RABBITMQ_PASSWORD:-password}
-  #     - RabbitMQ__Port=5672
-  #     - RabbitMQ__VirtualHost=/
-  #     - Elasticsearch__Username=elastic
-  #     - Elasticsearch__Password=${ELASTIC_PASSWORD:-musetrip360_elastic}
-  #     - Elasticsearch__DefaultIndex=${ELASTIC_DEFAULT_INDEX:-musetrip360}
-  #     - Elasticsearch__NumberOfShards=${ELASTIC_SHARDS:-1}
-  #     - Elasticsearch__NumberOfReplicas=${ELASTIC_REPLICAS:-0}
-  #     - Elasticsearch__ConnectionString=http://elastic:9200
-  #     - GoogleClientId=${GOOGLE_CLIENT_ID:-google-client-id}
-  #     - GoogleClientSecret=${GOOGLE_CLIENT_SECRET:-google-client-secret}
-  #     - SMTP__Host=${SMTP_HOST:-smtp.gmail.com}
-  #     - SMTP__Port=${SMTP_PORT:-587}
-  #     - SMTP__EnableSSL=${SMTP_ENABLE_SSL:-true}
-  #     - SMTP__Email=${SMTP_EMAIL:-musetrip360-mail}
-  #     - SMTP__Password=${SMTP_PASSWORD:-musetrip360-password}
-  #     - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
-  #     - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
-  #     - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
-  #     - PayOS__ClientId=${PAYOS_CLIENT_ID:-}
-  #     - PayOS__ApiKey=${PAYOS_API_KEY:-}
-  #     - PayOS__ChecksumKey=${PAYOS_CHECKSUM_KEY:-}
-  #     - Gemini__ApiKey=${GEMINI_API_KEY:-}
+  musetrip360-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      # .NET Core Configuration overrides
+      - ConnectionStrings__DatabaseConnection=Server=postgres;Port=5432;Database=${POSTGRES_DB:-musetrip360db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-123456};CommandTimeout=20;Timeout=15;
+      - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD:-exeredis},abortConnect=false
+      - ConnectionStrings__ElasticsearchConnection=http://elastic:9200
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=${RABBITMQ_USER:-user}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-password}
+      - RabbitMQ__Port=5672
+      - RabbitMQ__VirtualHost=/
+      - Elasticsearch__Username=elastic
+      - Elasticsearch__Password=${ELASTIC_PASSWORD:-musetrip360_elastic}
+      - Elasticsearch__DefaultIndex=${ELASTIC_DEFAULT_INDEX:-musetrip360}
+      - Elasticsearch__NumberOfShards=${ELASTIC_SHARDS:-1}
+      - Elasticsearch__NumberOfReplicas=${ELASTIC_REPLICAS:-0}
+      - Elasticsearch__ConnectionString=http://elastic:9200
+      - GoogleClientId=${GOOGLE_CLIENT_ID:-google-client-id}
+      - GoogleClientSecret=${GOOGLE_CLIENT_SECRET:-google-client-secret}
+      - SMTP__Host=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP__Port=${SMTP_PORT:-587}
+      - SMTP__EnableSSL=${SMTP_ENABLE_SSL:-true}
+      - SMTP__Email=${SMTP_EMAIL:-musetrip360-mail}
+      - SMTP__Password=${SMTP_PASSWORD:-musetrip360-password}
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+      - PayOS__ClientId=${PAYOS_CLIENT_ID:-}
+      - PayOS__ApiKey=${PAYOS_API_KEY:-}
+      - PayOS__ChecksumKey=${PAYOS_CHECKSUM_KEY:-}
+      - Gemini__ApiKey=${GEMINI_API_KEY:-}
       
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     elastic:
-  #       condition: service_healthy
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/ping"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 60s
-  #   restart: unless-stopped
-  #   networks:
-  #     - default
-  #     - elastic
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elastic:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - default
+      - elastic
   turnserver:
     image: coturn/coturn:latest
     container_name: turnserver
