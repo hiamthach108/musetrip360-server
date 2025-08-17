@@ -1,3 +1,4 @@
+using Application.DTOs.User;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Events;
@@ -10,6 +11,8 @@ public class EventParticipantDto
     public DateTime JoinedAt { get; set; }
     public ParticipantRoleEnum Role { get; set; }
     public ParticipantStatusEnum Status { get; set; }
+    public UserDto User { get; set; } = null!;
+    public EventDto Event { get; set; } = null!;
 }
 public class EventParticipantProfile : Profile
 {
