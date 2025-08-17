@@ -32,7 +32,7 @@ public class EventDto
     public ICollection<TourOnlineDto>? TourOnlines { get; set; }
     public ICollection<TourGuideDto>? TourGuides { get; set; }
     public ICollection<RepresentationMaterialDto>? RepresentationMaterials { get; set; }
-    public ICollection<EventParticipantDto>? EventParticipants { get; set; }
+    public ICollection<EventParticipantNoNavigateDto>? EventParticipants { get; set; }
     public ICollection<RoomDto>? Rooms { get; set; }
     //   public ICollection<TicketAddonDto> TicketAddons { get; set; } = null!;
     public class EventProfile : Profile
