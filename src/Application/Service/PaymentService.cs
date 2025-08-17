@@ -78,7 +78,7 @@ public class PaymentService : BaseService, IPaymentService
       var orders = await _orderRepo.GetAllAdminAsync(query);
       return SuccessResp.Ok(new
       {
-        Lists = _mapper.Map<List<OrderDto>>(orders.Orders),
+        List = _mapper.Map<List<OrderDto>>(orders.Orders),
         Total = orders.TotalCount
       });
     }
@@ -99,7 +99,7 @@ public class PaymentService : BaseService, IPaymentService
     var orders = await _orderRepo.GetByUserIdAsync(payload.UserId, query);
     return SuccessResp.Ok(new
     {
-      Lists = _mapper.Map<List<OrderDto>>(orders.Orders),
+      List = _mapper.Map<List<OrderDto>>(orders.Orders),
       Total = orders.TotalCount
     });
   }
