@@ -157,6 +157,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IHistoricalPeriodService, HistoricalPeriodService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 
 // Singleton for RoomStateManager
 builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();

@@ -53,6 +53,7 @@ public class MuseumRequestUpdateDto
 public class MuseumRequestQuery : PaginationReq
 {
   public string? Search { get; set; }
+  public List<RequestStatusEnum>? Status { get; set; }
 }
 
 public class MuseumRequestProfile : Profile

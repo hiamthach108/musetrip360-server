@@ -18,6 +18,8 @@ public class EventUpdateDto : IValidatableObject
     [Range(0, int.MaxValue)]
     public int? AvailableSlots { get; set; }
     public DateTime? BookingDeadline { get; set; }
+    [Range(0, float.MaxValue)]
+    public float? Price { get; set; }
     public JsonDocument? Metadata { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -38,9 +40,9 @@ public class EventUpdateDto : IValidatableObject
         {
             yield return new ValidationResult("Available slots cannot be greater than capacity");
         }
-        if (BookingDeadline <= StartTime || BookingDeadline >= EndTime)
+        if (BookingDeadline >= EndTime)
         {
-            yield return new ValidationResult("Booking deadline must be between start and end time");
+            yield return new ValidationResult("Booking deadline must be before end time");
         }
     }
 }

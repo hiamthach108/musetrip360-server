@@ -1,4 +1,5 @@
 using Application.DTOs.Analytics;
+using Application.Shared.Enum;
 using Database;
 
 namespace Infrastructure.Repository;
@@ -6,6 +7,7 @@ namespace Infrastructure.Repository;
 public interface IAnalyticsRepository
 {
   MuseumAnalyticsOverview GetOverview(Guid museumId);
+  AdminAnalyticsOverview GetAdminOverview();
   int GetTotalVisitors(Guid museumId);
   int GetTotalArticles(Guid museumId);
   int GetTotalEvents(Guid museumId);
@@ -75,5 +77,25 @@ public class AnalyticsRepository : IAnalyticsRepository
   public int GetTotalArtifacts(Guid museumId)
   {
     return _context.Artifacts.Count(a => a.MuseumId == museumId);
+  }
+
+  public AdminAnalyticsOverview GetAdminOverview()
+  {
+    return new AdminAnalyticsOverview
+    {
+      TotalMuseums = _context.Museums.Count(),
+      TotalPendingRequests = _context.MuseumRequests.Where(r => r.Status == RequestStatusEnum.Pending).Count(),
+      TotalUsers = _context.Users.Count(),
+      TotalEvents = _context.Events.Count(),
+      TotalTours = _context.TourOnlines.Count(),
+      MuseumsByCategory = [.. _context.Museums
+        .SelectMany(m => m.Categories, (museum, category) => new { museum, category })
+        .GroupBy(x => x.category)
+        .Select(g => new AnalyticsMuseumCategorize
+        {
+          Category = g.Key.Name,
+          Count = g.Count()
+        })]
+    };
   }
 }

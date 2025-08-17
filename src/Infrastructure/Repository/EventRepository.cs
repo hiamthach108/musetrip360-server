@@ -20,6 +20,7 @@ namespace Infrastructure.Repository
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
         Task<bool> IsOwner(Guid userId, Guid eventId);
         Task FeedbackEvents(Guid eventId, Guid userId, string comment);
+        Task<IEnumerable<Event>> GetEventCreatedByUser(Guid userId);
     }
 
     public class EventList
@@ -61,14 +62,17 @@ namespace Infrastructure.Repository
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Status == null || e.Status == query.Status)
+            .Where(e => query.Ids == null || query.Ids.Contains(e.Id))
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Where(e => query.StartBookingDeadline == null || e.BookingDeadline >= query.StartBookingDeadline)
             .Where(e => query.EndBookingDeadline == null || e.BookingDeadline <= query.EndBookingDeadline)
-            .Include(e => e.Artifacts)
-            .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .OrderBy(e => e.StartTime < DateTime.UtcNow)
+            .ThenBy(e => e.StartTime);
+            // .Include(e => e.Artifacts)
+            // .Include(e => e.TourOnlines)
+            // .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -88,12 +92,15 @@ namespace Infrastructure.Repository
             .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
+            .Where(e => query.Ids == null || query.Ids.Contains(e.Id))
             // time range available is e.Start before query end or query Start before e.End is available
             .Where(e => query.StartTime == null || e.StartTime <= query.EndTime)
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
-            .Include(e => e.Artifacts)
-            .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .OrderBy(e => e.StartTime < DateTime.UtcNow)
+            .ThenBy(e => e.StartTime);
+            // .Include(e => e.Artifacts)
+            // .Include(e => e.TourOnlines)
+            // .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -113,6 +120,7 @@ namespace Infrastructure.Repository
             .Include(e => e.TourGuides)
             .Include(e => e.RepresentationMaterials)
             .Include(e => e.EventParticipants)
+            .Include(e => e.CreatedByUser)
             .FirstOrDefaultAsync(e => e.Id == id);
         }
 
@@ -145,7 +153,7 @@ namespace Infrastructure.Repository
             .Where(e => query.EndTime == null || e.EndTime >= query.StartTime)
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides);
+            .Include(e => e.CreatedByUser);
 
             var total = queryable.Count();
             var events = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
@@ -163,7 +171,7 @@ namespace Infrastructure.Repository
             .Where(e => e.CreatedBy == userId && (status == null || e.Status == status))
             .Include(e => e.Artifacts)
             .Include(e => e.TourOnlines)
-            .Include(e => e.TourGuides)
+            .Include(e => e.CreatedByUser)
             .ToListAsync();
         }
 
@@ -210,6 +218,11 @@ namespace Infrastructure.Repository
                 throw new InvalidOperationException("An error occurred while providing feedback for the event.", ex);
             }
             await transaction.CommitAsync();
+        }
+
+        public async Task<IEnumerable<Event>> GetEventCreatedByUser(Guid userId)
+        {
+            return await _context.Events.Where(e => e.CreatedBy == userId).ToListAsync();
         }
     }
 }

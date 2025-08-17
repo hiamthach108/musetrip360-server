@@ -1,6 +1,9 @@
+using Application.DTOs.Search;
 using Application.Service;
+using Application.Shared.Constant;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.Queue;
 using Database;
 using Domain.Tours;
 using Infrastructure.Repository;
@@ -87,8 +90,9 @@ public class TourOnlineService(MuseTrip360DbContext dbContext, IMapper mapper, I
 {
 }
 
-public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), IAdminTourOnlineService
+public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), IAdminTourOnlineService
 {
+    protected readonly IQueuePublisher _queuePublisher = queuePublisher;
     public async Task<IActionResult> ActivateAsync(Guid id)
     {
         try
@@ -100,6 +104,12 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             }
             tour.IsActive = true;
             await _tourOnlineRepository.UpdateAsync(tour);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = tour.Id,
+                Type = IndexConst.TOUR_ONLINE_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
         }
@@ -148,6 +158,12 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             var tour = _mapper.Map<TourOnline>(tourOnline);
             tour.MuseumId = museumId;
             await _tourOnlineRepository.CreateAsync(tour);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = tour.Id,
+                Type = IndexConst.TOUR_ONLINE_TYPE,
+                Action = IndexConst.CREATE_ACTION
+            });
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Created(tourDto);
         }
@@ -168,6 +184,12 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
             }
             tour.IsActive = false;
             await _tourOnlineRepository.UpdateAsync(tour);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = tour.Id,
+                Type = IndexConst.TOUR_ONLINE_TYPE,
+                Action = IndexConst.DELETE_ACTION
+            });
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Ok(tour);
         }
@@ -187,6 +209,12 @@ public class TourOnlineAdminService(MuseTrip360DbContext dbContext, IMapper mapp
                 return ErrorResp.NotFound("Tour not found");
             }
             await _tourOnlineRepository.DeleteAsync(id);
+            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+            {
+                Id = id,
+                Type = IndexConst.TOUR_ONLINE_TYPE,
+                Action = IndexConst.DELETE_ACTION
+            });
             return SuccessResp.Ok(new { Message = "Tour deleted successfully" });
         }
         catch (Exception e)

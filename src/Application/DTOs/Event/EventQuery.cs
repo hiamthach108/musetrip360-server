@@ -14,6 +14,7 @@ public class EventQuery : PaginationReq, IValidatableObject
     public EventTypeEnum? EventType { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
+    public List<Guid>? Ids { get; set; }
 
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

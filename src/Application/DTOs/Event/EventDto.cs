@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Application.DTOs.RepresentationMaterial;
+using Application.DTOs.User;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Events;
@@ -20,9 +21,12 @@ public class EventDto
     public Guid MuseumId { get; set; }
     public Guid CreatedBy { get; set; }
     public EventStatusEnum Status { get; set; }
+    public float Price { get; set; }
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public UserDto CreatedByUser { get; set; } = null!;
+
 
     public ICollection<ArtifactDto>? Artifacts { get; set; }
     public ICollection<TourOnlineDto>? TourOnlines { get; set; }

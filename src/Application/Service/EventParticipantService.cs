@@ -60,7 +60,8 @@ public class EventParticipantService(MuseTrip360DbContext context, IMapper mappe
             eventParticipantItem.JoinedAt = DateTime.UtcNow;
 
             await _eventParticipantRepository.AddAsync(eventParticipantItem);
-            return SuccessResp.Created(eventParticipantItem);
+            var eventParticipantDto = _mapper.Map<EventParticipantDto>(eventParticipantItem);
+            return SuccessResp.Created(eventParticipantDto);
         }
         catch (Exception e)
         {
@@ -175,7 +176,8 @@ public class EventParticipantService(MuseTrip360DbContext context, IMapper mappe
             }
             var eventParticipantToUpdate = mapper.Map(updateDto, eventParticipantItem);
             await _eventParticipantRepository.UpdateAsync(eventParticipantId, eventParticipantToUpdate);
-            return SuccessResp.Ok(eventParticipantToUpdate);
+            var eventParticipantDto = mapper.Map<EventParticipantDto>(eventParticipantToUpdate);
+            return SuccessResp.Ok(eventParticipantDto);
         }
         catch (Exception e)
         {

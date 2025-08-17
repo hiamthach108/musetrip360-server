@@ -7,16 +7,21 @@ using Database;
 using Domain.Payment;
 using Application.Shared.Enum;
 using Application.DTOs.Order;
+using Microsoft.EntityFrameworkCore;
+using Google.Apis.Util;
 
 public interface IOrderRepository
 {
-  Task<Order> GetByIdAsync(Guid id);
-  Task<IEnumerable<Order>> GetAllAsync();
-  Task<IEnumerable<Order>> GetByUserIdAsync(Guid userId, OrderQuery query);
-  Task<IEnumerable<Order>> GetByStatusAsync(PaymentStatusEnum status);
-  Task<IEnumerable<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType);
+  Task<Order?> GetByIdAsync(Guid id);
+  Task<List<Order>> GetAllAsync();
+  Task<List<Order>> GetByUserIdAsync(Guid userId, OrderQuery query);
+  Task<List<Order>> GetByStatusAsync(PaymentStatusEnum status);
+  Task<List<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType);
   Task<Order> AddAsync(Order order);
   Task<Order> UpdateAsync(Guid orderId, Order order);
+  Task<Order> GetByOrderCodeAsync(long orderCode);
+  Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds);
+  Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds);
 }
 
 public class OrderRepository : IOrderRepository
@@ -28,23 +33,36 @@ public class OrderRepository : IOrderRepository
     _dbContext = dbContext;
   }
 
-  public async Task<Order> GetByIdAsync(Guid id)
+  public async Task<Order?> GetByIdAsync(Guid id)
   {
-    var order = await _dbContext.Orders.FindAsync(id);
+    var order = await _dbContext.Orders
+    .Include(o => o.CreatedByUser)
+    .Include(o => o.OrderEvents)
+    .ThenInclude(oe => oe.Event)
+    .Include(o => o.OrderTours)
+    .ThenInclude(ot => ot.TourOnline)
+    .FirstOrDefaultAsync(o => o.Id == id);
     return order;
   }
 
-  public async Task<IEnumerable<Order>> GetAllAsync()
+  public async Task<List<Order>> GetAllAsync()
   {
-    var orders = _dbContext.Orders
+    var orders = await _dbContext.Orders
       .OrderByDescending(o => o.CreatedAt)
-      .AsEnumerable();
+      .Include(o => o.CreatedByUser)
+      .ToListAsync();
     return orders;
   }
 
-  public async Task<IEnumerable<Order>> GetByUserIdAsync(Guid userId, OrderQuery query)
+  public async Task<List<Order>> GetByUserIdAsync(Guid userId, OrderQuery query)
   {
-    var orders = _dbContext.Orders.Where(o => o.CreatedBy == userId);
+    var orders = _dbContext.Orders
+      .Include(o => o.CreatedByUser)
+      .Include(o => o.OrderEvents)
+      .ThenInclude(oe => oe.Event)
+      .Include(o => o.OrderTours)
+      .ThenInclude(ot => ot.TourOnline)
+      .Where(o => o.CreatedBy == userId);
 
     if (!string.IsNullOrEmpty(query.Search))
     {
@@ -63,24 +81,26 @@ public class OrderRepository : IOrderRepository
 
     orders = orders.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
 
-    return orders;
+    return await orders.ToListAsync();
   }
 
-  public async Task<IEnumerable<Order>> GetByStatusAsync(PaymentStatusEnum status)
+  public async Task<List<Order>> GetByStatusAsync(PaymentStatusEnum status)
   {
-    var orders = _dbContext.Orders
+    var orders = await _dbContext.Orders
       .Where(o => o.Status == status)
       .OrderByDescending(o => o.CreatedAt)
-      .AsEnumerable();
+      .Include(o => o.CreatedByUser)
+      .ToListAsync();
     return orders;
   }
 
-  public async Task<IEnumerable<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType)
+  public async Task<List<Order>> GetByOrderTypeAsync(OrderTypeEnum orderType)
   {
-    var orders = _dbContext.Orders
+    var orders = await _dbContext.Orders
       .Where(o => o.OrderType == orderType)
       .OrderByDescending(o => o.CreatedAt)
-      .AsEnumerable();
+      .Include(o => o.CreatedByUser)
+      .ToListAsync();
     return orders;
   }
 
@@ -99,5 +119,31 @@ public class OrderRepository : IOrderRepository
     _dbContext.Entry(existingOrder).CurrentValues.SetValues(order);
     await _dbContext.SaveChangesAsync();
     return existingOrder;
+  }
+
+  public async Task<Order> GetByOrderCodeAsync(long orderCode)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.CreatedByUser)
+      .Include(o => o.OrderEvents)
+      .ThenInclude(oe => oe.Event)
+      .Include(o => o.OrderTours)
+      .ThenInclude(ot => ot.TourOnline)
+    .FirstOrDefaultAsync(o => o.OrderCode == orderCode.ToString());
+    return order;
+  }
+  public async Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderEvents)
+      .FirstOrDefaultAsync(o => o.CreatedBy == userId && o.OrderEvents.Any(oe => eventIds.Contains(oe.EventId)));
+    return order != null;
+  }
+  public async Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderTours)
+      .FirstOrDefaultAsync(o => o.CreatedBy == userId && o.OrderTours.Any(ot => tourIds.Contains(ot.TourId)));
+    return order != null;
   }
 }

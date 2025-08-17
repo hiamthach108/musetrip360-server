@@ -109,7 +109,7 @@ public class SignalingHub : Hub
             if (_connections.TryRemove(Context.ConnectionId, out var sfu))
             {
                 var payload = Context.Items["payload"] as Payload ?? new Payload();
-                await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("PeerDisconnected", payload.UserId, Context.ConnectionId);
+                await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("PeerDisconnected", payload.UserId, Context.ConnectionId, _peerIdToStreamId[Context.ConnectionId]);
                 // await for client to disconnect from sfu
                 await Task.Delay(1000);
                 RemoveStreamPeerId();
@@ -133,12 +133,12 @@ public class SignalingHub : Hub
             {
                 // validate user before join room
                 var payload = Context.Items["payload"] as Payload ?? new Payload();
-                var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
-                if (!isValid)
-                {
-                    await Clients.Caller.SendAsync("Error", "User not authorized to join room");
-                    return;
-                }
+                // var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
+                // if (!isValid)
+                // {
+                //     await Clients.Caller.SendAsync("Error", "User not authorized to join room");
+                //     return;
+                // }
                 // send offer to sfu
                 await sfu.JoinRoomAsync(roomId, Context.ConnectionId, offer);
                 // set room id for sfu connection
@@ -146,7 +146,7 @@ public class SignalingHub : Hub
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
                 // notify other peers in room that new peer joined
-                await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", Context.ConnectionId);
+                await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
                 // get room state and send to peer
                 var roomState = await _roomStateManager.GetRoomState(roomId);

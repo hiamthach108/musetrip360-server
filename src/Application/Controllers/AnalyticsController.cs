@@ -25,4 +25,12 @@ public class AnalyticsController : ControllerBase
     _logger.LogInformation("GetOverview request received for museumId: {MuseumId}", museumId);
     return await _analyticsService.GetOverview(museumId);
   }
+
+  [Protected]
+  [HttpGet("admin/overview")]
+  public async Task<IActionResult> GetAdminOverview()
+  {
+    _logger.LogInformation("GetAdminOverview request received");
+    return await _analyticsService.GetAdminOverview();
+  }
 }
