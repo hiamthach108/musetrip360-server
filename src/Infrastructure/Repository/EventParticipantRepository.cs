@@ -170,6 +170,8 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+      .Where(ep => ep.EventId == eventId)
+      .OrderByDescending(ep => ep.JoinedAt)
       .ToListAsync();
     return eventParticipants;
   }
@@ -186,6 +188,7 @@ public class EventParticipantRepository : IEventParticipantRepository
         JoinedAt = ep.JoinedAt,
         Role = ep.Role,
         Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
         Event = new Domain.Events.Event
         {
           Id = ep.Event.Id,
@@ -218,6 +221,8 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+      .Where(ep => ep.UserId == userId)
+      .OrderByDescending(ep => ep.CreatedAt)
       .ToListAsync();
     return eventParticipants;
   }
@@ -266,6 +271,8 @@ public class EventParticipantRepository : IEventParticipantRepository
           UpdatedAt = ep.User.UpdatedAt,
         }
       })
+      .Where(ep => ep.UserId == userId && ep.EventId == eventId)
+      .OrderByDescending(ep => ep.CreatedAt)
       .ToListAsync();
     return eventParticipants.FirstOrDefault(ep => ep.UserId == userId && ep.EventId == eventId);
   }
