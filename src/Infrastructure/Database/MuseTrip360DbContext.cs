@@ -502,6 +502,7 @@ public class MuseTrip360DbContext : DbContext
       e.HasOne(x => x.User).WithMany(x => x.Subscriptions).HasForeignKey(x => x.UserId);
       e.HasOne(x => x.Plan).WithMany(x => x.Subscriptions).HasForeignKey(x => x.PlanId);
       e.HasOne(x => x.Order).WithMany(x => x.Subscriptions).HasForeignKey(x => x.OrderId);
+      e.HasOne(x => x.Museum).WithMany(x => x.Subscriptions).HasForeignKey(x => x.MuseumId);
       e.Property(x => x.StartDate).IsRequired();
       e.Property(x => x.EndDate).IsRequired();
       e.Property(x => x.Status).HasConversion<string>().HasDefaultValue(SubscriptionStatusEnum.Active);

@@ -8,6 +8,7 @@ using Domain.Events;
 using Domain.Payment;
 using Domain.Tours;
 using Domain.Users;
+using Domain.Subscription;
 
 public class Museum : BaseEntity
 {
@@ -36,4 +37,5 @@ public class Museum : BaseEntity
 
   public ICollection<Category> Categories { get; set; } = new List<Category>();
   public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+  public ICollection<Subscription> Subscriptions { get; set; } = [];
 }
