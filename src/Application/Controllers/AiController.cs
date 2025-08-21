@@ -34,4 +34,12 @@ public class AiController : ControllerBase
     _logger.LogInformation("Embedding request received");
     return await _aiService.HandleEmbedding(req);
   }
+
+  [Protected]
+  [HttpPost("audio")]
+  public async Task<IActionResult> Audio([FromBody] ChatReq req)
+  {
+    _logger.LogInformation("Audio request received");
+    return await _aiService.HandleAudio(req);
+  }
 }

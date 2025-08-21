@@ -1,5 +1,6 @@
 namespace Application.Controllers;
 
+using Application.DTOs.Ai;
 using Application.Middlewares;
 using Application.Shared.Constant;
 using Application.Shared.Enum;
@@ -98,5 +99,25 @@ public class UploadController : ControllerBase
     }
 
     return null;
+  }
+
+  [HttpPost("base64")]
+  public async Task<IActionResult> UploadFromBase64Async([FromBody] UploadFromBase64Req request)
+  {
+    if (string.IsNullOrEmpty(request.Base64))
+    {
+      return ErrorResp.BadRequest("Base64 string is empty");
+    }
+
+    var url = await _uploadService.UploadFromBase64Async(request.Base64, request.MimeType);
+    if (string.IsNullOrEmpty(url))
+    {
+      return ErrorResp.InternalServerError("Upload from base64 failed");
+    }
+
+    return SuccessResp.Ok(new
+    {
+      url
+    });
   }
 }
