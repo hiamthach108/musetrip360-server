@@ -21,6 +21,7 @@ namespace Infrastructure.Repository
         Task<bool> IsOwner(Guid userId, Guid eventId);
         Task FeedbackEvents(Guid eventId, Guid userId, string comment);
         Task<IEnumerable<Event>> GetEventCreatedByUser(Guid userId);
+        Task<IEnumerable<Feedback?>> GetFeedbackByEventIdAsync(Guid id);
     }
 
     public class EventList
@@ -223,6 +224,13 @@ namespace Infrastructure.Repository
         public async Task<IEnumerable<Event>> GetEventCreatedByUser(Guid userId)
         {
             return await _context.Events.Where(e => e.CreatedBy == userId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Feedback?>> GetFeedbackByEventIdAsync(Guid id)
+        {
+            return await _context.Feedbacks.Where(f => f.TargetId == id)
+            .Include(f => f.CreatedByUser)
+            .ToListAsync();
         }
     }
 }

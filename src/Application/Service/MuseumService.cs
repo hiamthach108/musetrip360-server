@@ -18,6 +18,7 @@ using Application.Shared.Constant;
 using Domain.Users;
 using Core.Queue;
 using Application.DTOs.Search;
+using MuseTrip360.src.Application.DTOs.Feedback;
 
 public interface IMuseumService
 {
@@ -29,6 +30,7 @@ public interface IMuseumService
   Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto);
   Task<IActionResult> HandleDelete(Guid id);
   Task<IActionResult> HandleFeedback(Guid id, int rating, string comment);
+  Task<IActionResult> HandleGetFeedbackByMuseumId(Guid id);
   Task<IActionResult> HandleTriggerIndexing(Guid id);
 
   // MuseumRequest endpoints
@@ -618,5 +620,27 @@ public class MuseumService : BaseService, IMuseumService
     }
     await _museumRepository.FeedbackMuseums(id, rating, payload.UserId, comment);
     return SuccessResp.Ok("Rating museum successfully");
+  }
+
+  public async Task<IActionResult> HandleGetFeedbackByMuseumId(Guid id)
+  {
+    try
+    {
+      var feedback = await _museumRepository.GetFeedbackByMuseumIdAsync(id);
+      var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+      return SuccessResp.Ok(feedbackDtos.Select(f => new
+      {
+        comment = f.Comment,
+        createdByUser = new
+        {
+          name = f.CreatedByUser.FullName,
+          avatar = f.CreatedByUser.AvatarUrl,
+        }
+      }));
+    }
+    catch (Exception e)
+    {
+      return ErrorResp.InternalServerError(e.Message);
+    }
   }
 }

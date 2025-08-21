@@ -8,12 +8,14 @@ using Database;
 using Domain.Tours;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
+using MuseTrip360.src.Application.DTOs.Feedback;
 
 public interface ITourOnlineService
 {
     Task<IActionResult> GetAllAsync(TourOnlineQuery query);
     Task<IActionResult> GetByIdAsync(Guid id);
     Task<IActionResult> HandleFeedback(Guid tourOnlineId, string comment);
+    Task<IActionResult> HandleGetFeedbackByTourOnlineId(Guid id);
 }
 
 public interface IAdminTourOnlineService : ITourOnlineService
@@ -83,6 +85,21 @@ public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMap
         {
             return ErrorResp.InternalServerError(e.Message);
         }
+    }
+
+    public async Task<IActionResult> HandleGetFeedbackByTourOnlineId(Guid id)
+    {
+        var feedback = await _tourOnlineRepository.GetFeedbackByTourOnlineIdAsync(id);
+        var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+        return SuccessResp.Ok(feedbackDtos.Select(f => new
+        {
+            comment = f.Comment,
+            createdByUser = new
+            {
+                name = f.CreatedByUser.FullName,
+                avatar = f.CreatedByUser.AvatarUrl,
+            }
+        }));
     }
 }
 

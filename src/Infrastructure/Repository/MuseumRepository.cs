@@ -25,6 +25,7 @@ public interface IMuseumRepository
   Task<Museum> UpdateAsync(Guid id, Museum museum);
   Task DeleteAsync(Museum museum);
   Task FeedbackMuseums(Guid museumId, int rating, Guid userId, string comment);
+  Task<IEnumerable<Feedback?>> GetFeedbackByMuseumIdAsync(Guid id);
 }
 
 public class MuseumList
@@ -241,5 +242,12 @@ public class MuseumRepository : IMuseumRepository
       throw new InvalidOperationException("An error occurred while providing feedback for the museum.", ex);
     }
     await transaction.CommitAsync();
+  }
+
+  public async Task<IEnumerable<Feedback?>> GetFeedbackByMuseumIdAsync(Guid id)
+  {
+    return await _dbContext.Feedbacks
+      .Where(f => f.TargetId == id)
+      .ToListAsync();
   }
 }

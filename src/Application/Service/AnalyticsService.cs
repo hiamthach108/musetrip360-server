@@ -35,8 +35,7 @@ public class AnalyticsService : BaseService, IAnalyticsService
   {
     try
     {
-      var overview = _analyticsRepository.GetAdminOverview();
-
+      var overview = await _analyticsRepository.GetAdminOverview();
       return SuccessResp.Ok(overview);
     }
     catch (Exception ex)
@@ -60,7 +59,7 @@ public class AnalyticsService : BaseService, IAnalyticsService
       // {
       //   return SuccessResp.Ok(cached);
       // }
-      var overview = _analyticsRepository.GetOverview(museumId);
+      var overview = await _analyticsRepository.GetOverview(museumId);
 
       // Cache the overview for 1 hour
       // await _cacheService.Set($"analytics:overview:{museumId}", overview, TimeSpan.FromHours(1));
