@@ -8,7 +8,6 @@ using Application.Shared.Enum;
 public class ArticleCreateDto
 {
     [Required]
-    [StringLength(200)]
     public string Title { get; set; } = null!;
 
     [Required]
