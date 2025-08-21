@@ -268,7 +268,9 @@ namespace MuseTrip360.src.Infrastructure.Repository
         public async Task<IEnumerable<Feedback?>> GetFeedbackByArtifactIdAsync(Guid id)
         {
             return await _context.Feedbacks
+                .Include(f => f.CreatedByUser)
                 .Where(f => f.TargetId == id)
+                .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
     }

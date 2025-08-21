@@ -1,13 +1,22 @@
-namespace MuseTrip360.src.Application.DTOs.Feedback;
+namespace Application.DTOs.Feedback;
+
 using AutoMapper;
 using Domain.Reviews;
-using Domain.Users;
+using Application.DTOs.User;
+using Application.Shared.Enum;
 
 public class FeedbackDto
 {
+    public Guid Id { get; set; }
+    public Guid TargetId { get; set; }
+    public DataEntityType Type { get; set; }
+
     public string Comment { get; set; } = null!;
     public int Rating { get; set; }
-    public User CreatedByUser { get; set; } = null!;
+    public UserDto CreatedByUser { get; set; } = null!;
+    public Guid CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 public class FeedbackProfile : Profile
 {

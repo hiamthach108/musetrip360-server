@@ -213,6 +213,10 @@ public class TourOnlineRepository : ITourOnlineRepository
 
     public async Task<IEnumerable<Feedback?>> GetFeedbackByTourOnlineIdAsync(Guid id)
     {
-        return await _context.Feedbacks.Where(f => f.TargetId == id).ToListAsync();
+        return await _context.Feedbacks
+            .Include(f => f.CreatedByUser)
+            .OrderByDescending(f => f.CreatedAt)
+            .Where(f => f.TargetId == id)
+            .ToListAsync();
     }
 }

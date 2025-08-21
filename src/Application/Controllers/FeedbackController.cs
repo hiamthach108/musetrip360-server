@@ -34,37 +34,37 @@ public class FeedbackController : ControllerBase
     /// <response code="200">Returns the created feedback</response>
     /// <response code="400">Returns an error message if the type is invalid</response>
     [Protected]
-    [HttpPost("{targetId}/target")]
-    public async Task<IActionResult> CreateFeedback([FromRoute] Guid targetId, [FromBody] FeedbackCreateDto dto)
+    [HttpPost("")]
+    public async Task<IActionResult> CreateFeedback([FromBody] FeedbackCreateDto dto)
     {
         switch (dto.Target)
         {
             case DataEntityType.Artifact:
-                return await _artifactService.HandleFeedback(targetId, dto.Rating, dto.Comment);
+                return await _artifactService.HandleFeedback(dto.TargetId, dto.Rating, dto.Comment);
             case DataEntityType.Museum:
-                return await _museumService.HandleFeedback(targetId, dto.Rating, dto.Comment);
+                return await _museumService.HandleFeedback(dto.TargetId, dto.Rating, dto.Comment);
             case DataEntityType.Event:
-                return await _eventService.HandleFeedback(targetId, dto.Comment);
+                return await _eventService.HandleFeedback(dto.TargetId, dto.Comment);
             case DataEntityType.TourOnline:
-                return await _tourOnlineService.HandleFeedback(targetId, dto.Comment);
+                return await _tourOnlineService.HandleFeedback(dto.TargetId, dto.Comment);
             default:
                 return BadRequest("Invalid type");
         }
     }
     [Protected]
-    [HttpPost("{targetId}/target/get")]
-    public async Task<IActionResult> GetFeedback([FromRoute] Guid targetId, [FromBody] DataEntityType target)
+    [HttpGet("")]
+    public async Task<IActionResult> GetFeedback([FromQuery] FeedbackQuery query)
     {
-        switch (target)
+        switch (query.Type)
         {
             case DataEntityType.Artifact:
-                return await _artifactService.HandleGetFeedbackByArtifactId(targetId);
+                return await _artifactService.HandleGetFeedbackByArtifactId(query.TargetId);
             case DataEntityType.Museum:
-                return await _museumService.HandleGetFeedbackByMuseumId(targetId);
+                return await _museumService.HandleGetFeedbackByMuseumId(query.TargetId);
             case DataEntityType.Event:
-                return await _eventService.HandleGetFeedbackByEventId(targetId);
+                return await _eventService.HandleGetFeedbackByEventId(query.TargetId);
             case DataEntityType.TourOnline:
-                return await _tourOnlineService.HandleGetFeedbackByTourOnlineId(targetId);
+                return await _tourOnlineService.HandleGetFeedbackByTourOnlineId(query.TargetId);
             default:
                 return BadRequest("Invalid type");
         }
