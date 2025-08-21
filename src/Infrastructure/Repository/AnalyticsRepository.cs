@@ -1,19 +1,22 @@
 using Application.DTOs.Analytics;
 using Application.Shared.Enum;
 using Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository;
 
 public interface IAnalyticsRepository
 {
-  MuseumAnalyticsOverview GetOverview(Guid museumId);
-  AdminAnalyticsOverview GetAdminOverview();
-  int GetTotalVisitors(Guid museumId);
-  int GetTotalArticles(Guid museumId);
-  int GetTotalEvents(Guid museumId);
-  int GetTotalTourOnline(Guid museumId);
-  int GetTotalFeedbacks(Guid museumId);
-  int GetTotalArtifacts(Guid museumId);
+  Task<MuseumAnalyticsOverview> GetOverview(Guid museumId);
+  Task<AdminAnalyticsOverview> GetAdminOverview();
+  Task<int> GetTotalVisitors(Guid museumId);
+  Task<int> GetTotalArticles(Guid museumId);
+  Task<int> GetTotalEvents(Guid museumId);
+  Task<int> GetTotalTourOnline(Guid museumId);
+  Task<int> GetTotalFeedbacks(Guid museumId);
+  Task<int> GetTotalArtifacts(Guid museumId);
+  Task<double> GetTotalRevenue(Guid museumId);
+  Task<double> GetAverageRating(Guid museumId);
 }
 
 public class AnalyticsRepository : IAnalyticsRepository
@@ -25,69 +28,93 @@ public class AnalyticsRepository : IAnalyticsRepository
     _context = context;
   }
 
-  public MuseumAnalyticsOverview GetOverview(Guid museumId)
+  public async Task<MuseumAnalyticsOverview> GetOverview(Guid museumId)
   {
-    var museum = _context.Museums.Find(museumId);
-    if (museum == null)
+    var overview = new MuseumAnalyticsOverview
     {
-      throw new ArgumentException("Museum not found", nameof(museumId));
-    }
-
-
-    return new MuseumAnalyticsOverview
-    {
-      TotalVisitors = GetTotalVisitors(museumId),
-      TotalArticles = GetTotalArticles(museumId),
-      TotalEvents = GetTotalEvents(museumId),
-      TotalTourOnlines = GetTotalTourOnline(museumId),
-      AverageRating = museum.Rating,
-      TotalFeedbacks = GetTotalFeedbacks(museumId),
-      TotalArtifacts = GetTotalArtifacts(museumId),
+      TotalVisitors = await GetTotalVisitors(museumId),
+      TotalArticles = await GetTotalArticles(museumId),
+      TotalEvents = await GetTotalEvents(museumId),
+      TotalTourOnlines = await GetTotalTourOnline(museumId),
+      AverageRating = await GetAverageRating(museumId),
+      TotalFeedbacks = await GetTotalFeedbacks(museumId),
+      TotalRevenue = await GetTotalRevenue(museumId),
+      TotalArtifacts = await GetTotalArtifacts(museumId),
     };
+
+    return overview;
   }
 
-  public int GetTotalArticles(Guid museumId)
+  public async Task<int> GetTotalArticles(Guid museumId)
   {
     // Assuming you have a method to get the total articles for a museum
-    return _context.Articles.Count(a => a.MuseumId == museumId);
+    return await _context.Articles.CountAsync(a => a.MuseumId == museumId);
   }
 
-  public int GetTotalEvents(Guid museumId)
+  public async Task<int> GetTotalEvents(Guid museumId)
   {
     // Assuming you have a method to get the total events for a museum
-    return _context.Events.Count(e => e.MuseumId == museumId);
+    return await _context.Events.CountAsync(e => e.MuseumId == museumId);
   }
 
-  public int GetTotalFeedbacks(Guid museumId)
+  public async Task<int> GetTotalFeedbacks(Guid museumId)
   {
-    return 0;
+    return await _context.Feedbacks.CountAsync(f => f.TargetId == museumId);
   }
 
-  public int GetTotalTourOnline(Guid museumId)
+  public async Task<int> GetTotalTourOnline(Guid museumId)
   {
     // Assuming you have a method to get the total online tours for a museum
-    return _context.TourOnlines.Count(t => t.MuseumId == museumId);
+    return await _context.TourOnlines.CountAsync(t => t.MuseumId == museumId);
   }
 
-  public int GetTotalVisitors(Guid museumId)
+  public async Task<int> GetTotalVisitors(Guid museumId)
   {
-    return 0;
+    return await _context.EventParticipants.CountAsync(e => e.Event.MuseumId == museumId);
   }
 
-  public int GetTotalArtifacts(Guid museumId)
+  public async Task<int> GetTotalArtifacts(Guid museumId)
   {
-    return _context.Artifacts.Count(a => a.MuseumId == museumId);
+    return await _context.Artifacts.CountAsync(a => a.MuseumId == museumId);
+  }
+  public async Task<double> GetTotalRevenue(Guid museumId)
+  {
+    var tourRevenue = await _context.TourOnlines
+    .Where(t => t.MuseumId == museumId)
+    .SelectMany(t => t.OrderTours
+    .SelectMany(ot => ot.Order.Payments
+    .Select(p => p.Amount)))
+    .SumAsync();
+
+    var eventRevenue = await _context.Events
+    .Where(e => e.MuseumId == museumId)
+    .SelectMany(e => e.OrderEvents
+    .SelectMany(oe => oe.Order.Payments
+    .Select(p => p.Amount)))
+    .SumAsync();
+
+    return (double)(tourRevenue + eventRevenue);
   }
 
-  public AdminAnalyticsOverview GetAdminOverview()
+  public async Task<double> GetAverageRating(Guid museumId)
+  {
+    var feedbacks = await _context.Feedbacks.Where(f => f.TargetId == museumId).ToListAsync();
+    if (feedbacks.Count == 0)
+    {
+      return 0;
+    }
+    return feedbacks.Average(f => f.Rating);
+  }
+
+  public async Task<AdminAnalyticsOverview> GetAdminOverview()
   {
     return new AdminAnalyticsOverview
     {
-      TotalMuseums = _context.Museums.Count(),
-      TotalPendingRequests = _context.MuseumRequests.Where(r => r.Status == RequestStatusEnum.Pending).Count(),
-      TotalUsers = _context.Users.Count(),
-      TotalEvents = _context.Events.Count(),
-      TotalTours = _context.TourOnlines.Count(),
+      TotalMuseums = await _context.Museums.CountAsync(),
+      TotalPendingRequests = await _context.MuseumRequests.Where(r => r.Status == RequestStatusEnum.Pending).CountAsync(),
+      TotalUsers = await _context.Users.CountAsync(),
+      TotalEvents = await _context.Events.CountAsync(),
+      TotalTours = await _context.TourOnlines.CountAsync(),
       MuseumsByCategory = [.. _context.Museums
         .SelectMany(m => m.Categories, (museum, category) => new { museum, category })
         .GroupBy(x => x.category)
@@ -98,4 +125,5 @@ public class AnalyticsRepository : IAnalyticsRepository
         })]
     };
   }
+
 }

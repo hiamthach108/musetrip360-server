@@ -25,6 +25,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
         Task<ArtifactListResultWithMissingIds> GetArtifactByListIdEventId(IEnumerable<Guid> artifactIds, Guid eventId);
         Task<ArtifactList> GetArtifactByFilterSort(ArtifactFilterSort filterSort);
         Task FeedbackArtifacts(Guid artifactId, int rating, Guid userId, string comment);
+        Task<IEnumerable<Feedback?>> GetFeedbackByArtifactIdAsync(Guid id);
     }
     public class ArtifactList
     {
@@ -248,13 +249,12 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 await _context.SaveChangesAsync();
 
                 // calculate average rating
-                var listFeedback = await _context.Feedbacks
+                var averageRating = await _context.Feedbacks
                     .Where(f => f.TargetId == artifactId)
-                    .ToListAsync();
-                var averageRating = listFeedback.Average(f => f.Rating);
+                    .AverageAsync(f => f.Rating);
 
                 // update artifact rating
-                artifact.Rating = (float)Math.Round(averageRating, 1);
+                artifact.Rating = (float)averageRating;
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -263,6 +263,13 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
             }
             await transaction.CommitAsync();
+        }
+
+        public async Task<IEnumerable<Feedback?>> GetFeedbackByArtifactIdAsync(Guid id)
+        {
+            return await _context.Feedbacks
+                .Where(f => f.TargetId == id)
+                .ToListAsync();
         }
     }
 }
