@@ -11,6 +11,7 @@ using Database;
 using Domain.Events;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
+using MuseTrip360.src.Application.DTOs.Feedback;
 using MuseTrip360.src.Infrastructure.Repository;
 using StackExchange.Redis;
 
@@ -22,6 +23,7 @@ public interface IEventService
     Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId, EventAdminQuery query);
     Task<bool> IsOwner(Guid userId, Guid eventId);
     Task<IActionResult> HandleFeedback(Guid id, string comment);
+    Task<IActionResult> HandleGetFeedbackByEventId(Guid id);
 }
 
 // Admin, Manager operations
@@ -128,6 +130,28 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IConnection
             // rate the event
             await _eventRepository.FeedbackEvents(id, payload.UserId, comment);
             return SuccessResp.Ok("Event rated successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetFeedbackByEventId(Guid id)
+    {
+        try
+        {
+            var feedback = await _eventRepository.GetFeedbackByEventIdAsync(id);
+            var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+            return SuccessResp.Ok(feedbackDtos.Select(f => new
+            {
+                comment = f.Comment,
+                createdByUser = new
+                {
+                    name = f.CreatedByUser.FullName,
+                    avatar = f.CreatedByUser.AvatarUrl,
+                }
+            }));
         }
         catch (Exception e)
         {

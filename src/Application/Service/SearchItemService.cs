@@ -429,7 +429,7 @@ public class SearchItemService : BaseService, ISearchItemService
     if (!string.IsNullOrEmpty(query.Search))
     {
       var searchTerm = query.Search.Trim();
-      queryParts.Add($"(title:\"{searchTerm}\" OR title:*{searchTerm}* OR searchText:\"{searchTerm}\" OR searchText:*{searchTerm}*)");
+      queryParts.Add($"(title:\"{searchTerm}\"^3 OR title:*{searchTerm}*^2 OR searchText:\"{searchTerm}\" OR searchText:*{searchTerm}*)");
     }
 
     if (!string.IsNullOrEmpty(query.Type))

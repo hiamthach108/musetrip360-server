@@ -17,6 +17,7 @@ public interface ITourOnlineRepository
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdMuseumIdStatus(IEnumerable<Guid> tourOnlineIds, Guid museumId, bool IsActive);
     Task<TourOnlineListResultWithMissingIds> GetTourOnlineByListIdEventId(IEnumerable<Guid> tourOnlineIds, Guid eventId);
     Task FeedbackTourOnlines(Guid tourOnlineId, Guid userId, string comment);
+    Task<IEnumerable<Feedback?>> GetFeedbackByTourOnlineIdAsync(Guid id);
 }
 public class TourOnlineList
 {
@@ -208,5 +209,10 @@ public class TourOnlineRepository : ITourOnlineRepository
             throw new InvalidOperationException("An error occurred while providing feedback for the tour online.", ex);
         }
         await transaction.CommitAsync();
+    }
+
+    public async Task<IEnumerable<Feedback?>> GetFeedbackByTourOnlineIdAsync(Guid id)
+    {
+        return await _context.Feedbacks.Where(f => f.TargetId == id).ToListAsync();
     }
 }

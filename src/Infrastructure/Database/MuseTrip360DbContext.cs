@@ -232,7 +232,7 @@ public class MuseTrip360DbContext : DbContext
     {
       e.HasKey(x => x.Id);
       e.HasIndex(x => x.MuseumId);
-      e.Property(x => x.Title).IsRequired().HasMaxLength(100);
+      e.Property(x => x.Title).IsRequired();
       e.Property(x => x.Content).IsRequired();
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedBy).IsRequired();

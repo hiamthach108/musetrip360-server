@@ -9,6 +9,7 @@ using Domain.Artifacts;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using MuseTrip360.src.Application.DTOs.Artifact;
+using MuseTrip360.src.Application.DTOs.Feedback;
 using MuseTrip360.src.Infrastructure.Repository;
 
 namespace MuseTrip360.src.Application.Service;
@@ -26,6 +27,7 @@ public interface IArtifactService
     Task<IActionResult> HandleDeactivate(Guid id);
     Task<IActionResult> HandleGetByFilterSort(ArtifactFilterSort filterSort);
     Task<IActionResult> HandleFeedback(Guid id, int rating, string comment);
+    Task<IActionResult> HandleGetFeedbackByArtifactId(Guid id);
 }
 
 public class ArtifactService : BaseService, IArtifactService
@@ -335,6 +337,28 @@ public class ArtifactService : BaseService, IArtifactService
             await _artifactRepository.FeedbackArtifacts(id, rating, payload.UserId, comment);
             // return the success response
             return SuccessResp.Ok("Rating artifact successfully");
+        }
+        catch (Exception e)
+        {
+            return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetFeedbackByArtifactId(Guid id)
+    {
+        try
+        {
+            var feedback = await _artifactRepository.GetFeedbackByArtifactIdAsync(id);
+            var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
+            return SuccessResp.Ok(feedbackDtos.Select(f => new
+            {
+                comment = f.Comment,
+                createdByUser = new
+                {
+                    name = f.CreatedByUser.FullName,
+                    avatar = f.CreatedByUser.AvatarUrl,
+                }
+            }));
         }
         catch (Exception e)
         {

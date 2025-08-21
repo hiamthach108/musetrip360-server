@@ -146,6 +146,55 @@ public class GeminiSvc : ILLM
 
     return contents;
   }
+
+  public async Task<AudioResp?> GenerateAudioAsync(string text)
+  {
+    var response = await _httpClient.PostAsync<GeminiAudioResponse>(
+      $"/models/{AiModelConst.GEMINI_TTS}:generateContent",
+      new
+      {
+        model = AiModelConst.GEMINI_TTS,
+        contents = new[] {
+          new {
+            parts = new[] {
+              new {
+                text
+              }
+            }
+          }
+        },
+        generationConfig = new
+        {
+          responseModalities = new[] { "AUDIO" },
+          speechConfig = new
+          {
+            voiceConfig = new
+            {
+              prebuiltVoiceConfig = new
+              {
+                voiceName = AiModelConst.DEFAULT_VOICE
+              }
+            }
+          }
+        }
+      },
+      _apiHeader
+    );
+
+    var audioParts = new List<AudioPart>();
+    if (response != null && response.Candidates != null && response.Candidates.Count > 0)
+    {
+      foreach (var candidate in response.Candidates)
+      {
+        if (candidate.Content != null && candidate.Content.Parts != null && candidate.Content.Parts.Count > 0)
+        {
+          audioParts.AddRange(candidate.Content.Parts);
+        }
+      }
+    }
+
+    return audioParts.Count > 0 ? audioParts[0].InlineData : null;
+  }
 }
 
 public class GeminiEmbeddingResponse
@@ -180,4 +229,28 @@ public class Content
 public class Part
 {
   public string Text { get; set; } = "";
+}
+
+public class GeminiAudioResponse
+{
+  public List<AudioCandidate> Candidates { get; set; } = [];
+  public string ResponseId { get; set; } = "";
+}
+
+public class AudioCandidate
+{
+  public AudioContent Content { get; set; } = new();
+  public string FinishReason { get; set; } = "";
+  public int Index { get; set; } = 0;
+}
+
+public class AudioContent
+{
+  public List<AudioPart> Parts { get; set; } = [];
+  public string Role { get; set; } = "";
+}
+
+public class AudioPart
+{
+  public AudioResp InlineData { get; set; } = null!;
 }
