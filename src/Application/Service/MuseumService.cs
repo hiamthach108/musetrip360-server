@@ -18,7 +18,7 @@ using Application.Shared.Constant;
 using Domain.Users;
 using Core.Queue;
 using Application.DTOs.Search;
-using MuseTrip360.src.Application.DTOs.Feedback;
+using Application.DTOs.Feedback;
 
 public interface IMuseumService
 {
@@ -628,15 +628,11 @@ public class MuseumService : BaseService, IMuseumService
     {
       var feedback = await _museumRepository.GetFeedbackByMuseumIdAsync(id);
       var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
-      return SuccessResp.Ok(feedbackDtos.Select(f => new
+      return SuccessResp.Ok(new
       {
-        comment = f.Comment,
-        createdByUser = new
-        {
-          name = f.CreatedByUser.FullName,
-          avatar = f.CreatedByUser.AvatarUrl,
-        }
-      }));
+        List = feedbackDtos,
+        Total = feedbackDtos.Count()
+      });
     }
     catch (Exception e)
     {

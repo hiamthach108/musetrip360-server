@@ -1,3 +1,4 @@
+using Application.DTOs.Feedback;
 using Application.DTOs.Search;
 using Application.Service;
 using Application.Shared.Constant;
@@ -8,7 +9,6 @@ using Database;
 using Domain.Tours;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
-using MuseTrip360.src.Application.DTOs.Feedback;
 
 public interface ITourOnlineService
 {
@@ -91,15 +91,11 @@ public abstract class BaseTourOnlineService(MuseTrip360DbContext dbContext, IMap
     {
         var feedback = await _tourOnlineRepository.GetFeedbackByTourOnlineIdAsync(id);
         var feedbackDtos = _mapper.Map<IEnumerable<FeedbackDto>>(feedback);
-        return SuccessResp.Ok(feedbackDtos.Select(f => new
+        return SuccessResp.Ok(new
         {
-            comment = f.Comment,
-            createdByUser = new
-            {
-                name = f.CreatedByUser.FullName,
-                avatar = f.CreatedByUser.AvatarUrl,
-            }
-        }));
+            List = feedbackDtos,
+            Total = feedbackDtos.Count()
+        });
     }
 }
 

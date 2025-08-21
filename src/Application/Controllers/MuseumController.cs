@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Application.DTOs.MuseumRequest;
 using Application.DTOs.Pagination;
 using Application.DTOs.MuseumPolicy;
-using MuseTrip360.src.Application.DTOs.Feedback;
 
 [ApiController]
 [Route("/api/v1/museums")]

@@ -247,7 +247,9 @@ public class MuseumRepository : IMuseumRepository
   public async Task<IEnumerable<Feedback?>> GetFeedbackByMuseumIdAsync(Guid id)
   {
     return await _dbContext.Feedbacks
+      .Include(f => f.CreatedByUser)
       .Where(f => f.TargetId == id)
+      .OrderByDescending(f => f.CreatedAt)
       .ToListAsync();
   }
 }

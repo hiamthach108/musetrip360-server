@@ -229,6 +229,7 @@ namespace Infrastructure.Repository
         public async Task<IEnumerable<Feedback?>> GetFeedbackByEventIdAsync(Guid id)
         {
             return await _context.Feedbacks.Where(f => f.TargetId == id)
+            .OrderByDescending(f => f.CreatedAt)
             .Include(f => f.CreatedByUser)
             .ToListAsync();
         }
