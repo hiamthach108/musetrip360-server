@@ -15,8 +15,10 @@ using Core.Queue;
 using Database;
 using Domain.Events;
 using Domain.Payment;
+using Domain.Tours;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Net.payOS.Types;
 
 public interface IPaymentService
@@ -127,10 +129,19 @@ public class PaymentService : BaseService, IPaymentService
       {
         return ErrorResp.BadRequest("Event already exists in order");
       }
-      var eventTasks = req.ItemIds.Select(async itemId => await _eventRepo.GetEventById(itemId));
-      var events = await Task.WhenAll(eventTasks);
-      listItem.AddRange(events.Where(e => e != null).Select(e => new ItemData(e!.Id.ToString(), 1, (int)e.Price)));
-      totalAmount = (int)events.Sum(e => e.Price);
+      var events = new List<Event>();
+      foreach (var itemId in req.ItemIds)
+      {
+        var ev = await _eventRepo.GetEventById(itemId);
+        if (ev == null)
+        {
+          return ErrorResp.NotFound("Event not found");
+        }
+        events.Add(ev);
+      }
+
+      listItem.AddRange(events.Where(e => e != null).Select(e => new ItemData(e!.Id.ToString(), 1, (int)e!.Price)));
+      totalAmount = (int)events.Sum(e => e!.Price);
     }
     else if (req.OrderType == OrderTypeEnum.Tour)
     {
@@ -139,17 +150,25 @@ public class PaymentService : BaseService, IPaymentService
       {
         return ErrorResp.BadRequest("Tour already exists in order");
       }
-      var tourTasks = req.ItemIds.Select(async itemId => await _tourRepo.GetByIdAsync(itemId));
-      var tours = await Task.WhenAll(tourTasks);
+      var tours = new List<TourOnline>();
+      foreach (var itemId in req.ItemIds)
+      {
+        var tour = await _tourRepo.GetByIdAsync(itemId);
+        if (tour == null)
+        {
+          return ErrorResp.NotFound("Tour not found");
+        }
+        tours.Add(tour);
+      }
       listItem.AddRange(tours.Where(t => t != null).Select(t => new ItemData(t!.Id.ToString(), 1, (int)t.Price)));
       totalAmount = (int)tours.Sum(t => t.Price);
     }
-
     var snowflake = new SnowflakeId(1);
+    var orderCode = snowflake.GenerateOrderId();
     var paymentData = new PaymentData(
-      orderCode: snowflake.GenerateOrderId(),
+      orderCode: orderCode,
       amount: totalAmount,
-      description: "Payment for order",
+      description: $"Payment for {orderCode}",
       items: listItem,
       cancelUrl: req.CancelUrl,
       returnUrl: req.ReturnUrl
