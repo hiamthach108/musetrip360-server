@@ -47,7 +47,7 @@ public class UploadController : ControllerBase
           file,
           FileConst.VIDEO_CONTENT_TYPES,
           FileConst.MAX_VIDEO_SIZE,
-          "File is not video type (mp4, avi, mov, wmv, flv, mkv)",
+          "File is not video type (mp4, avi, mov, wmv, flv, mkv, wav)",
           "File is too large, max size is 20MB"
       ),
 
@@ -101,6 +101,7 @@ public class UploadController : ControllerBase
     return null;
   }
 
+  [Protected]
   [HttpPost("base64")]
   public async Task<IActionResult> UploadFromBase64Async([FromBody] UploadFromBase64Req request)
   {

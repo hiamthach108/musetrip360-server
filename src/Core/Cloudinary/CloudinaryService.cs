@@ -1,5 +1,6 @@
 namespace Core.Cloudinary;
 
+using Application.Shared.Constant;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 
@@ -29,12 +30,40 @@ public class CloudinaryService : ICloudinaryService
     await using var ms = new MemoryStream();
     await file.CopyToAsync(ms);
     var fileBytes = ms.ToArray();
-    var uploadParams = new ImageUploadParams()
+
+    var resourceType = GetResourceType(file.ContentType);
+
+    await using var fileStream = new MemoryStream(fileBytes);
+
+    switch (resourceType)
     {
-      File = new FileDescription(file.FileName, new MemoryStream(fileBytes)),
-    };
-    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-    return uploadResult.SecureUrl.AbsoluteUri;
+      case ResourceType.Image:
+        var imageParams = new ImageUploadParams()
+        {
+          File = new FileDescription(file.FileName, fileStream),
+        };
+        var imageResult = await _cloudinary.UploadAsync(imageParams);
+        return imageResult.SecureUrl.AbsoluteUri;
+
+      case ResourceType.Video:
+        var videoParams = new VideoUploadParams()
+        {
+          File = new FileDescription(file.FileName, fileStream),
+        };
+        var videoResult = await _cloudinary.UploadAsync(videoParams);
+        return videoResult.SecureUrl.AbsoluteUri;
+
+      case ResourceType.Raw:
+        var rawParams = new RawUploadParams()
+        {
+          File = new FileDescription(file.FileName, fileStream),
+        };
+        var rawResult = await _cloudinary.UploadAsync(rawParams);
+        return rawResult.SecureUrl.AbsoluteUri;
+
+      default:
+        throw new NotSupportedException($"File type '{file.ContentType}' is not supported");
+    }
   }
 
   public async Task<bool> DeleteImageAsync(string publicId)
@@ -223,5 +252,25 @@ public class CloudinaryService : ICloudinaryService
     writer.Write(pcmData);
 
     return ms.ToArray();
+  }
+
+  private static ResourceType GetResourceType(string mimeType)
+  {
+    if (string.IsNullOrEmpty(mimeType))
+      return ResourceType.Raw;
+
+    var baseMimeType = mimeType.Split(';')[0].ToLower();
+
+    if (FileConst.IMAGE_CONTENT_TYPES.Contains(baseMimeType))
+      return ResourceType.Image;
+
+    if (FileConst.VIDEO_CONTENT_TYPES.Contains(baseMimeType))
+      return ResourceType.Video;
+
+    if (FileConst.DOCUMENT_CONTENT_TYPES.Contains(baseMimeType))
+      return ResourceType.Raw;
+
+    // Default to Raw for unknown types
+    return ResourceType.Raw;
   }
 }
