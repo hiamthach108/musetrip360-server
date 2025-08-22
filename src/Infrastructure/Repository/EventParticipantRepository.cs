@@ -304,7 +304,9 @@ public class EventParticipantRepository : IEventParticipantRepository
 
   public async Task<bool> ValidateUser(Guid userId, Guid eventId)
   {
-    var eventParticipant = await _dbContext.EventParticipants.FirstOrDefaultAsync(ep => (ep.UserId == userId && ep.EventId == eventId) || ep.Event.Price == 0);
+    var eventParticipant = await _dbContext.EventParticipants
+      .Include(ep => ep.Event)
+      .FirstOrDefaultAsync(ep => (ep.UserId == userId && ep.EventId == eventId) || ep.Event.Price == 0);
     return eventParticipant != null;
   }
 
