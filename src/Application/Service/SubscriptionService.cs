@@ -1,38 +1,328 @@
 namespace Application.Service;
 
+using Application.DTOs.Subscription;
 using Application.DTOs.Plan;
+using Application.DTOs.Payment;
 using Application.Shared.Type;
+using Application.Shared.Enum;
+using Application.Shared.Helpers;
+using Application.Shared.Constant;
 using AutoMapper;
 using Domain.Subscription;
+using Domain.Payment;
 using Database;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Core.Payos;
+using Core.Queue;
+using Net.payOS.Types;
+using System.Text.Json;
 
 public interface ISubscriptionService
 {
-  Task<IActionResult> HandleGetAllAsync(PlanQuery query);
-  Task<IActionResult> HandleGetByIdAsync(Guid id);
-  Task<IActionResult> HandleCreateAsync(PlanCreateDto dto);
-  Task<IActionResult> HandleUpdateAsync(Guid id, PlanUpdateDto dto);
-  Task<IActionResult> HandleDeleteAsync(Guid id);
-  Task<IActionResult> HandleGetAdminAsync();
+  // Subscription Management
+  Task<IActionResult> HandleBuySubscriptionAsync(BuySubscriptionDto dto);
+  Task<IActionResult> HandleGetUserSubscriptionsAsync(SubscriptionQuery query);
+  Task<IActionResult> HandleGetSubscriptionByIdAsync(Guid id);
+  Task<IActionResult> HandleGetActiveSubscriptionAsync(Guid museumId);
+  Task<IActionResult> HandleCancelSubscriptionAsync(Guid id);
+  Task<IActionResult> HandleGetMuseumSubscriptionsAsync(Guid museumId);
+
+  // Plan Management
+  Task<IActionResult> HandleGetAllPlansAsync(PlanQuery query);
+  Task<IActionResult> HandleGetPlanByIdAsync(Guid id);
+  Task<IActionResult> HandleCreatePlanAsync(PlanCreateDto dto);
+  Task<IActionResult> HandleUpdatePlanAsync(Guid id, PlanUpdateDto dto);
+  Task<IActionResult> HandleDeletePlanAsync(Guid id);
+  Task<IActionResult> HandleGetAdminPlansAsync();
 }
 
 public class SubscriptionService : BaseService, ISubscriptionService
 {
+  private readonly ISubscriptionRepository _subscriptionRepository;
   private readonly IPlanRepository _planRepository;
+  private readonly IOrderRepository _orderRepository;
+  private readonly IPaymentRepository _paymentRepository;
+  private readonly IMuseumRepository _museumRepository;
+  private readonly IPayOSService _payOSService;
+  private readonly IQueuePublisher _queuePublisher;
+  private readonly ILogger<SubscriptionService> _logger;
 
   public SubscriptionService(
       MuseTrip360DbContext dbContext,
       IMapper mapper,
-      IHttpContextAccessor httpCtx)
+      IHttpContextAccessor httpCtx,
+      IPayOSService payOSService,
+      IQueuePublisher queuePublisher,
+      ILogger<SubscriptionService> logger)
       : base(dbContext, mapper, httpCtx)
   {
+    _subscriptionRepository = new SubscriptionRepository(dbContext);
     _planRepository = new PlanRepository(dbContext);
+    _orderRepository = new OrderRepository(dbContext);
+    _paymentRepository = new PaymentRepository(dbContext);
+    _museumRepository = new MuseumRepository(dbContext);
+    _payOSService = payOSService;
+    _queuePublisher = queuePublisher;
+    _logger = logger;
   }
 
-  public async Task<IActionResult> HandleGetAllAsync(PlanQuery query)
+  public async Task<IActionResult> HandleBuySubscriptionAsync(BuySubscriptionDto dto)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      // Check if plan exists and is active
+      var plan = await _planRepository.GetByIdAsync(dto.PlanId);
+      if (plan == null || !plan.IsActive)
+      {
+        return ErrorResp.NotFound("Plan not found or inactive");
+      }
+
+      // Check if museum exists
+      var museum = await _museumRepository.GetByIdAsync(dto.MuseumId);
+      if (museum == null)
+      {
+        return ErrorResp.NotFound("Museum not found");
+      }
+
+      // Check if user already has active subscription for this museum
+      var existingSubscription = await _subscriptionRepository.GetActiveSubscriptionByUserAndMuseumAsync(payload.UserId, dto.MuseumId);
+      if (existingSubscription != null)
+      {
+        return ErrorResp.BadRequest("You already have an active subscription for this museum");
+      }
+
+      // Create order
+      var snowflake = new SnowflakeId(1);
+      var orderCode = snowflake.GenerateOrderId();
+      var totalAmount = (int)plan.Price;
+
+      // Create PayOS payment
+      var paymentData = new PaymentData(
+        orderCode: orderCode,
+        amount: totalAmount,
+        description: $"{orderCode}",
+        items: [new ItemData(plan.Id.ToString(), 1, totalAmount)],
+        cancelUrl: "https://yourapp.com/cancel",
+        returnUrl: "https://yourapp.com/success"
+      );
+
+      var paymentResult = await _payOSService.CreatePayment(paymentData);
+
+      // Create order in database
+      var order = new Order
+      {
+        CreatedBy = payload.UserId,
+        TotalAmount = totalAmount,
+        OrderCode = paymentResult.orderCode.ToString(),
+        ExpiredAt = paymentResult.expiredAt.HasValue ?
+          DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) :
+          DateTime.UtcNow.AddDays(1),
+        Status = PaymentStatusEnum.Pending,
+        OrderType = OrderTypeEnum.Subscription,
+        Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult))
+      };
+
+      var createdOrder = await _orderRepository.AddAsync(order);
+
+      // Create pending subscription
+      var subscription = new Subscription
+      {
+        UserId = payload.UserId,
+        PlanId = dto.PlanId,
+        OrderId = createdOrder.Id,
+        MuseumId = dto.MuseumId,
+        StartDate = DateTime.UtcNow,
+        EndDate = DateTime.UtcNow.AddDays(plan.DurationDays),
+        Status = SubscriptionStatusEnum.Cancelled // Will be activated when payment is successful
+      };
+
+      await _subscriptionRepository.AddAsync(subscription);
+
+      return SuccessResp.Ok(new
+      {
+        paymentResult.checkoutUrl,
+        paymentResult.orderCode,
+        paymentResult.expiredAt,
+        paymentResult.paymentLinkId,
+        paymentResult.status,
+        paymentResult.currency,
+        paymentResult.amount,
+        paymentResult.description,
+        paymentResult.bin,
+        paymentResult.accountNumber,
+        paymentResult.qrCode,
+        CancelUrl = "https://yourapp.com/cancel",
+        ReturnUrl = "https://yourapp.com/success"
+      });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error buying subscription");
+      return ErrorResp.InternalServerError($"Error processing subscription purchase: {ex.Message}");
+    }
+  }
+
+  public async Task<IActionResult> HandleGetUserSubscriptionsAsync(SubscriptionQuery query)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      // Use user ID from token if not specified in query
+      if (!query.UserId.HasValue)
+      {
+        query.UserId = payload.UserId;
+      }
+      else if (query.UserId != payload.UserId)
+      {
+        // Check if user has admin permissions to view other users' subscriptions
+        // For now, only allow users to see their own subscriptions
+        return ErrorResp.Forbidden("You can only view your own subscriptions");
+      }
+
+      var subscriptions = await _subscriptionRepository.GetByUserIdWithDetailsAsync(payload.UserId);
+      var subscriptionDtos = _mapper.Map<List<SubscriptionSummaryDto>>(subscriptions);
+
+      return SuccessResp.Ok(new { Subscriptions = subscriptionDtos });
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError($"Error retrieving subscriptions: {ex.Message}");
+    }
+  }
+
+  public async Task<IActionResult> HandleGetSubscriptionByIdAsync(Guid id)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      var subscription = await _subscriptionRepository.GetByIdWithDetailsAsync(id);
+      if (subscription == null)
+      {
+        return ErrorResp.NotFound("Subscription not found");
+      }
+
+      // Only allow users to view their own subscriptions
+      if (subscription.UserId != payload.UserId)
+      {
+        return ErrorResp.Forbidden("You can only view your own subscriptions");
+      }
+
+      var subscriptionDto = _mapper.Map<SubscriptionDto>(subscription);
+      return SuccessResp.Ok(subscriptionDto);
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError($"Error retrieving subscription: {ex.Message}");
+    }
+  }
+
+  public async Task<IActionResult> HandleGetActiveSubscriptionAsync(Guid museumId)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      var subscription = await _subscriptionRepository.GetActiveSubscriptionByUserAndMuseumAsync(payload.UserId, museumId);
+      if (subscription == null)
+      {
+        return ErrorResp.NotFound("No active subscription found for this museum");
+      }
+
+      var subscriptionDto = _mapper.Map<SubscriptionSummaryDto>(subscription);
+      return SuccessResp.Ok(subscriptionDto);
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError($"Error retrieving active subscription: {ex.Message}");
+    }
+  }
+
+  public async Task<IActionResult> HandleCancelSubscriptionAsync(Guid id)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      var subscription = await _subscriptionRepository.GetByIdAsync(id);
+      if (subscription == null)
+      {
+        return ErrorResp.NotFound("Subscription not found");
+      }
+
+      // Only allow users to cancel their own subscriptions
+      if (subscription.UserId != payload.UserId)
+      {
+        return ErrorResp.Forbidden("You can only cancel your own subscriptions");
+      }
+
+      if (subscription.Status != SubscriptionStatusEnum.Active)
+      {
+        return ErrorResp.BadRequest("Only active subscriptions can be cancelled");
+      }
+
+      subscription.Status = SubscriptionStatusEnum.Cancelled;
+      await _subscriptionRepository.UpdateAsync(id, subscription);
+
+      return SuccessResp.Ok("Subscription cancelled successfully");
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError($"Error cancelling subscription: {ex.Message}");
+    }
+  }
+
+  public async Task<IActionResult> HandleGetMuseumSubscriptionsAsync(Guid museumId)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+
+      // Check if user has permission to view museum subscriptions
+      // This would typically check if user is museum owner/admin
+
+      var subscriptions = await _subscriptionRepository.GetByMuseumIdAsync(museumId);
+      var subscriptionDtos = _mapper.Map<List<SubscriptionDto>>(subscriptions);
+
+      return SuccessResp.Ok(new { Subscriptions = subscriptionDtos });
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError($"Error retrieving museum subscriptions: {ex.Message}");
+    }
+  }
+
+  // Plan Management Methods
+  public async Task<IActionResult> HandleGetAllPlansAsync(PlanQuery query)
   {
     try
     {
@@ -47,7 +337,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
     }
   }
 
-  public async Task<IActionResult> HandleGetByIdAsync(Guid id)
+  public async Task<IActionResult> HandleGetPlanByIdAsync(Guid id)
   {
     try
     {
@@ -67,7 +357,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
     }
   }
 
-  public async Task<IActionResult> HandleCreateAsync(PlanCreateDto dto)
+  public async Task<IActionResult> HandleCreatePlanAsync(PlanCreateDto dto)
   {
     try
     {
@@ -96,7 +386,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
     }
   }
 
-  public async Task<IActionResult> HandleUpdateAsync(Guid id, PlanUpdateDto dto)
+  public async Task<IActionResult> HandleUpdatePlanAsync(Guid id, PlanUpdateDto dto)
   {
     try
     {
@@ -134,7 +424,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
     }
   }
 
-  public async Task<IActionResult> HandleDeleteAsync(Guid id)
+  public async Task<IActionResult> HandleDeletePlanAsync(Guid id)
   {
     try
     {
@@ -152,7 +442,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
 
       // Check if plan has active subscriptions
       var hasActiveSubscriptions = plan.Subscriptions
-          .Any(s => s.Status == Application.Shared.Enum.SubscriptionStatusEnum.Active);
+          .Any(s => s.Status == SubscriptionStatusEnum.Active);
 
       if (hasActiveSubscriptions)
       {
@@ -168,7 +458,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
     }
   }
 
-  public async Task<IActionResult> HandleGetAdminAsync()
+  public async Task<IActionResult> HandleGetAdminPlansAsync()
   {
     try
     {
