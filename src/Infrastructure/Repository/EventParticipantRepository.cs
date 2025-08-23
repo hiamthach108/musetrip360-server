@@ -20,6 +20,7 @@ public interface IEventParticipantRepository
   Task<EventParticipant> DeleteAsync(EventParticipant eventParticipant);
   Task<bool> ValidateUser(Guid userId, Guid eventId);
   Task AddRangeAsync(IEnumerable<EventParticipant> eventParticipants);
+  Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId);
 }
 
 public class EventParticipantRepository : IEventParticipantRepository
@@ -280,6 +281,57 @@ public class EventParticipantRepository : IEventParticipantRepository
       .OrderByDescending(ep => ep.CreatedAt)
       .ToListAsync();
     return eventParticipants.FirstOrDefault(ep => ep.UserId == userId && ep.EventId == eventId);
+  }
+
+  public async Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId)
+  {
+    var eventParticipants = await _dbContext.EventParticipants
+      .Include(ep => ep.User)
+      .Select(ep => new EventParticipant
+      {
+        Id = ep.Id,
+        EventId = ep.EventId,
+        UserId = ep.UserId,
+        JoinedAt = ep.JoinedAt,
+        Role = ep.Role,
+        Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
+        // Event = new Domain.Events.Event
+        // {
+        //   Id = ep.Event.Id,
+        //   Title = ep.Event.Title,
+        //   Description = ep.Event.Description,
+        //   StartTime = ep.Event.StartTime,
+        //   EndTime = ep.Event.EndTime,
+        //   Location = ep.Event.Location,
+        //   Capacity = ep.Event.Capacity,
+        //   AvailableSlots = ep.Event.AvailableSlots,
+        //   BookingDeadline = ep.Event.BookingDeadline,
+        //   MuseumId = ep.Event.MuseumId,
+        //   CreatedBy = ep.Event.CreatedBy,
+        //   Status = ep.Event.Status,
+        //   Price = ep.Event.Price
+        // },
+        User = new Domain.Users.User
+        {
+          Id = ep.User.Id,
+          Username = ep.User.Username,
+          FullName = ep.User.FullName,
+          Email = ep.User.Email,
+          PhoneNumber = ep.User.PhoneNumber,
+          AvatarUrl = ep.User.AvatarUrl,
+          BirthDate = ep.User.BirthDate,
+          AuthType = ep.User.AuthType,
+          Status = ep.User.Status,
+          LastLogin = ep.User.LastLogin,
+          CreatedAt = ep.User.CreatedAt,
+          UpdatedAt = ep.User.UpdatedAt,
+        }
+      })
+      .Where(ep => ep.UserId == userId && ep.EventId == eventId)
+      .OrderByDescending(ep => ep.CreatedAt)
+      .ToListAsync();
+    return eventParticipants;
   }
 
   public async Task<EventParticipant> AddAsync(EventParticipant eventParticipant)

@@ -111,9 +111,13 @@ public class SignalingHub : Hub
 
     public async Task<string> GetUserByStreamId(string streamId)
     {
+        // get user id
         var userId = GetUserIdByStreamId(streamId);
-        var eventParticipant = await _eventParticipantService.GetUserByEventParticipantId(userId);
-        return JsonSerializer.Serialize(eventParticipant);
+        // get room to get event
+        var roomId = _connections[Context.ConnectionId].GetRoomId();
+        var room = await _roomService.GetRoomById(roomId);
+        var eventParticipants = await _eventParticipantService.GetByEventIdAndUserIdStreamAsync(room.EventId, userId);
+        return JsonSerializer.Serialize(eventParticipants);
     }
 
     public void RemoveStreamPeerId()
