@@ -16,6 +16,7 @@ using Database;
 using Domain.Events;
 using Domain.Payment;
 using Domain.Tours;
+using Domain.Subscription;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
@@ -51,6 +52,7 @@ public class PaymentService : BaseService, IPaymentService
   private readonly ITourOnlineRepository _tourRepo;
   private readonly IPaymentRepository _paymentRepo;
   private readonly IEventParticipantRepository _eventParticipantRepo;
+  private readonly ISubscriptionRepository _subscriptionRepo;
 
   public PaymentService(
   IConfiguration configuration,
@@ -71,6 +73,7 @@ public class PaymentService : BaseService, IPaymentService
     _tourRepo = new TourOnlineRepository(dbContext);
     _paymentRepo = new PaymentRepository(dbContext);
     _eventParticipantRepo = new EventParticipantRepository(dbContext);
+    _subscriptionRepo = new SubscriptionRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
@@ -228,7 +231,7 @@ public class PaymentService : BaseService, IPaymentService
         })];
         break;
       case OrderTypeEnum.Subscription:
-        // TODO: handle subscription order
+        // Subscriptions are handled in the webhook when payment is successful
         break;
       default:
         throw new Exception("Invalid order type");
@@ -398,6 +401,16 @@ public class PaymentService : BaseService, IPaymentService
           Status = ParticipantStatusEnum.Confirmed,
         });
         await _eventParticipantRepo.AddRangeAsync(eventParticipants);
+      }
+      else if (order.OrderType == OrderTypeEnum.Subscription)
+      {
+        // Activate subscription when payment is successful
+        var subscription = await _subscriptionRepo.GetByOrderIdAsync(order.Id);
+        if (subscription != null)
+        {
+          subscription.Status = SubscriptionStatusEnum.Active;
+          await _subscriptionRepo.UpdateAsync(subscription.Id, subscription);
+        }
       }
       return SuccessResp.Ok(new { success = true });
     }
