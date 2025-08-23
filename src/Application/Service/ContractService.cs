@@ -49,11 +49,15 @@ public class ContractService : BaseService
         throw new Exception("Plan not found");
       }
 
-      var templatePath = Path.Combine(_environment.ContentRootPath, "templates", "contract.html");
+      var templatePath = Path.Combine(AppContext.BaseDirectory, "templates", "contract.html");
 
       if (!File.Exists(templatePath))
       {
-        throw new Exception("Contract template not found");
+        templatePath = Path.Combine(_environment.ContentRootPath, "templates", "contract.html");
+        if (!File.Exists(templatePath))
+        {
+          throw new Exception($"Contract template not found at {templatePath}");
+        }
       }
 
       var templateContent = await File.ReadAllTextAsync(templatePath, Encoding.UTF8);
