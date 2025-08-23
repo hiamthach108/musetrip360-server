@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Application.Service;
 using Core.Jwt;
+using Domain.Users;
 using Microsoft.AspNetCore.SignalR;
 
 public class SignalingHub : Hub
@@ -11,13 +13,15 @@ public class SignalingHub : Hub
     private static ConcurrentDictionary<string, SfuConnection> _connections = new();
     private static ConcurrentDictionary<string, string> _peerIdToStreamId = new();
     private static ConcurrentDictionary<string, string> _streamIdToPeerId = new();
+    private static ConcurrentDictionary<string, Guid> _streamIdToUserId = new();
     private readonly IRoomService _roomService;
     private readonly IHubContext<SignalingHub> _hubContext;
     private readonly IJwtService _jwtSvc;
     private readonly IRoomStateManager _roomStateManager;
     private readonly IUserService _userService;
+    private readonly IEventParticipantService _eventParticipantService;
     private readonly string _sfuUrl;
-    public SignalingHub(IConfiguration config, IRoomStateManager roomStateManager, IRoomService roomService, ILogger<SignalingHub> logger, IHubContext<SignalingHub> hubContext, IJwtService jwtSvc, IUserService userService)
+    public SignalingHub(IConfiguration config, IRoomStateManager roomStateManager, IRoomService roomService, ILogger<SignalingHub> logger, IHubContext<SignalingHub> hubContext, IJwtService jwtSvc, IUserService userService, IEventParticipantService eventParticipantService)
     {
         _roomService = roomService;
         _logger = logger;
@@ -25,6 +29,7 @@ public class SignalingHub : Hub
         _jwtSvc = jwtSvc;
         _roomStateManager = roomStateManager;
         _userService = userService;
+        _eventParticipantService = eventParticipantService;
         _sfuUrl = config["SFU:WebSocketUrl"] ?? "";
     }
 
@@ -99,8 +104,25 @@ public class SignalingHub : Hub
         return _streamIdToPeerId[streamId];
     }
 
+    public Guid GetUserIdByStreamId(string streamId)
+    {
+        return _streamIdToUserId[streamId];
+    }
+
+    public async Task<string> GetUserByStreamId(string streamId)
+    {
+        // get user id
+        var userId = GetUserIdByStreamId(streamId);
+        // get room to get event
+        var roomId = _connections[Context.ConnectionId].GetRoomId();
+        var room = await _roomService.GetRoomById(roomId);
+        var eventParticipants = await _eventParticipantService.GetByEventIdAndUserIdStreamAsync(room.EventId, userId);
+        return JsonSerializer.Serialize(eventParticipants);
+    }
+
     public void RemoveStreamPeerId()
     {
+        _streamIdToUserId.TryRemove(GetStreamIdByPeerId(Context.ConnectionId), out _);
         _streamIdToPeerId.TryRemove(_peerIdToStreamId[Context.ConnectionId], out _);
         _peerIdToStreamId.TryRemove(Context.ConnectionId, out _);
     }
@@ -137,7 +159,6 @@ public class SignalingHub : Hub
                 // validate user before join room
                 var payload = Context.Items["payload"] as Payload ?? new Payload();
                 var isValid = await _roomService.ValidateUser(payload.UserId, roomId);
-
                 if (!isValid)
                 {
                     await Clients.Caller.SendAsync("Error", "User not authorized to join room");
@@ -149,6 +170,8 @@ public class SignalingHub : Hub
                 sfu.SetRoomId(roomId);
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+                // add user stream record
+                _streamIdToUserId.TryAdd(GetStreamIdByPeerId(Context.ConnectionId), payload.UserId);
                 // notify other peers in room that new peer joined
                 await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId, payload.UserId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);

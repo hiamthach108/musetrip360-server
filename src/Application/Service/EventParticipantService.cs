@@ -4,6 +4,7 @@ using Application.Shared.Type;
 using AutoMapper;
 using Database;
 using Domain.Events;
+using Domain.Users;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,7 @@ public interface IEventParticipantService
     Task<IActionResult> HandleUpdate(Guid eventParticipantId, EventParticipantUpdateDto eventParticipant);
     Task<IActionResult> HandleDelete(Guid eventParticipantId);
     Task<IActionResult> HandleAddClientEvent(Guid userId, Guid eventId);
+    Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId);
 }
 public class EventParticipantService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), IEventParticipantService
 {
@@ -221,6 +223,18 @@ public class EventParticipantService(MuseTrip360DbContext context, IMapper mappe
         catch (Exception e)
         {
             return ErrorResp.InternalServerError(e.Message);
+        }
+    }
+
+    public async Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId)
+    {
+        try
+        {
+            return await _eventParticipantRepository.GetByEventIdAndUserIdStreamAsync(eventId, userId);
+        }
+        catch
+        {
+            throw;
         }
     }
 }
