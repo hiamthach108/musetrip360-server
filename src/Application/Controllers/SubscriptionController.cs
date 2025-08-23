@@ -12,11 +12,13 @@ public class SubscriptionController : ControllerBase
 {
   private readonly ILogger<SubscriptionController> _logger;
   private readonly ISubscriptionService _subscriptionService;
+  private readonly ContractService _contractService;
 
-  public SubscriptionController(ILogger<SubscriptionController> logger, ISubscriptionService subscriptionService)
+  public SubscriptionController(ILogger<SubscriptionController> logger, ISubscriptionService subscriptionService, ContractService contractService)
   {
     _logger = logger;
     _subscriptionService = subscriptionService;
+    _contractService = contractService;
   }
 
   [HttpPost("buy")]
@@ -112,5 +114,13 @@ public class SubscriptionController : ControllerBase
   {
     _logger.LogInformation("Deleting plan: {PlanId}", id);
     return await _subscriptionService.HandleDeletePlanAsync(id);
+  }
+
+  [HttpGet("contract/generate")]
+  [Protected]
+  public async Task<IActionResult> GenerateContract([FromQuery] Guid museumId, [FromQuery] Guid planId)
+  {
+    _logger.LogInformation("Generating contract for museum: {MuseumId}, plan: {PlanId}", museumId, planId);
+    return await _contractService.GenerateContractPdf(museumId, planId);
   }
 }
