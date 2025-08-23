@@ -28,6 +28,7 @@ public interface ISubscriptionService
   Task<IActionResult> HandleGetActiveSubscriptionAsync(Guid museumId);
   Task<IActionResult> HandleCancelSubscriptionAsync(Guid id);
   Task<IActionResult> HandleGetMuseumSubscriptionsAsync(Guid museumId);
+  Task<IActionResult> HandleGetAllSubscriptionsAsync(SubscriptionQuery query);
 
   // Plan Management
   Task<IActionResult> HandleGetAllPlansAsync(PlanQuery query);
@@ -93,7 +94,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
       }
 
       // Check if user already has active subscription for this museum
-      var existingSubscription = await _subscriptionRepository.GetActiveSubscriptionByUserAndMuseumAsync(payload.UserId, dto.MuseumId);
+      var existingSubscription = await _subscriptionRepository.GetActiveSubscriptionByMuseumIdAsync(dto.MuseumId);
       if (existingSubscription != null)
       {
         return ErrorResp.BadRequest("You already have an active subscription for this museum");
@@ -110,8 +111,8 @@ public class SubscriptionService : BaseService, ISubscriptionService
         amount: totalAmount,
         description: $"{orderCode}",
         items: [new ItemData(plan.Id.ToString(), 1, totalAmount)],
-        cancelUrl: "https://yourapp.com/cancel",
-        returnUrl: "https://yourapp.com/success"
+        cancelUrl: dto.CancelUrl ?? "",
+        returnUrl: dto.SuccessUrl ?? ""
       );
 
       var paymentResult = await _payOSService.CreatePayment(paymentData);
@@ -159,8 +160,8 @@ public class SubscriptionService : BaseService, ISubscriptionService
         paymentResult.bin,
         paymentResult.accountNumber,
         paymentResult.qrCode,
-        CancelUrl = "https://yourapp.com/cancel",
-        ReturnUrl = "https://yourapp.com/success"
+        CancelUrl = dto.CancelUrl ?? "",
+        ReturnUrl = dto.SuccessUrl ?? ""
       });
     }
     catch (Exception ex)
@@ -180,22 +181,10 @@ public class SubscriptionService : BaseService, ISubscriptionService
         return ErrorResp.Unauthorized("Invalid token");
       }
 
-      // Use user ID from token if not specified in query
-      if (!query.UserId.HasValue)
-      {
-        query.UserId = payload.UserId;
-      }
-      else if (query.UserId != payload.UserId)
-      {
-        // Check if user has admin permissions to view other users' subscriptions
-        // For now, only allow users to see their own subscriptions
-        return ErrorResp.Forbidden("You can only view your own subscriptions");
-      }
-
       var subscriptions = await _subscriptionRepository.GetByUserIdWithDetailsAsync(payload.UserId);
       var subscriptionDtos = _mapper.Map<List<SubscriptionSummaryDto>>(subscriptions);
 
-      return SuccessResp.Ok(new { Subscriptions = subscriptionDtos });
+      return SuccessResp.Ok(subscriptionDtos);
     }
     catch (Exception ex)
     {
@@ -244,7 +233,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
         return ErrorResp.Unauthorized("Invalid token");
       }
 
-      var subscription = await _subscriptionRepository.GetActiveSubscriptionByUserAndMuseumAsync(payload.UserId, museumId);
+      var subscription = await _subscriptionRepository.GetActiveSubscriptionByMuseumIdAsync(museumId);
       if (subscription == null)
       {
         return ErrorResp.NotFound("No active subscription found for this museum");
@@ -307,18 +296,29 @@ public class SubscriptionService : BaseService, ISubscriptionService
         return ErrorResp.Unauthorized("Invalid token");
       }
 
-      // Check if user has permission to view museum subscriptions
-      // This would typically check if user is museum owner/admin
-
       var subscriptions = await _subscriptionRepository.GetByMuseumIdAsync(museumId);
       var subscriptionDtos = _mapper.Map<List<SubscriptionDto>>(subscriptions);
 
-      return SuccessResp.Ok(new { Subscriptions = subscriptionDtos });
+      return SuccessResp.Ok(subscriptionDtos);
     }
     catch (Exception ex)
     {
       return ErrorResp.InternalServerError($"Error retrieving museum subscriptions: {ex.Message}");
     }
+  }
+
+  public async Task<IActionResult> HandleGetAllSubscriptionsAsync(SubscriptionQuery query)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var subscriptions = await _subscriptionRepository.GetAllAsync(query);
+    var subscriptionDtos = _mapper.Map<List<SubscriptionDto>>(subscriptions);
+
+    return SuccessResp.Ok(subscriptionDtos);
   }
 
   // Plan Management Methods
@@ -486,4 +486,5 @@ public class SubscriptionService : BaseService, ISubscriptionService
       return ErrorResp.InternalServerError($"Error retrieving admin plans: {ex.Message}");
     }
   }
+
 }

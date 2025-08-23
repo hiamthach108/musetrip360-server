@@ -3,6 +3,7 @@ namespace Infrastructure.Repository;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Application.DTOs.Subscription;
 using Application.Shared.Enum;
 using Database;
 using Domain.Subscription;
@@ -14,7 +15,7 @@ public interface ISubscriptionRepository
   Task<Subscription?> GetByIdWithDetailsAsync(Guid id);
 
   Task<Subscription?> GetByOrderIdAsync(Guid orderId);
-  Task<IEnumerable<Subscription>> GetAllAsync();
+  Task<IEnumerable<Subscription>> GetAllAsync(SubscriptionQuery query);
   Task<IEnumerable<Subscription>> GetByUserIdAsync(Guid userId);
   Task<IEnumerable<Subscription>> GetByUserIdWithDetailsAsync(Guid userId);
   Task<Subscription> AddAsync(Subscription subscription);
@@ -22,6 +23,7 @@ public interface ISubscriptionRepository
   Task<Subscription> DeleteAsync(Subscription subscription);
   Task<Subscription?> GetActiveSubscriptionByUserIdAsync(Guid userId);
   Task<Subscription?> GetActiveSubscriptionByUserAndMuseumAsync(Guid userId, Guid museumId);
+  Task<Subscription?> GetActiveSubscriptionByMuseumIdAsync(Guid museumId);
   Task<IEnumerable<Subscription>> GetByMuseumIdAsync(Guid museumId);
 }
 
@@ -132,5 +134,42 @@ public class SubscriptionRepository : ISubscriptionRepository
       .Where(s => s.MuseumId == museumId)
       .OrderByDescending(s => s.CreatedAt)
       .ToListAsync();
+  }
+
+  public async Task<IEnumerable<Subscription>> GetAllAsync(SubscriptionQuery query)
+  {
+    var subscriptions = _dbContext.Subscriptions.AsQueryable();
+
+    if (query.MuseumId.HasValue)
+    {
+      subscriptions = subscriptions.Where(s => s.MuseumId == query.MuseumId.Value);
+    }
+
+    if (query.PlanId.HasValue)
+    {
+      subscriptions = subscriptions.Where(s => s.PlanId == query.PlanId.Value);
+    }
+
+    if (query.Status.HasValue)
+    {
+      subscriptions = subscriptions.Where(s => s.Status == query.Status.Value);
+    }
+
+    return await subscriptions
+      .Include(s => s.User)
+      .Include(s => s.Plan)
+      .Include(s => s.Museum)
+      .OrderByDescending(s => s.CreatedAt)
+      .Skip((query.Page - 1) * query.PageSize)
+      .Take(query.PageSize)
+      .ToListAsync();
+  }
+
+  public async Task<Subscription?> GetActiveSubscriptionByMuseumIdAsync(Guid museumId)
+  {
+    return await _dbContext.Subscriptions
+      .Where(s => s.MuseumId == museumId && s.Status == SubscriptionStatusEnum.Active)
+      .OrderByDescending(s => s.CreatedAt)
+      .FirstOrDefaultAsync();
   }
 }

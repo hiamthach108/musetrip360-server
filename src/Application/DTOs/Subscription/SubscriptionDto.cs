@@ -43,24 +43,19 @@ public class BuySubscriptionDto
   [Required]
   public Guid MuseumId { get; set; }
 
-  [Required]
-  public PaymentMethodEnum PaymentMethod { get; set; }
+  public string? SuccessUrl { get; set; }
+
+  public string? CancelUrl { get; set; }
+
 }
 
 public class SubscriptionQuery
 {
-  public Guid? UserId { get; set; }
   public Guid? MuseumId { get; set; }
   public Guid? PlanId { get; set; }
   public SubscriptionStatusEnum? Status { get; set; }
-  public DateTime? StartDateFrom { get; set; }
-  public DateTime? StartDateTo { get; set; }
-  public DateTime? EndDateFrom { get; set; }
-  public DateTime? EndDateTo { get; set; }
   public int Page { get; set; } = 1;
   public int PageSize { get; set; } = 10;
-  public string? SortBy { get; set; } = "CreatedAt";
-  public string? SortOrder { get; set; } = "desc";
 }
 
 public class SubscriptionSummaryDto
@@ -81,13 +76,13 @@ public class SubscriptionProfile : Profile
   public SubscriptionProfile()
   {
     CreateMap<Subscription, SubscriptionDto>();
-    
+
     CreateMap<Subscription, SubscriptionSummaryDto>()
         .ForMember(dest => dest.MuseumName, opt => opt.MapFrom(src => src.Museum.Name))
         .ForMember(dest => dest.PlanName, opt => opt.MapFrom(src => src.Plan.Name))
         .ForMember(dest => dest.PlanPrice, opt => opt.MapFrom(src => src.Plan.Price))
-        .ForMember(dest => dest.DaysRemaining, opt => opt.MapFrom(src => 
-            src.Status == SubscriptionStatusEnum.Active 
+        .ForMember(dest => dest.DaysRemaining, opt => opt.MapFrom(src =>
+            src.Status == SubscriptionStatusEnum.Active
                 ? Math.Max(0, (src.EndDate - DateTime.UtcNow).Days)
                 : 0));
 
