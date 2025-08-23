@@ -16,8 +16,8 @@ public class Subscription : BaseEntity
   public DateTime EndDate { get; set; }
   public SubscriptionStatusEnum Status { get; set; }
 
-  public User User { get; set; } = new();
-  public Plan Plan { get; set; } = new();
-  public Order Order { get; set; } = new();
-  public Museum Museum { get; set; } = new();
+  public User User { get; set; } = null!;
+  public Plan Plan { get; set; } = null!;
+  public Order Order { get; set; } = null!;
+  public Museum Museum { get; set; } = null!;
 }

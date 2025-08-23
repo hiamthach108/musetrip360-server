@@ -16,6 +16,7 @@ using Database;
 using Domain.Events;
 using Domain.Payment;
 using Domain.Tours;
+using Domain.Subscription;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
