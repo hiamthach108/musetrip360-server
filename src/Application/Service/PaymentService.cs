@@ -51,6 +51,8 @@ public class PaymentService : BaseService, IPaymentService
   private readonly ITourOnlineRepository _tourRepo;
   private readonly IPaymentRepository _paymentRepo;
   private readonly IEventParticipantRepository _eventParticipantRepo;
+  private readonly IWalletRepository _walletRepo;
+  private readonly IMuseumRepository _museumRepo;
 
   public PaymentService(
   IConfiguration configuration,
@@ -71,6 +73,8 @@ public class PaymentService : BaseService, IPaymentService
     _tourRepo = new TourOnlineRepository(dbContext);
     _paymentRepo = new PaymentRepository(dbContext);
     _eventParticipantRepo = new EventParticipantRepository(dbContext);
+    _walletRepo = new WalletRepository(dbContext);
+    _museumRepo = new MuseumRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
@@ -204,39 +208,49 @@ public class PaymentService : BaseService, IPaymentService
 
   public async Task<OrderDto> CreateOrder(CreateOrderMsg msg)
   {
-    var order = new Order();
-    order.CreatedBy = msg.CreatedBy;
-    order.Status = PaymentStatusEnum.Pending;
-    order.OrderType = msg.OrderType;
-    order.Metadata = msg.Metadata;
-    order.TotalAmount = msg.TotalAmount;
-    order.ExpiredAt = msg.ExpiredAt;
-    order.OrderCode = msg.OrderCode;
-
-    switch (order.OrderType)
+    await using var transaction = await _dbContext.Database.BeginTransactionAsync();
     {
-      case OrderTypeEnum.Event:
-        order.OrderEvents = [.. msg.ItemIds.Select(itemId => new OrderEvent
+      try
+      {
+        var order = new Order();
+        order.CreatedBy = msg.CreatedBy;
+        order.Status = PaymentStatusEnum.Pending;
+        order.OrderType = msg.OrderType;
+        order.Metadata = msg.Metadata;
+        order.TotalAmount = msg.TotalAmount;
+        order.ExpiredAt = msg.ExpiredAt;
+        order.OrderCode = msg.OrderCode;
+        switch (order.OrderType)
+        {
+          case OrderTypeEnum.Event:
+            order.OrderEvents = [.. msg.ItemIds.Select(itemId => new OrderEvent
         {
           EventId = itemId,
         })];
-        break;
-      case OrderTypeEnum.Tour:
-        order.OrderTours = [.. msg.ItemIds.Select(itemId => new OrderTour
+            break;
+          case OrderTypeEnum.Tour:
+            order.OrderTours = [.. msg.ItemIds.Select(itemId => new OrderTour
         {
           TourId = itemId,
         })];
-        break;
-      case OrderTypeEnum.Subscription:
-        // TODO: handle subscription order
-        break;
-      default:
-        throw new Exception("Invalid order type");
+            break;
+          case OrderTypeEnum.Subscription:
+            // TODO: handle subscription order
+            break;
+          default:
+            throw new Exception("Invalid order type");
+        }
+
+        var result = await _orderRepo.AddAsync(order);
+        await transaction.CommitAsync();
+        return _mapper.Map<OrderDto>(order);
+      }
+      catch (Exception ex)
+      {
+        await transaction.RollbackAsync();
+        throw new Exception(ex.Message);
+      }
     }
-
-    var result = await _orderRepo.AddAsync(order);
-
-    return _mapper.Map<OrderDto>(order);
   }
 
   // BankAccount management methods
@@ -350,6 +364,7 @@ public class PaymentService : BaseService, IPaymentService
 
   public async Task<IActionResult> HandlePayosWebhook(WebhookType data)
   {
+    await using var transaction = await _dbContext.Database.BeginTransactionAsync();
     try
     {
       if (data.desc != "success")
@@ -386,7 +401,7 @@ public class PaymentService : BaseService, IPaymentService
       // update order status
       order.Status = PaymentStatusEnum.Success;
       await _orderRepo.UpdateAsync(order.Id, order);
-      // add range event participants
+      // event case
       if (order.OrderType == OrderTypeEnum.Event)
       {
         var eventParticipants = order.OrderEvents.Select(e => new EventParticipant
@@ -398,11 +413,60 @@ public class PaymentService : BaseService, IPaymentService
           Status = ParticipantStatusEnum.Confirmed,
         });
         await _eventParticipantRepo.AddRangeAsync(eventParticipants);
+        // add balance to museum wallet
+        var eventIds = eventParticipants.Select(e => e.EventId).ToList();
+        foreach (var e in eventIds)
+        {
+          var eventItem = await _eventRepo.GetEventById(e);
+          if (eventItem == null)
+          {
+            throw new Exception("Event not found");
+          }
+          // add to museum balance
+          var museum = await _museumRepo.GetByIdAsync(eventItem.MuseumId);
+          if (museum == null)
+          {
+            throw new Exception("Museum not found");
+          }
+          var wallet = await _walletRepo.GetWalletByMuseumId(museum.Id);
+          if (wallet == null)
+          {
+            wallet = await _walletRepo.InitWallet(museum.Id);
+          }
+          await _walletRepo.AddBalance(wallet.Id, eventItem.Price);
+        }
       }
+      // tou online case
+      if (order.OrderType == OrderTypeEnum.Tour)
+      {
+        var tourIds = order.OrderTours.Select(t => t.TourId).ToList();
+        foreach (var t in tourIds)
+        {
+          var tourItem = await _tourRepo.GetByIdAsync(t);
+          if (tourItem == null)
+          {
+            throw new Exception("Tour not found");
+          }
+          // add to museum balance
+          var museum = await _museumRepo.GetByIdAsync(tourItem.MuseumId);
+          if (museum == null)
+          {
+            throw new Exception("Museum not found");
+          }
+          var wallet = await _walletRepo.GetWalletByMuseumId(museum.Id);
+          if (wallet == null)
+          {
+            throw new Exception("Wallet not found");
+          }
+          await _walletRepo.AddBalance(wallet.Id, tourItem.Price);
+        }
+      }
+      await transaction.CommitAsync();
       return SuccessResp.Ok(new { success = true });
     }
     catch (Exception e)
     {
+      await transaction.RollbackAsync();
       return ErrorResp.InternalServerError(e.Message);
     }
   }
