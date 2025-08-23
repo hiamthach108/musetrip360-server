@@ -54,6 +54,7 @@ public class PaymentService : BaseService, IPaymentService
   private readonly IEventParticipantRepository _eventParticipantRepo;
   private readonly IWalletRepository _walletRepo;
   private readonly IMuseumRepository _museumRepo;
+  private readonly ISubscriptionRepository _subscriptionRepo;
 
   public PaymentService(
   IConfiguration configuration,
@@ -76,6 +77,7 @@ public class PaymentService : BaseService, IPaymentService
     _eventParticipantRepo = new EventParticipantRepository(dbContext);
     _walletRepo = new WalletRepository(dbContext);
     _museumRepo = new MuseumRepository(dbContext);
+    _subscriptionRepo = new SubscriptionRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
@@ -460,6 +462,16 @@ public class PaymentService : BaseService, IPaymentService
             throw new Exception("Wallet not found");
           }
           await _walletRepo.AddBalance(wallet.Id, tourItem.Price);
+        }
+      }
+      if (order.OrderType == OrderTypeEnum.Subscription)
+      {
+        // Activate subscription when payment is successful
+        var subscription = await _subscriptionRepo.GetByOrderIdAsync(order.Id);
+        if (subscription != null)
+        {
+          subscription.Status = SubscriptionStatusEnum.Active;
+          await _subscriptionRepo.UpdateAsync(subscription.Id, subscription);
         }
       }
       await transaction.CommitAsync();
