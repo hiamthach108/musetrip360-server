@@ -19,7 +19,7 @@ public interface IEventParticipantService
     Task<IActionResult> HandleUpdate(Guid eventParticipantId, EventParticipantUpdateDto eventParticipant);
     Task<IActionResult> HandleDelete(Guid eventParticipantId);
     Task<IActionResult> HandleAddClientEvent(Guid userId, Guid eventId);
-    Task<EventParticipant> GetUserByEventParticipantId(Guid eventParticipantId);
+    Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId);
 }
 public class EventParticipantService(MuseTrip360DbContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseService(context, mapper, httpContextAccessor), IEventParticipantService
 {
@@ -226,16 +226,11 @@ public class EventParticipantService(MuseTrip360DbContext context, IMapper mappe
         }
     }
 
-    public async Task<EventParticipant> GetUserByEventParticipantId(Guid eventParticipantId)
+    public async Task<List<EventParticipant>> GetByEventIdAndUserIdStreamAsync(Guid eventId, Guid userId)
     {
         try
         {
-            var eventParticipant = await _eventParticipantRepository.GetByIdAsync(eventParticipantId);
-            if (eventParticipant == null)
-            {
-                throw new Exception("Event participant not found");
-            }
-            return eventParticipant;
+            return await _eventParticipantRepository.GetByEventIdAndUserIdStreamAsync(eventId, userId);
         }
         catch
         {
