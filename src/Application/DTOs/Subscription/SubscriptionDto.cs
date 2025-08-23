@@ -1,6 +1,7 @@
 namespace Application.DTOs.Subscription;
 
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Application.DTOs.Museum;
 using Application.DTOs.Plan;
 using Application.DTOs.User;
@@ -18,6 +19,7 @@ public class SubscriptionDto
   public DateTime StartDate { get; set; }
   public DateTime EndDate { get; set; }
   public SubscriptionStatusEnum Status { get; set; }
+  public JsonDocument? Metadata { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
 
@@ -46,7 +48,7 @@ public class BuySubscriptionDto
   public string? SuccessUrl { get; set; }
 
   public string? CancelUrl { get; set; }
-
+  public JsonDocument? Metadata { get; set; }
 }
 
 public class SubscriptionQuery

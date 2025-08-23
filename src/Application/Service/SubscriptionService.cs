@@ -142,7 +142,8 @@ public class SubscriptionService : BaseService, ISubscriptionService
         MuseumId = dto.MuseumId,
         StartDate = DateTime.UtcNow,
         EndDate = DateTime.UtcNow.AddDays(plan.DurationDays),
-        Status = SubscriptionStatusEnum.Cancelled // Will be activated when payment is successful
+        Status = SubscriptionStatusEnum.Cancelled, // Will be activated when payment is successful
+        Metadata = dto.Metadata
       };
 
       await _subscriptionRepository.AddAsync(subscription);
