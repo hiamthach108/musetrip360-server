@@ -10,5 +10,5 @@ public class MuseumWallet : BaseEntity
   public float PendingBalance { get; set; }
   public float TotalBalance { get; set; }
 
-  public Museum Museum { get; set; } = new();
+  public Museum Museum { get; set; } = null!;
 }

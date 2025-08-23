@@ -43,6 +43,7 @@ public class EventParticipantRepository : IEventParticipantRepository
         JoinedAt = ep.JoinedAt,
         Role = ep.Role,
         Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
         Event = new Domain.Events.Event
         {
           Id = ep.Event.Id,
@@ -91,6 +92,7 @@ public class EventParticipantRepository : IEventParticipantRepository
         JoinedAt = ep.JoinedAt,
         Role = ep.Role,
         Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
         Event = new Domain.Events.Event
         {
           Id = ep.Event.Id,
@@ -139,6 +141,7 @@ public class EventParticipantRepository : IEventParticipantRepository
         JoinedAt = ep.JoinedAt,
         Role = ep.Role,
         Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
         Event = new Domain.Events.Event
         {
           Id = ep.Event.Id,
@@ -240,6 +243,7 @@ public class EventParticipantRepository : IEventParticipantRepository
         JoinedAt = ep.JoinedAt,
         Role = ep.Role,
         Status = ep.Status,
+        CreatedAt = ep.CreatedAt,
         Event = new Domain.Events.Event
         {
           Id = ep.Event.Id,
