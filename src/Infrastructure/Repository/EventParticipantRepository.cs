@@ -142,22 +142,22 @@ public class EventParticipantRepository : IEventParticipantRepository
         Role = ep.Role,
         Status = ep.Status,
         CreatedAt = ep.CreatedAt,
-        Event = new Domain.Events.Event
-        {
-          Id = ep.Event.Id,
-          Title = ep.Event.Title,
-          Description = ep.Event.Description,
-          StartTime = ep.Event.StartTime,
-          EndTime = ep.Event.EndTime,
-          Location = ep.Event.Location,
-          Capacity = ep.Event.Capacity,
-          AvailableSlots = ep.Event.AvailableSlots,
-          BookingDeadline = ep.Event.BookingDeadline,
-          MuseumId = ep.Event.MuseumId,
-          CreatedBy = ep.Event.CreatedBy,
-          Status = ep.Event.Status,
-          Price = ep.Event.Price
-        },
+        // Event = new Domain.Events.Event
+        // {
+        //   Id = ep.Event.Id,
+        //   Title = ep.Event.Title,
+        //   Description = ep.Event.Description,
+        //   StartTime = ep.Event.StartTime,
+        //   EndTime = ep.Event.EndTime,
+        //   Location = ep.Event.Location,
+        //   Capacity = ep.Event.Capacity,
+        //   AvailableSlots = ep.Event.AvailableSlots,
+        //   BookingDeadline = ep.Event.BookingDeadline,
+        //   MuseumId = ep.Event.MuseumId,
+        //   CreatedBy = ep.Event.CreatedBy,
+        //   Status = ep.Event.Status,
+        //   Price = ep.Event.Price
+        // },
         User = new Domain.Users.User
         {
           Id = ep.User.Id,
