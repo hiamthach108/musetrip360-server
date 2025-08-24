@@ -409,8 +409,9 @@ public class MuseTrip360DbContext : DbContext
     builder.Entity<Message>(e =>
     {
       e.HasKey(x => x.Id);
-      e.Property(x => x.Content).IsRequired().HasMaxLength(1000);
+      e.Property(x => x.Content).IsRequired();
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Messages).HasForeignKey(x => x.CreatedBy);
+      e.HasOne(x => x.Conversation).WithMany().HasForeignKey(x => x.ConversationId);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
       e.Property(x => x.UpdatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -422,8 +423,6 @@ public class MuseTrip360DbContext : DbContext
       e.Property(x => x.Name).IsRequired(false).HasMaxLength(100);
       e.Property(x => x.Metadata).IsRequired(false).HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb");
       e.Property(x => x.IsBot).IsRequired().HasDefaultValue(false);
-      e.Property(x => x.LastMessageId).IsRequired(false);
-      e.HasOne(x => x.LastMessage).WithMany(x => x.Conversations).HasForeignKey(x => x.LastMessageId);
       e.Property(x => x.CreatedBy).IsRequired();
       e.HasOne(x => x.CreatedByUser).WithMany(x => x.Conversations).HasForeignKey(x => x.CreatedBy);
       e.Property(x => x.CreatedAt).IsRequired().HasDefaultValueSql("CURRENT_TIMESTAMP");

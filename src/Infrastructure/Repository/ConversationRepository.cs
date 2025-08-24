@@ -9,12 +9,11 @@ public interface IConversationRepository
 {
   // Conversation
   Task<Conversation?> GetByIdAsync(Guid id);
-  IEnumerable<ConversationUser> GetConversationUsers(Guid userId);
+  IEnumerable<Conversation> GetConversationUsers(Guid userId);
   ConversationUser? GetConversationUser(Guid conversationId, Guid userId);
   Task<Conversation> CreateConversation(Conversation conversation);
   Task<IEnumerable<ConversationUser>> AddUsersToConversation(Guid conversationId, List<Guid> userIds);
   Task<int> UpdateLastSeen(Guid conversationId, Guid userId);
-  Task<int> UpdateLastMessage(Guid conversationId, Guid messageId);
   Task<int> UpdateName(Guid conversationId, string name);
   Task<List<Guid>> GetConversationUserIds(Guid conversationId);
   Task<Conversation> GetConversationByUsers(Guid userId1, Guid userId2);
@@ -62,17 +61,12 @@ public class ConversationRepository : IConversationRepository
     return result.Entity;
   }
 
-  public IEnumerable<ConversationUser> GetConversationUsers(Guid userId)
+  public IEnumerable<Conversation> GetConversationUsers(Guid userId)
   {
     // get all conversations at ConversationUser table, sorted by lastMessage date
-    var conversations = _dbContext.ConversationUsers
-      .Where(uc => uc.UserId == userId)
-      .Include(uc => uc.Conversation)
-      .Include(uc => uc.Conversation.LastMessage)
-      .Include(uc => uc.Conversation.LastMessage != null ? uc.Conversation.LastMessage.CreatedByUser : null)
-      .OrderByDescending(uc => uc.Conversation.LastMessage != null
-          ? uc.Conversation.LastMessage.CreatedAt
-          : uc.Conversation.CreatedAt)
+    var conversations = _dbContext.Conversations
+      .Where(c => c.CreatedBy == userId)
+      .OrderByDescending(c => c.UpdatedAt)
       .AsEnumerable();
 
     if (conversations == null)
@@ -92,22 +86,12 @@ public class ConversationRepository : IConversationRepository
     return conversation;
   }
 
-  public async Task<int> UpdateLastMessage(Guid conversationId, Guid messageId)
-  {
-    var rowsAffected = await _dbContext.Conversations
-        .Where(uc => uc.Id == conversationId)
-        .ExecuteUpdateAsync(s => s
-            .SetProperty(b => b.LastMessageId, messageId));
-
-    return rowsAffected;
-  }
-
   public async Task<int> UpdateLastSeen(Guid conversationId, Guid userId)
   {
-    var rowsAffected = await _dbContext.ConversationUsers
-        .Where(uc => uc.ConversationId == conversationId && uc.UserId == userId)
+    var rowsAffected = await _dbContext.Conversations
+        .Where(uc => uc.Id == conversationId && uc.CreatedBy == userId)
         .ExecuteUpdateAsync(s => s
-            .SetProperty(b => b.LastMessageReadAt, DateTime.UtcNow));
+            .SetProperty(b => b.UpdatedAt, DateTime.UtcNow));
 
     return rowsAffected;
   }

@@ -52,7 +52,7 @@ public class MessageRepository : IMessageRepository
       .Include(x => x.CreatedByUser)
       .Where(x => x.ConversationId == conversationId)
       .OrderByDescending(x => x.CreatedAt)
-      .Skip(page * pageSize)
+      .Skip((page - 1) * pageSize)
       .Take(pageSize)
       .AsEnumerable();
 

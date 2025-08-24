@@ -15,6 +15,4 @@ public class Message : BaseEntity
   public User CreatedByUser { get; set; } = null!;
 
   public ICollection<ConversationUser> ConversationUsers { get; set; } = new List<ConversationUser>();
-
-  public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
 }

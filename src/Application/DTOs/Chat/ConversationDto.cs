@@ -16,7 +16,6 @@ public class ConversationDto
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
   public UserBlobDto CreatedUser { get; set; } = null!;
-  public MessageDto? LastMessage { get; set; } = null!;
 }
 
 public class ConversationProfile : Profile

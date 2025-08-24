@@ -1,11 +1,14 @@
 namespace Application.Service;
 
+using System.Text.Json;
 using Application.DTOs.Chat;
 using Application.DTOs.Notification;
+using Application.DTOs.Search;
 using Application.Shared.Constant;
 using Application.Shared.Enum;
 using Application.Shared.Type;
 using AutoMapper;
+using Core.LLM;
 using Core.Queue;
 using Core.Realtime;
 using Database;
@@ -38,13 +41,18 @@ public class MessagingService : BaseService, IMessagingService
   private readonly INotificationRepository _notificationRepo;
   private readonly IRealtimeService _realtimeSvc;
   private readonly IQueuePublisher _queuePub;
+  private readonly ISemanticSearchService _semanticSearchService;
+
+  private readonly ILLM _llm;
 
   public MessagingService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
     IRealtimeService realtimeService,
-    IQueuePublisher queuePublisher
+    IQueuePublisher queuePublisher,
+    ILLM llm,
+    ISemanticSearchService semanticSearchService
   ) : base(dbContext, mapper, httpCtx)
   {
     _conversationRepo = new ConversationRepository(dbContext);
@@ -52,6 +60,8 @@ public class MessagingService : BaseService, IMessagingService
     _realtimeSvc = realtimeService;
     _notificationRepo = new NotificationRepository(dbContext);
     _queuePub = queuePublisher;
+    _llm = llm;
+    _semanticSearchService = semanticSearchService;
   }
 
   public async Task<IActionResult> HandleCreateConversation(CreateConversation req)
@@ -60,20 +70,6 @@ public class MessagingService : BaseService, IMessagingService
     if (payload == null)
     {
       return ErrorResp.Unauthorized("Invalid token");
-    }
-
-    var existConversation = await _conversationRepo.GetConversationByUsers(payload.UserId, req.ChatWithUserId);
-    if (existConversation != null)
-    {
-      // update conversation name
-      if (!string.IsNullOrEmpty(req.Name))
-      {
-        existConversation.Name = req.Name;
-        await _conversationRepo.UpdateName(existConversation.Id, req.Name);
-      }
-
-      var conversationDto = _mapper.Map<ConversationDto>(existConversation);
-      return SuccessResp.Ok(conversationDto);
     }
 
     var conversation = new Conversation
@@ -90,17 +86,6 @@ public class MessagingService : BaseService, IMessagingService
       return ErrorResp.InternalServerError("Failed to create conversation");
     }
 
-    var userIds = new List<Guid>
-    {
-        payload.UserId
-    };
-    if (req.ChatWithUserId != Guid.Empty)
-    {
-      userIds.Add(req.ChatWithUserId);
-    }
-
-    await _conversationRepo.AddUsersToConversation(result.Id, userIds);
-
     var con = _mapper.Map<ConversationDto>(result);
 
     return SuccessResp.Ok(con);
@@ -114,10 +99,14 @@ public class MessagingService : BaseService, IMessagingService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var userConversation = _conversationRepo.GetConversationUser(req.ConversationId, payload.UserId);
-    if (userConversation == null)
+    var conversation = await _conversationRepo.GetByIdAsync(req.ConversationId);
+    if (conversation == null)
     {
       return ErrorResp.NotFound("Conversation not found");
+    }
+    if (!conversation.CreatedBy.Equals(payload.UserId))
+    {
+      return ErrorResp.Forbidden("Cannot send message to inactive conversation");
     }
 
     var message = new Message
@@ -125,32 +114,57 @@ public class MessagingService : BaseService, IMessagingService
       ConversationId = req.ConversationId,
       CreatedBy = payload.UserId,
       Content = req.Content,
-      Metadata = req.Metadata
+      Metadata = req.Metadata,
+      ContentType = "User"
     };
-
-    // var messages = req.Messages.Select(m => new Message
-    // {
-    //   ConversationId = req.ConversationId,
-    //   CreatedBy = payload.UserId,
-    //   Content = m.Content,
-    //   Metadata = m.Metadata
-    // });
 
     var result = await _messageRepo.CreateMessage(message);
 
     var msg = _mapper.Map<MessageDto>(result);
 
-    await _conversationRepo.UpdateLastMessage(req.ConversationId, msg.Id);
+    await _conversationRepo.UpdateLastSeen(req.ConversationId, payload.UserId);
 
-    // run in background
-    var users = await _conversationRepo.GetConversationUserIds(req.ConversationId);
-    if (users != null && users.Count > 0)
+    // Is AI process
+    if (req.IsBot == true)
     {
-      var userIds = users.Select(u => u.ToString()).ToList();
-      await _realtimeSvc.SendMessage(msg, userIds);
+      var semanticResult = await _semanticSearchService.SearchByQueryAsync(
+        new SemanticSearchQuery
+        {
+          Query = req.Content,
+          Page = 1,
+          PageSize = 10,
+          MinSimilarity = 0.7m,
+          IncludeEmbeddings = false,
+        });
+
+      var resultWithData = await _llm.CompleteWithDataAsync(req.Content, [.. semanticResult.Items.Cast<object>()]);
+
+      var aiMessage = new Message
+      {
+        ConversationId = req.ConversationId,
+        CreatedBy = payload.UserId,
+        Content = resultWithData,
+        IsBot = true,
+        ContentType = "AI"
+      };
+
+      // add semanticResult to metadata
+      var aiMetadata = new Dictionary<string, object>
+      {
+        ["relatedData"] = semanticResult.Items
+      };
+      aiMessage.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(aiMetadata));
+
+      var aiResult = await _messageRepo.CreateMessage(aiMessage);
+
+      if (aiResult == null)
+      {
+        return ErrorResp.InternalServerError("Failed to create AI message");
+      }
+
+      return SuccessResp.Ok(_mapper.Map<MessageDto>(aiResult));
     }
 
-    // var listMsg = _mapper.Map<IEnumerable<MessageDto>(result);
 
     return SuccessResp.Ok(msg);
   }
@@ -163,10 +177,15 @@ public class MessagingService : BaseService, IMessagingService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var userConversation = _conversationRepo.GetConversationUser(req.ConversationId, payload.UserId);
-    if (userConversation == null)
+    var conversation = await _conversationRepo.GetByIdAsync(req.ConversationId);
+    if (conversation == null)
     {
       return ErrorResp.NotFound("Conversation not found");
+    }
+
+    if (!conversation.CreatedBy.Equals(payload.UserId))
+    {
+      return ErrorResp.Forbidden("Cannot send message to inactive conversation");
     }
 
     var messages = _messageRepo.GetConversationMessages(req.ConversationId, req.Page, req.PageSize);
@@ -194,11 +213,9 @@ public class MessagingService : BaseService, IMessagingService
     {
       return ErrorResp.NotFound("Conversations not found");
     }
-    var data = _mapper.Map<IEnumerable<ConversationUserDto>>(conversations);
+    var data = _mapper.Map<IEnumerable<ConversationDto>>(conversations);
 
-    return SuccessResp.Ok(
-      new { conversations = data }
-    );
+    return SuccessResp.Ok(data);
   }
 
   public async Task<IActionResult> HandleJoinConversation(Guid conversationId)
@@ -240,9 +257,7 @@ public class MessagingService : BaseService, IMessagingService
 
     await _conversationRepo.UpdateLastSeen(conversationId, payload.UserId);
 
-    return SuccessResp.Ok(
-      new { message = "Last seen updated" }
-    );
+    return SuccessResp.Ok("Last seen updated");
   }
 
   public async Task<IActionResult> HandleGetUserNotification(NotificationQuery query)
