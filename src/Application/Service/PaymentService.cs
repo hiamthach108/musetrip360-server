@@ -55,7 +55,7 @@ public class PaymentService : BaseService, IPaymentService
   private readonly IWalletRepository _walletRepo;
   private readonly IMuseumRepository _museumRepo;
   private readonly ISubscriptionRepository _subscriptionRepo;
-
+  private readonly ITransactionRepository _transactionRepo;
   public PaymentService(
   IConfiguration configuration,
   ILogger<PaymentService> logger,
@@ -78,6 +78,7 @@ public class PaymentService : BaseService, IPaymentService
     _walletRepo = new WalletRepository(dbContext);
     _museumRepo = new MuseumRepository(dbContext);
     _subscriptionRepo = new SubscriptionRepository(dbContext);
+    _transactionRepo = new TransactionRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
@@ -436,6 +437,18 @@ public class PaymentService : BaseService, IPaymentService
           {
             wallet = await _walletRepo.InitWallet(museum.Id);
           }
+          // create transaction item
+          var transactionItem = new Domain.Payment.Transaction
+          {
+            MuseumId = museum.Id,
+            ReferenceId = e.ToString(),
+            Amount = (decimal)eventItem.Price,
+            TransactionType = "Event",
+            BalanceBefore = (decimal)wallet.TotalBalance,
+            BalanceAfter = (decimal)wallet.TotalBalance + (decimal)eventItem.Price,
+          };
+          await _transactionRepo.CreateTransaction(transactionItem);
+          // add balance after
           await _walletRepo.AddBalance(wallet.Id, eventItem.Price);
         }
       }
@@ -461,6 +474,18 @@ public class PaymentService : BaseService, IPaymentService
           {
             throw new Exception("Wallet not found");
           }
+          // create transaction item
+          var transactionItem = new Domain.Payment.Transaction
+          {
+            MuseumId = museum.Id,
+            ReferenceId = t.ToString(),
+            Amount = (decimal)tourItem.Price,
+            TransactionType = "TourOnline",
+            BalanceBefore = (decimal)wallet.TotalBalance,
+            BalanceAfter = (decimal)wallet.TotalBalance + (decimal)tourItem.Price,
+          };
+          await _transactionRepo.CreateTransaction(transactionItem);
+          // add balance after
           await _walletRepo.AddBalance(wallet.Id, tourItem.Price);
         }
       }
