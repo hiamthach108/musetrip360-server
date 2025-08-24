@@ -114,6 +114,11 @@ public class SignalingHub : Hub
         _peerIdToStreamId.TryRemove(Context.ConnectionId, out _);
     }
 
+    public void SendChatMessageToRoom(string roomId, string message)
+    {
+        Clients.OthersInGroup(roomId).SendAsync("ReceiveChatMessage", message);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         try

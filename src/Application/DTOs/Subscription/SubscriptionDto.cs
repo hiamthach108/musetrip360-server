@@ -3,6 +3,7 @@ namespace Application.DTOs.Subscription;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Application.DTOs.Museum;
+using Application.DTOs.Order;
 using Application.DTOs.Plan;
 using Application.DTOs.User;
 using Application.Shared.Enum;
@@ -26,6 +27,7 @@ public class SubscriptionDto
   public UserDto? User { get; set; }
   public PlanDto? Plan { get; set; }
   public MuseumDto? Museum { get; set; }
+  public OrderDto? Order { get; set; }
 }
 
 public class SubscriptionCreateDto

@@ -37,6 +37,14 @@ public class SubscriptionController : ControllerBase
     return await _subscriptionService.HandleGetUserSubscriptionsAsync(query);
   }
 
+  [HttpGet("admin")]
+  [Protected]
+  public async Task<IActionResult> GetAdminSubscriptions([FromQuery] SubscriptionQuery query)
+  {
+    _logger.LogInformation("Getting admin subscriptions with query: {@Query}", query);
+    return await _subscriptionService.HandleGetAllSubscriptionsAsync(query);
+  }
+
   [HttpGet("{id}")]
   [Protected]
   public async Task<IActionResult> GetSubscriptionById(Guid id)
