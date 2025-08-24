@@ -39,16 +39,15 @@ public class WalletRepository : IWalletRepository
 
     public async Task<MuseumWallet?> GetWalletByMuseumId(Guid museumId)
     {
-        return await _dbContext.MuseumWallets.FindAsync(museumId);
+        return await _dbContext.MuseumWallets.Where(w => w.MuseumId == museumId).FirstOrDefaultAsync();
     }
 
     public async Task AddBalance(Guid walletId, float amount)
     {
         var wallet = await GetById(walletId);
         if (wallet == null) return;
-
-        wallet.AvailableBalance += amount;
-        wallet.TotalBalance += amount;
+        // update both avail balance and total
+        wallet.AddBalance(amount);
         await _dbContext.SaveChangesAsync();
     }
 
