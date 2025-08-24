@@ -157,8 +157,14 @@ public class SignalingHub : Hub
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
                 // add user stream record
-                _streamIdToUserId.TryAdd(GetStreamIdByPeerId(Context.ConnectionId), payload.UserId);
-                // notify other peers in room that new peer joined
+                if (_peerIdToStreamId.TryGetValue(Context.ConnectionId, out var streamId))
+                {
+                    _streamIdToUserId.TryAdd(streamId, payload.UserId);
+                }
+                else
+                {
+                    _logger.LogWarning($"No streamId found for peerId {Context.ConnectionId} when adding userId mapping.");
+                }                // notify other peers in room that new peer joined
                 await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId, payload.UserId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
                 // get room state and send to peer
