@@ -19,6 +19,8 @@ public class AdminAnalyticsOverview
   public int TotalUsers { get; set; }
   public int TotalEvents { get; set; }
   public int TotalTours { get; set; }
+  public int TotalSubscriptions { get; set; }
+  public double TotalRevenue { get; set; }
 
   public List<AnalyticsMuseumCategorize> MuseumsByCategory { get; set; } = [];
 }
@@ -27,4 +29,30 @@ public class AnalyticsMuseumCategorize
 {
   public string Category { get; set; } = string.Empty;
   public int Count { get; set; }
+}
+
+public class WeeklyEventsAnalytics
+{
+  public List<WeeklyEventCount> WeeklyData { get; set; } = [];
+}
+
+public class WeeklyEventCount
+{
+  public string WeekLabel { get; set; } = string.Empty;
+  public DateTime WeekStartDate { get; set; }
+  public DateTime WeekEndDate { get; set; }
+  public int EventCount { get; set; }
+}
+
+public class WeeklyParticipantsAnalytics
+{
+  public List<WeeklyParticipantCount> WeeklyData { get; set; } = [];
+}
+
+public class WeeklyParticipantCount
+{
+  public string WeekLabel { get; set; } = string.Empty;
+  public DateTime WeekStartDate { get; set; }
+  public DateTime WeekEndDate { get; set; }
+  public int ParticipantCount { get; set; }
 }

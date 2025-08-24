@@ -17,6 +17,8 @@ public interface IAnalyticsRepository
   Task<int> GetTotalArtifacts(Guid museumId);
   Task<double> GetTotalRevenue(Guid museumId);
   Task<double> GetAverageRating(Guid museumId);
+  Task<WeeklyEventsAnalytics> GetWeeklyEventsAnalytics();
+  Task<WeeklyParticipantsAnalytics> GetWeeklyParticipantsAnalytics(Guid museumId);
 }
 
 public class AnalyticsRepository : IAnalyticsRepository
@@ -106,6 +108,21 @@ public class AnalyticsRepository : IAnalyticsRepository
     return feedbacks.Average(f => f.Rating);
   }
 
+  public async Task<int> GetTotalSubscriptions()
+  {
+    return await _context.Subscriptions.CountAsync(s => s.Status == SubscriptionStatusEnum.Active);
+  }
+
+  public async Task<double> GetTotalRevenue()
+  {
+    var totalRevenue = await _context.Subscriptions
+      .Where(s => s.Status == SubscriptionStatusEnum.Active)
+      .SelectMany(s => s.Order.Payments)
+      .SumAsync(p => p.Amount);
+
+    return (double)totalRevenue;
+  }
+
   public async Task<AdminAnalyticsOverview> GetAdminOverview()
   {
     return new AdminAnalyticsOverview
@@ -115,6 +132,8 @@ public class AnalyticsRepository : IAnalyticsRepository
       TotalUsers = await _context.Users.CountAsync(),
       TotalEvents = await _context.Events.CountAsync(),
       TotalTours = await _context.TourOnlines.CountAsync(),
+      TotalSubscriptions = await GetTotalSubscriptions(),
+      TotalRevenue = await GetTotalRevenue(),
       MuseumsByCategory = [.. _context.Museums
         .SelectMany(m => m.Categories, (museum, category) => new { museum, category })
         .GroupBy(x => x.category)
@@ -123,6 +142,71 @@ public class AnalyticsRepository : IAnalyticsRepository
           Category = g.Key.Name,
           Count = g.Count()
         })]
+    };
+  }
+
+  public async Task<WeeklyEventsAnalytics> GetWeeklyEventsAnalytics()
+  {
+    var currentDate = DateTime.UtcNow.Date;
+    var startOfCurrentWeek = currentDate.AddDays(-(int)currentDate.DayOfWeek);
+    var sixWeeksAgo = startOfCurrentWeek.AddDays(-35);
+
+    var weeklyData = new List<WeeklyEventCount>();
+
+    for (int i = 0; i < 6; i++)
+    {
+      var weekStart = sixWeeksAgo.AddDays(i * 7);
+      var weekEnd = weekStart.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
+
+      var eventCount = await _context.Events
+        .Where(e => e.CreatedAt >= weekStart && e.CreatedAt <= weekEnd)
+        .CountAsync();
+
+      weeklyData.Add(new WeeklyEventCount
+      {
+        WeekLabel = $"Week {weekStart:MMM dd} - {weekEnd:MMM dd}",
+        WeekStartDate = weekStart,
+        WeekEndDate = weekEnd,
+        EventCount = eventCount
+      });
+    }
+
+    return new WeeklyEventsAnalytics
+    {
+      WeeklyData = weeklyData
+    };
+  }
+
+  public async Task<WeeklyParticipantsAnalytics> GetWeeklyParticipantsAnalytics(Guid museumId)
+  {
+    var currentDate = DateTime.UtcNow.Date;
+    var startOfCurrentWeek = currentDate.AddDays(-(int)currentDate.DayOfWeek);
+    var sixWeeksAgo = startOfCurrentWeek.AddDays(-35);
+
+    var weeklyData = new List<WeeklyParticipantCount>();
+
+    for (int i = 0; i < 6; i++)
+    {
+      var weekStart = sixWeeksAgo.AddDays(i * 7);
+      var weekEnd = weekStart.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
+
+      var participantCount = await _context.EventParticipants
+        .Where(ep => ep.Event.MuseumId == museumId && 
+                     ep.JoinedAt >= weekStart && ep.JoinedAt <= weekEnd)
+        .CountAsync();
+
+      weeklyData.Add(new WeeklyParticipantCount
+      {
+        WeekLabel = $"Week {weekStart:MMM dd} - {weekEnd:MMM dd}",
+        WeekStartDate = weekStart,
+        WeekEndDate = weekEnd,
+        ParticipantCount = participantCount
+      });
+    }
+
+    return new WeeklyParticipantsAnalytics
+    {
+      WeeklyData = weeklyData
     };
   }
 
