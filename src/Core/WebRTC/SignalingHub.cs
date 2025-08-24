@@ -11,7 +11,7 @@ public class SignalingHub : Hub
     private static ConcurrentDictionary<string, SfuConnection> _connections = new();
     private static ConcurrentDictionary<string, string> _peerIdToStreamId = new();
     private static ConcurrentDictionary<string, string> _streamIdToPeerId = new();
-    private static ConcurrentDictionary<string, Guid> _streamIdToUserId = new();
+    private static ConcurrentDictionary<string, string> _streamIdToUserId = new();
     private readonly IRoomService _roomService;
     private readonly IHubContext<SignalingHub> _hubContext;
     private readonly IJwtService _jwtSvc;
@@ -84,6 +84,13 @@ public class SignalingHub : Hub
         await _roomStateManager.UpdateRoomState(sfu.GetRoomId(), dto);
     }
 
+    public void SetStreamPeerId(string streamId, string userId)
+    {
+        _streamIdToPeerId.TryAdd(streamId, Context.ConnectionId);
+        _peerIdToStreamId.TryAdd(Context.ConnectionId, streamId);
+        _streamIdToUserId.TryAdd(streamId, userId);
+    }
+
     public void SetStreamPeerId(string streamId)
     {
         _streamIdToPeerId.TryAdd(streamId, Context.ConnectionId);
@@ -102,7 +109,7 @@ public class SignalingHub : Hub
 
     public string GetUserByStreamId(string streamId)
     {
-        return _streamIdToUserId[streamId].ToString();
+        return _streamIdToUserId[streamId];
     }
 
     public void RemoveStreamPeerId()
@@ -156,15 +163,7 @@ public class SignalingHub : Hub
                 sfu.SetRoomId(roomId);
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-                // add user stream record
-                if (_peerIdToStreamId.TryGetValue(Context.ConnectionId, out var streamId))
-                {
-                    _streamIdToUserId.TryAdd(streamId, payload.UserId);
-                }
-                else
-                {
-                    _logger.LogWarning($"No streamId found for peerId {Context.ConnectionId} when adding userId mapping.");
-                }                // notify other peers in room that new peer joined
+                // notify other peers in room that new peer joined
                 await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId, payload.UserId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
                 // get room state and send to peer
