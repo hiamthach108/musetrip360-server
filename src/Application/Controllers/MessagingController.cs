@@ -112,5 +112,21 @@ public class MessagingController : ControllerBase
       message = "Test notification sent successfully"
     });
   }
+
+  [Protected]
+  [HttpPut("conversations/{conversationId}")]
+  public async Task<IActionResult> UpdateConversation(Guid conversationId, [FromBody] UpdateConversation req)
+  {
+    _logger.LogInformation("Update conversation request received");
+    return await _service.HandleUpdateConversation(conversationId, req);
+  }
+
+  [Protected]
+  [HttpDelete("conversations/{conversationId}")]
+  public async Task<IActionResult> DeleteConversation(Guid conversationId)
+  {
+    _logger.LogInformation("Delete conversation request received");
+    return await _service.HandleDeleteConversation(conversationId);
+  }
 }
 

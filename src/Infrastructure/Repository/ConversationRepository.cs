@@ -1,6 +1,7 @@
 namespace Infrastructure.Repository;
 
 using System;
+using Application.DTOs.Chat;
 using Database;
 using Domain.Messaging;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,8 @@ public interface IConversationRepository
   Task<int> UpdateName(Guid conversationId, string name);
   Task<List<Guid>> GetConversationUserIds(Guid conversationId);
   Task<Conversation> GetConversationByUsers(Guid userId1, Guid userId2);
+  Task<Conversation?> UpdateConversation(Guid conversationId, UpdateConversation updateData);
+  Task<bool> DeleteConversation(Guid conversationId);
 }
 
 public class ConversationList
@@ -136,5 +139,53 @@ public class ConversationRepository : IConversationRepository
             .SetProperty(b => b.Name, name));
 
     return rowsAffected;
+  }
+
+  public async Task<Conversation?> UpdateConversation(Guid conversationId, UpdateConversation updateData)
+  {
+    var conversation = await _dbContext.Conversations.FindAsync(conversationId);
+    if (conversation == null)
+    {
+      return null;
+    }
+
+    if (updateData.Name != null)
+    {
+      conversation.Name = updateData.Name;
+    }
+
+    if (updateData.Metadata != null)
+    {
+      conversation.Metadata = updateData.Metadata;
+    }
+
+    conversation.UpdatedAt = DateTime.UtcNow;
+
+    await _dbContext.SaveChangesAsync();
+    return conversation;
+  }
+
+  public async Task<bool> DeleteConversation(Guid conversationId)
+  {
+    var conversation = await _dbContext.Conversations
+        .Include(c => c.ConversationUsers)
+        .FirstOrDefaultAsync(c => c.Id == conversationId);
+
+    if (conversation == null)
+    {
+      return false;
+    }
+
+    _dbContext.ConversationUsers.RemoveRange(conversation.ConversationUsers);
+
+    var messages = await _dbContext.Messages
+        .Where(m => m.ConversationId == conversationId)
+        .ToListAsync();
+    _dbContext.Messages.RemoveRange(messages);
+
+    _dbContext.Conversations.Remove(conversation);
+    await _dbContext.SaveChangesAsync();
+
+    return true;
   }
 }

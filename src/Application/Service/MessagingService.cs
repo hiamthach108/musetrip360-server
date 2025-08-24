@@ -25,6 +25,8 @@ public interface IMessagingService
   Task<IActionResult> HandleCreateMessage(CreateMessage req);
   Task<IActionResult> HandleUpdateLastSeen(Guid conversationId);
   Task<IActionResult> HandleJoinConversation(Guid conversationId);
+  Task<IActionResult> HandleUpdateConversation(Guid conversationId, UpdateConversation req);
+  Task<IActionResult> HandleDeleteConversation(Guid conversationId);
 
   // Notification
   Task<IActionResult> HandleGetUserNotification(NotificationQuery query);
@@ -323,5 +325,62 @@ public class MessagingService : BaseService, IMessagingService
     var result = await _notificationRepo.CreateNotification(notification);
 
     return _mapper.Map<NotificationDto>(result);
+  }
+
+  public async Task<IActionResult> HandleUpdateConversation(Guid conversationId, UpdateConversation req)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var conversation = await _conversationRepo.GetByIdAsync(conversationId);
+    if (conversation == null)
+    {
+      return ErrorResp.NotFound("Conversation not found");
+    }
+
+    if (!conversation.CreatedBy.Equals(payload.UserId))
+    {
+      return ErrorResp.Forbidden("You can only update your own conversations");
+    }
+
+    var updatedConversation = await _conversationRepo.UpdateConversation(conversationId, req);
+    if (updatedConversation == null)
+    {
+      return ErrorResp.InternalServerError("Failed to update conversation");
+    }
+
+    var conversationDto = _mapper.Map<ConversationDto>(updatedConversation);
+    return SuccessResp.Ok(conversationDto);
+  }
+
+  public async Task<IActionResult> HandleDeleteConversation(Guid conversationId)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var conversation = await _conversationRepo.GetByIdAsync(conversationId);
+    if (conversation == null)
+    {
+      return ErrorResp.NotFound("Conversation not found");
+    }
+
+    if (!conversation.CreatedBy.Equals(payload.UserId))
+    {
+      return ErrorResp.Forbidden("You can only delete your own conversations");
+    }
+
+    var deleted = await _conversationRepo.DeleteConversation(conversationId);
+    if (!deleted)
+    {
+      return ErrorResp.InternalServerError("Failed to delete conversation");
+    }
+
+    return SuccessResp.Ok(new { message = "Conversation deleted successfully" });
   }
 }
