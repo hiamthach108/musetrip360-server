@@ -11,6 +11,7 @@ public class SignalingHub : Hub
     private static ConcurrentDictionary<string, SfuConnection> _connections = new();
     private static ConcurrentDictionary<string, string> _peerIdToStreamId = new();
     private static ConcurrentDictionary<string, string> _streamIdToPeerId = new();
+    private static ConcurrentDictionary<string, Guid> _streamIdToUserId = new();
     private readonly IRoomService _roomService;
     private readonly IHubContext<SignalingHub> _hubContext;
     private readonly IJwtService _jwtSvc;
@@ -99,8 +100,14 @@ public class SignalingHub : Hub
         return _streamIdToPeerId[streamId];
     }
 
+    public string GetUserByStreamId(string streamId)
+    {
+        return _streamIdToUserId[streamId].ToString();
+    }
+
     public void RemoveStreamPeerId()
     {
+        _streamIdToUserId.TryRemove(GetStreamIdByPeerId(Context.ConnectionId), out _);
         _streamIdToPeerId.TryRemove(_peerIdToStreamId[Context.ConnectionId], out _);
         _peerIdToStreamId.TryRemove(Context.ConnectionId, out _);
     }
@@ -149,6 +156,8 @@ public class SignalingHub : Hub
                 sfu.SetRoomId(roomId);
                 // add peer to room
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+                // add user stream record
+                _streamIdToUserId.TryAdd(GetStreamIdByPeerId(Context.ConnectionId), payload.UserId);
                 // notify other peers in room that new peer joined
                 await Clients.OthersInGroup(roomId).SendAsync("PeerJoined", payload.UserId, Context.ConnectionId, payload.UserId);
                 _logger.LogInformation("Peer joined room {RoomId} for {ConnectionId}", roomId, Context.ConnectionId);
