@@ -84,17 +84,12 @@ public class SignalingHub : Hub
         await _roomStateManager.UpdateRoomState(sfu.GetRoomId(), dto);
     }
 
-    public void SetStreamPeerId(string streamId, string userId)
-    {
-        _streamIdToPeerId.TryAdd(streamId, Context.ConnectionId);
-        _peerIdToStreamId.TryAdd(Context.ConnectionId, streamId);
-        _streamIdToUserId.TryAdd(streamId, userId);
-    }
-
     public void SetStreamPeerId(string streamId)
     {
+        var payload = Context.Items["payload"] as Payload ?? new Payload();
         _streamIdToPeerId.TryAdd(streamId, Context.ConnectionId);
         _peerIdToStreamId.TryAdd(Context.ConnectionId, streamId);
+        _streamIdToUserId.TryAdd(streamId, payload.UserId.ToString());
     }
 
     public string GetStreamIdByPeerId(string peerId)
