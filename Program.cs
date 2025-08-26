@@ -166,6 +166,7 @@ builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();
 builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddHostedService<OrderWorker>();
 builder.Services.AddHostedService<SearchIndexWorker>();
+builder.Services.AddHostedService<EventNotificationWorker>();
 var app = builder.Build();
 
 app.UseInitializeDatabase();
