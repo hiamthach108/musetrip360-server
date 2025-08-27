@@ -4,6 +4,8 @@ public interface IRoomStateManager
 {
     Task<Room?> GetRoomState(string roomId);
     Task UpdateRoomState(string roomId, RoomUpdateMetadataDto dto);
+    Task<string?> HandleGetTourStateByRoomId(string roomId);
+    Task HandleUpdateTourState(string roomId, string state);
 }
 
 public class RoomStateManager : IRoomStateManager
@@ -37,6 +39,30 @@ public class RoomStateManager : IRoomStateManager
             }
             room.Metadata = dto.Metadata;
             await _roomRepository.UpdateRoom(roomId, room);
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+    public async Task<string?> HandleGetTourStateByRoomId(string roomId)
+    {
+        try
+        {
+            return await _roomRepository.GetTourStateByRoomId(roomId);
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+    public async Task HandleUpdateTourState(string roomId, string state)
+    {
+        try
+        {
+            await _roomRepository.UpdateTourState(roomId, state);
         }
         catch
         {

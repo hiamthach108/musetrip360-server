@@ -119,9 +119,10 @@ public class SignalingHub : Hub
         Clients.OthersInGroup(roomId).SendAsync("ReceiveChatMessage", message);
     }
 
-    public void SendTourActionToRoom(string roomId, string action)
+    public async Task SendTourActionToRoom(string roomId, string action)
     {
-        Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", action);
+        _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
+        await _roomStateManager.HandleUpdateTourState(roomId, action);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

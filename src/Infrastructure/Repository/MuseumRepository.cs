@@ -2,6 +2,7 @@ namespace Infrastructure.Repository;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Threading.Tasks;
 using Application.DTOs.Museum;
 using Application.Shared.Enum;
@@ -9,6 +10,7 @@ using Database;
 using Domain.Content;
 using Domain.Museums;
 using Domain.Reviews;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 
 public interface IMuseumRepository
@@ -26,6 +28,7 @@ public interface IMuseumRepository
   Task DeleteAsync(Museum museum);
   Task FeedbackMuseums(Guid museumId, int rating, Guid userId, string comment);
   Task<IEnumerable<Feedback?>> GetFeedbackByMuseumIdAsync(Guid id);
+  Task<bool> ValidateMuseumOwner(Guid museumId, Guid userId);
 }
 
 public class MuseumList
@@ -251,5 +254,10 @@ public class MuseumRepository : IMuseumRepository
       .Where(f => f.TargetId == id)
       .OrderByDescending(f => f.CreatedAt)
       .ToListAsync();
+  }
+
+  public async Task<bool> ValidateMuseumOwner(Guid museumId, Guid userId)
+  {
+    return await _dbContext.Museums.AnyAsync(m => m.Id == museumId && m.CreatedBy == userId);
   }
 }
