@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhắc Nhở Sự Kiện</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #ffc107;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+        .reminder-badge {
+            background-color: #ffc107;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .event-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffc107;
+            margin-bottom: 15px;
+        }
+        .countdown {
+            background: linear-gradient(135deg, #ff6b6b, #ffc107);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .countdown-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .event-details {
+            background-color: #fff8dc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .detail-value {
+            color: #6c757d;
+        }
+        .important-note {
+            background-color: #ffe6e6;
+            border: 1px solid #ffcccc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #ffc107;
+            color: #333;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">MuseTrip360</div>
+            <div class="reminder-badge">⏰ NHẮC NHỞ SỰ KIỆN</div>
+            <h1>Đừng Quên Sự Kiện Sắp Diễn Ra!</h1>
+        </div>
+
+        <p>Xin chào {{participantName}},</p>
+        
+        <p>Đây là lời nhắc nhở thân thiện về sự kiện bạn đã đăng ký tham gia.</p>
+
+        <div class="countdown">
+            <div class="countdown-text">⏱️ Bắt đầu sau {{timeUntilEvent}}</div>
+        </div>
+
+        <div class="event-title">{{eventTitle}}</div>
+
+        <div class="event-details">
+            <div class="detail-row">
+                <span class="detail-label">📅 Ngày & Giờ:</span>
+                <span class="detail-value">{{eventDate}} lúc {{eventTime}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">📍 Điểm Hẹn:</span>
+                <span class="detail-value">{{eventLocation}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">⏰ Thời Gian:</span>
+                <span class="detail-value">{{eventDuration}}</span>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{eventDetailsLink}}" class="cta-button">Xem Chi Tiết Sự Kiện 📋</a>
+        </div>
+
+        <p><strong>Cần thay đổi thông tin?</strong> Nếu bạn cần hủy hoặc điều chỉnh đăng ký, vui lòng liên hệ với chúng tôi càng sớm càng tốt.</p>
+
+        <p>Chúng tôi rất mong được gặp bạn tại đó!</p>
+
+        <div class="footer">
+            <p>📧 Đây là thông báo tự động từ MuseTrip360</p>
+            <p>Nếu bạn cần hỗ trợ, vui lòng liên hệ đội ngũ hỗ trợ của chúng tôi</p>
+            <p>&copy; 2024 MuseTrip360. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </div>
+</body>
+</html>

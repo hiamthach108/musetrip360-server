@@ -1,10 +1,14 @@
 namespace Application.Service;
 
+using System.Text.Json;
+using Application.DTOs.Email;
 using Application.DTOs.Feedback;
+using Application.DTOs.Notification;
 using Application.DTOs.Search;
 using Application.Service;
 using Application.Shared.Constant;
 using Application.Shared.Enum;
+using Application.Shared.Helpers;
 using Application.Shared.Type;
 using AutoMapper;
 using Core.Queue;
@@ -232,12 +236,35 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
 
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
             await _eventRepository.UpdateAsync(id, eventItem);
-            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+
+            if (isApproved)
             {
-                Id = eventItem.Id,
-                Type = IndexConst.EVENT_TYPE,
-                Action = IndexConst.CREATE_ACTION
-            });
+                await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+                {
+                    Id = eventItem.Id,
+                    Type = IndexConst.EVENT_TYPE,
+                    Action = IndexConst.CREATE_ACTION
+                });
+            }
+
+            var notification = new CreateNotificationDto
+            {
+                Title = isApproved ? "Sự Kiện Được Phê Duyệt" : "Sự Kiện Bị Từ Chối",
+                Message = isApproved
+                    ? $"Sự kiện '{eventItem.Title}' của bạn đã được phê duyệt và xuất bản."
+                    : $"Sự kiện '{eventItem.Title}' của bạn đã bị từ chối. Vui lòng xem lại nội dung và gửi lại.",
+                Type = "Event",
+                UserId = eventItem.CreatedBy,
+                Target = NotificationTargetEnum.User,
+                Metadata = JsonDocument.Parse(JsonSerializer.Serialize(new
+                {
+                    TargetId = eventItem.Id,
+                    Event = eventItem
+                }))
+            };
+
+            await _queuePublisher.Publish(QueueConst.Notification, notification);
+
             return SuccessResp.Ok("Event evaluated successfully");
         }
         catch (Exception e)
@@ -512,8 +539,10 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
 }
 
 // Organizer implementation
-public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IOrganizerEventService
+public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor, IQueuePublisher queuePublisher) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IOrganizerEventService
 {
+    protected readonly IQueuePublisher _queuePublisher = queuePublisher;
+    protected readonly IUserRepository _userRepository = new UserRepository(context);
     public async Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto)
     {
         try
@@ -556,6 +585,30 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
 
             eventItem.Status = EventStatusEnum.Pending;
             await _eventRepository.UpdateAsync(id, eventItem);
+
+            var museumManagerEmails = await _userRepository.GetMuseumManagerEmailsByMuseumId(eventItem.MuseumId.ToString());
+
+            if (museumManagerEmails.Count > 0)
+            {
+                var emailRequest = new SendEmailDto
+                {
+                    Type = "event-submission",
+                    Recipients = museumManagerEmails,
+                    Subject = "Sự Kiện Mới Cần Được Xem Xét - MuseTrip360",
+                    TemplateData = new Dictionary<string, object>
+                    {
+                        ["eventTitle"] = eventItem.Title,
+                        ["eventDescription"] = eventItem.Description ?? "",
+                        ["eventDate"] = eventItem.StartTime.ToString("dd/MM/yyyy"),
+                        ["submissionDate"] = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                        ["content"] = $"Một sự kiện mới '{eventItem.Title}' đã được gửi và đang chờ phê duyệt của bạn.",
+                        ["eventLink"] = $"https://museum.musetrip360.site/event/edit/{eventItem.Id}"
+                    }
+                };
+
+                await _queuePublisher.Publish(QueueConst.Email, emailRequest);
+            }
+
             return SuccessResp.Ok("Event submitted successfully");
         }
         catch (Exception e)

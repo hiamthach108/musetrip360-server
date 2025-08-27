@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Thông Báo Gửi Sự Kiện</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #dee2e6;
+        }
+        .event-details {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .event-title {
+            color: #495057;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .event-info {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Sự Kiện Mới Được Gửi</h1>
+        <p>Có một sự kiện cần được xem xét và phê duyệt</p>
+    </div>
+    
+    <div class="content">
+        <p>Xin chào Quản lý Bảo tàng,</p>
+        
+        <p>Một sự kiện mới đã được gửi đến bảo tàng của bạn và đang chờ phê duyệt.</p>
+        
+        <div class="event-details">
+            <div class="event-title">{{eventTitle}}</div>
+            
+            <div class="event-info">
+                <span class="label">Ngày sự kiện:</span> {{eventDate}}
+            </div>
+            
+            <div class="event-info">
+                <span class="label">Ngày gửi:</span> {{submissionDate}}
+            </div>
+            
+            <div class="event-info">
+                <span class="label">Mô tả:</span>
+                <p style="margin: 10px 0; color: #495057;">{{eventDescription}}</p>
+            </div>
+        </div>
+        
+
+        <div style="text-align: center;">
+            <a href="{{eventLink}}" class="cta-button">Xem Xét Sự Kiện</a>
+        </div>
+        
+        <p><strong>Lưu ý:</strong> Các sự kiện phải được xem xét trong vòng 48 giờ kể từ khi gửi để duy trì tiêu chuẩn chất lượng.</p>
+    </div>
+    
+    <div class="footer">
+        <p>Đây là tin nhắn tự động từ MuseTrip360. Vui lòng không trả lời email này.</p>
+        <p>© 2024 MuseTrip360. Tất cả quyền được bảo lưu.</p>
+    </div>
+</body>
+</html>
