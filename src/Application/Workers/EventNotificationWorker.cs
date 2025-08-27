@@ -147,7 +147,7 @@ public class EventNotificationWorker : BackgroundService
           ["eventLocation"] = eventItem.Location ?? "Trực Tuyến",
           ["eventDuration"] = CalculateEventDuration(eventItem.StartTime, eventItem.EndTime),
           ["timeUntilEvent"] = "30 phút",
-          ["eventDetailsLink"] = $"https://musetrip360.com/event/{eventItem.Id}"
+          ["eventDetailsLink"] = $"https://musetrip360.site/event/{eventItem.Id}"
         }
       };
 
