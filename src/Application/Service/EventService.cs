@@ -1,7 +1,9 @@
 namespace Application.Service;
 
+using System.Text.Json;
 using Application.DTOs.Email;
 using Application.DTOs.Feedback;
+using Application.DTOs.Notification;
 using Application.DTOs.Search;
 using Application.Service;
 using Application.Shared.Constant;
@@ -234,12 +236,35 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
 
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
             await _eventRepository.UpdateAsync(id, eventItem);
-            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+
+            if (isApproved)
             {
-                Id = eventItem.Id,
-                Type = IndexConst.EVENT_TYPE,
-                Action = IndexConst.CREATE_ACTION
-            });
+                await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
+                {
+                    Id = eventItem.Id,
+                    Type = IndexConst.EVENT_TYPE,
+                    Action = IndexConst.CREATE_ACTION
+                });
+            }
+
+            var notification = new CreateNotificationDto
+            {
+                Title = isApproved ? "Sự Kiện Được Phê Duyệt" : "Sự Kiện Bị Từ Chối",
+                Message = isApproved
+                    ? $"Sự kiện '{eventItem.Title}' của bạn đã được phê duyệt và xuất bản."
+                    : $"Sự kiện '{eventItem.Title}' của bạn đã bị từ chối. Vui lòng xem lại nội dung và gửi lại.",
+                Type = "Event",
+                UserId = eventItem.CreatedBy,
+                Target = NotificationTargetEnum.User,
+                Metadata = JsonDocument.Parse(JsonSerializer.Serialize(new
+                {
+                    TargetId = eventItem.Id,
+                    Event = eventItem
+                }))
+            };
+
+            await _queuePublisher.Publish(QueueConst.Notification, notification);
+
             return SuccessResp.Ok("Event evaluated successfully");
         }
         catch (Exception e)
