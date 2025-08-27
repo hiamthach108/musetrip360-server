@@ -159,6 +159,7 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<ContractService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 // Singleton for RoomStateManager
 builder.Services.AddSingleton<IRoomStateManager, RoomStateManager>();

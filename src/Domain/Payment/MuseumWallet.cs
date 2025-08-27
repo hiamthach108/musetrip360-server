@@ -16,10 +16,20 @@ public class MuseumWallet : BaseEntity
     AvailableBalance += amount;
     TotalBalance += amount;
   }
-  public void WithdrawBalance(float amount)
+  public void HoldBalance(float amount)
   {
     AvailableBalance -= amount;
-    TotalBalance -= amount;
     PendingBalance += amount;
+  }
+  public void WithdrawBalance()
+  {
+    TotalBalance -= PendingBalance;
+    PendingBalance = 0;
+  }
+
+  public void RejectPayout()
+  {
+    AvailableBalance += PendingBalance;
+    PendingBalance = 0;
   }
 }
