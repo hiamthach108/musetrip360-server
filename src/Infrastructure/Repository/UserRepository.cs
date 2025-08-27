@@ -4,8 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Application.DTOs.User;
+using Application.Shared.Constant;
 using Database;
 using Domain.Users;
+using Microsoft.EntityFrameworkCore;
 
 public interface IUserRepository
 {
@@ -16,6 +18,7 @@ public interface IUserRepository
   Task<User> UpdateAsync(Guid userId, User user);
   Task<User> DeleteAsync(User user);
   Task<User> GetUserByEmail(string email);
+  Task<List<string>> GetMuseumManagerEmailsByMuseumId(string museumId);
 }
 
 public class UserList
@@ -112,5 +115,17 @@ public class UserRepository : IUserRepository
     var user = _dbContext.Users.FirstOrDefault(u => u.Email == email);
 
     return user;
+  }
+
+  public async Task<List<string>> GetMuseumManagerEmailsByMuseumId(string museumId)
+  {
+    var emails = await _dbContext.UserRoles
+      .Include(ur => ur.User)
+      .Include(ur => ur.Role)
+      .Where(ur => ur.MuseumId == museumId && ur.Role.Name == UserConst.ROLE_MUSEUM_MANAGER)
+      .Select(ur => ur.User.Email)
+      .ToListAsync();
+
+    return emails;
   }
 }

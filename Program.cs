@@ -168,6 +168,7 @@ builder.Services.AddHostedService<NotificationWorker>();
 builder.Services.AddHostedService<OrderWorker>();
 builder.Services.AddHostedService<SearchIndexWorker>();
 builder.Services.AddHostedService<EventNotificationWorker>();
+builder.Services.AddHostedService<EmailWorker>();
 var app = builder.Build();
 
 app.UseInitializeDatabase();
