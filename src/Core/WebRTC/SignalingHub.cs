@@ -77,6 +77,7 @@ public class SignalingHub : Hub
         }
         //send metadata to room 
         await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("ReceiveRoomState", metadata);
+        await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("SendTourActionToRoom", sfu.GetRoomId(), metadata);
         var dto = new RoomUpdateMetadataDto
         {
             Metadata = JsonDocument.Parse(metadata)

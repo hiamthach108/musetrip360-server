@@ -314,10 +314,14 @@ public class SubscriptionService : BaseService, ISubscriptionService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
-    var subscriptions = await _subscriptionRepository.GetAllAsync(query);
-    var subscriptionDtos = _mapper.Map<List<SubscriptionDto>>(subscriptions);
+    var resp = await _subscriptionRepository.GetAllAsync(query);
+    var subscriptionDtos = _mapper.Map<List<SubscriptionDto>>(resp.Subscriptions);
 
-    return SuccessResp.Ok(subscriptionDtos);
+    return SuccessResp.Ok(new
+    {
+      List = subscriptionDtos,
+      Total = resp.Total
+    });
   }
 
   // Plan Management Methods
@@ -470,15 +474,7 @@ public class SubscriptionService : BaseService, ISubscriptionService
       var plans = await _planRepository.GetAllAsync();
       var planDtos = _mapper.Map<List<PlanDto>>(plans);
 
-      var result = new
-      {
-        Plans = planDtos,
-        TotalCount = planDtos.Count,
-        ActiveCount = planDtos.Count(p => p.IsActive),
-        InactiveCount = planDtos.Count(p => !p.IsActive)
-      };
-
-      return SuccessResp.Ok(result);
+      return SuccessResp.Ok(planDtos);
     }
     catch (Exception ex)
     {

@@ -6,6 +6,7 @@ public class CreateMessage
 {
   public Guid ConversationId { get; set; }
   public string Content { get; set; } = null!;
+  public bool IsBot { get; set; }
   public JsonDocument? Metadata { get; set; }
 }
 

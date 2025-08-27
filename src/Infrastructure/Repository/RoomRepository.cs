@@ -23,6 +23,8 @@ public class RoomRepository : IRoomRepository
     {
         await _database.StringSetAsync($"room:{room.Id}", JsonSerializer.Serialize(room));
         await _database.SetAddAsync($"room:event:{room.EventId}", room.Id);
+        // tour state
+        await _database.StringSetAsync($"room:tour:{room.Id}", "");
     }
 
     public async Task DeleteRoom(string id)
@@ -47,5 +49,6 @@ public class RoomRepository : IRoomRepository
     public async Task UpdateRoom(string id, Room room)
     {
         await _database.StringSetAsync($"room:{id}", JsonSerializer.Serialize(room));
+        await _database.StringSetAsync($"room:tour:{id}", room.Metadata?.ToString() ?? "");
     }
 }

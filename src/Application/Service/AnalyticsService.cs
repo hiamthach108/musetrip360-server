@@ -12,6 +12,8 @@ public interface IAnalyticsService
 {
   Task<IActionResult> GetOverview(Guid museumId);
   Task<IActionResult> GetAdminOverview();
+  Task<IActionResult> GetWeeklyEventsAnalytics();
+  Task<IActionResult> GetWeeklyParticipantsAnalytics(Guid museumId);
 }
 
 public class AnalyticsService : BaseService, IAnalyticsService
@@ -69,6 +71,37 @@ public class AnalyticsService : BaseService, IAnalyticsService
     catch (ArgumentException ex)
     {
       return ErrorResp.NotFound(ex.Message);
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError(ex.Message);
+    }
+  }
+
+  public async Task<IActionResult> GetWeeklyEventsAnalytics()
+  {
+    try
+    {
+      var weeklyAnalytics = await _analyticsRepository.GetWeeklyEventsAnalytics();
+      return SuccessResp.Ok(weeklyAnalytics);
+    }
+    catch (Exception ex)
+    {
+      return ErrorResp.InternalServerError(ex.Message);
+    }
+  }
+
+  public async Task<IActionResult> GetWeeklyParticipantsAnalytics(Guid museumId)
+  {
+    try
+    {
+      if (museumId == Guid.Empty)
+      {
+        return ErrorResp.BadRequest("Invalid museum ID.");
+      }
+
+      var weeklyParticipants = await _analyticsRepository.GetWeeklyParticipantsAnalytics(museumId);
+      return SuccessResp.Ok(weeklyParticipants);
     }
     catch (Exception ex)
     {

@@ -33,4 +33,20 @@ public class AnalyticsController : ControllerBase
     _logger.LogInformation("GetAdminOverview request received");
     return await _analyticsService.GetAdminOverview();
   }
+
+  [Protected]
+  [HttpGet("weekly-events")]
+  public async Task<IActionResult> GetWeeklyEventsAnalytics()
+  {
+    _logger.LogInformation("GetWeeklyEventsAnalytics request received");
+    return await _analyticsService.GetWeeklyEventsAnalytics();
+  }
+
+  [Protected]
+  [HttpGet("weekly-participants/{museumId}")]
+  public async Task<IActionResult> GetWeeklyParticipantsAnalytics(Guid museumId)
+  {
+    _logger.LogInformation("GetWeeklyParticipantsAnalytics request received for museumId: {MuseumId}", museumId);
+    return await _analyticsService.GetWeeklyParticipantsAnalytics(museumId);
+  }
 }

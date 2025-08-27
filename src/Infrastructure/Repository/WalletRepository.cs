@@ -1,3 +1,4 @@
+using Application.Shared.Enum;
 using Database;
 using Domain.Payment;
 using Microsoft.EntityFrameworkCore;
@@ -7,11 +8,18 @@ namespace Infrastructure.Repository;
 public interface IWalletRepository
 {
     public Task<MuseumWallet> InitWallet(Guid museumId);
-    //public Task UpdateWallet(Guid museumId, float amount);
+    public Task HoldBalanceRequest(Guid walletId, float amount);
+    public Task WithdrawBalance(Guid walletId);
     public Task<MuseumWallet?> GetWalletByMuseumId(Guid museumId);
     public Task AddBalance(Guid walletId, float amount);
     //public Task SubtractBalance(Guid museumId, float amount);
     public Task<MuseumWallet?> GetById(Guid walletId);
+    public Task CreatePayout(Payout payout);
+    public Task UpdatePayout(Payout payout);
+    public Task<Payout?> GetPayoutById(Guid id);
+    public Task<List<Payout>> GetPayoutsByMuseumId(Guid museumId);
+    public Task<List<Payout>> GetPayoutsByStatus(PayoutStatusEnum status);
+
 }
 
 public class WalletRepository : IWalletRepository
@@ -55,4 +63,53 @@ public class WalletRepository : IWalletRepository
     {
         return await _dbContext.MuseumWallets.FindAsync(walletId);
     }
+    public async Task CreatePayout(Payout payout)
+    {
+        await _dbContext.Payouts.AddAsync(payout);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task UpdatePayout(Payout payout)
+    {
+        var existingPayout = await GetPayoutById(payout.Id);
+        if (existingPayout == null) return;
+        _dbContext.Entry(existingPayout).CurrentValues.SetValues(payout);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<Payout?> GetPayoutById(Guid id)
+    {
+        return await _dbContext.Payouts.FindAsync(id);
+    }
+
+    public async Task<List<Payout>> GetPayoutsByMuseumId(Guid museumId)
+    {
+        return await _dbContext.Payouts.Where(p => p.MuseumId == museumId)
+        .OrderByDescending(p => p.CreatedAt)
+        .ToListAsync();
+    }
+
+    public async Task<List<Payout>> GetPayoutsByStatus(PayoutStatusEnum status)
+    {
+        return await _dbContext.Payouts.Where(p => p.Status == status)
+        .OrderByDescending(p => p.CreatedAt)
+        .ToListAsync();
+    }
+
+    public async Task HoldBalanceRequest(Guid walletId, float amount)
+    {
+        var wallet = await GetById(walletId);
+        if (wallet == null) return;
+        wallet.HoldBalance(amount);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task WithdrawBalance(Guid walletId)
+    {
+        var wallet = await GetById(walletId);
+        if (wallet == null) return;
+        wallet.WithdrawBalance();
+        await _dbContext.SaveChangesAsync();
+    }
+
 }

@@ -5,8 +5,10 @@ using Application.DTOs.Pagination;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Messaging;
+
 public class NotificationDto
 {
+  public Guid Id { get; set; }
   public string Title { get; set; } = null!;
   public string Message { get; set; } = null!;
   public string Type { get; set; } = null!;
