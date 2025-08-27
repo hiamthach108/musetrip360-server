@@ -1,6 +1,7 @@
 namespace Application.Workers;
 
 using System.Text.Json;
+using Application.DTOs.Email;
 using Application.DTOs.Notification;
 using Application.Service;
 using Application.Shared.Constant;
@@ -67,7 +68,8 @@ public class EventNotificationWorker : BackgroundService
             Id = ep.Id,
             UserId = ep.UserId,
             EventId = ep.EventId,
-            Status = ep.Status
+            Status = ep.Status,
+            User = ep.User
           }).ToList()
         })
         .ToListAsync();
@@ -80,12 +82,23 @@ public class EventNotificationWorker : BackgroundService
 
         _logger.LogInformation($"Event '{eventItem.Title}' has {activeParticipants.Count} confirmed participants");
 
+        // Get participant emails for bulk email sending
+        var participantUserIds = activeParticipants.Select(p => p.UserId).ToList();
+        var participantEmails = activeParticipants.Select(p => p.User.Email).ToList();
+
+        // Send email reminders
+        if (participantEmails.Any())
+        {
+          await SendEventReminderEmails(queuePublisher, eventItem, participantEmails);
+        }
+
+        // Send push notifications
         foreach (var participant in activeParticipants)
         {
           var notification = new CreateNotificationDto
           {
-            Title = "Event Starting Soon",
-            Message = $"Your event '{eventItem.Title}' will start in 30 minutes at {eventItem.Location}",
+            Title = "Sự Kiện Sắp Bắt Đầu",
+            Message = $"Sự kiện '{eventItem.Title}' của bạn sẽ bắt đầu trong 30 phút tại {eventItem.Location}",
             UserId = participant.UserId,
             Target = NotificationTargetEnum.User,
             Type = "Event",
@@ -113,6 +126,58 @@ public class EventNotificationWorker : BackgroundService
     {
       _logger.LogError(ex, "Error occurred in EventNotificationWorker");
     }
+  }
+
+  private async Task SendEventReminderEmails(IQueuePublisher queuePublisher, Event eventItem, List<string> participantEmails)
+  {
+    try
+    {
+      var emailRequest = new SendEmailDto
+      {
+        Type = "event-reminder",
+        Recipients = participantEmails,
+        Subject = "Nhắc Nhở Sự Kiện - MuseTrip360",
+        TemplateData = new Dictionary<string, object>
+        {
+          ["eventId"] = eventItem.Id.ToString(),
+          ["participantName"] = "Người Tham Gia",
+          ["eventTitle"] = eventItem.Title ?? "Sự Kiện",
+          ["eventDate"] = eventItem.StartTime.ToString("MMMM dd, yyyy"),
+          ["eventTime"] = eventItem.StartTime.ToString("HH:mm"),
+          ["eventLocation"] = eventItem.Location ?? "Trực Tuyến",
+          ["eventDuration"] = CalculateEventDuration(eventItem.StartTime, eventItem.EndTime),
+          ["timeUntilEvent"] = "30 phút",
+          ["eventDetailsLink"] = $"https://musetrip360.com/event/{eventItem.Id}"
+        }
+      };
+
+      var result = await queuePublisher.Publish(QueueConst.Email, emailRequest);
+
+      if (result.Success)
+      {
+        _logger.LogInformation("Event reminder emails queued for {Count} recipients for event '{EventTitle}'",
+          participantEmails.Count, eventItem.Title);
+      }
+      else
+      {
+        _logger.LogError("Failed to queue event reminder emails for event '{EventTitle}': {ErrorMessage}",
+          eventItem.Title, result.ErrorMessage);
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error sending event reminder emails for event '{EventTitle}'", eventItem.Title);
+    }
+  }
+
+  private string CalculateEventDuration(DateTime startTime, DateTime endTime)
+  {
+    var duration = endTime - startTime;
+    if (duration.TotalHours >= 1)
+    {
+      return $"{(int)duration.TotalHours} giờ {duration.Minutes} phút";
+    }
+    return $"{duration.Minutes} phút";
   }
 
   public override void Dispose()
