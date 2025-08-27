@@ -4,6 +4,7 @@ using Domain.Payment;
 
 public class PayoutDto
 {
+    public Guid Id { get; set; }
     public Guid MuseumId { get; set; }
     public Guid BankAccountId { get; set; }
     public float Amount { get; set; }

@@ -15,10 +15,11 @@ public interface IWalletService
     public Task AddBalance(Guid walletId, float amount);
     public Task<IActionResult> HandleGetWalletByMuseumId(Guid museumId);
     public Task<IActionResult> HandleCreatePayoutRequest(PayoutReq req);
-    public Task<IActionResult> HandleElevatePayout(Guid payoutId, bool isApproved);
+    public Task<IActionResult> HandleElevatePayout(Guid payoutId, Guid walletId, bool isApproved);
     public Task<IActionResult> HandleGetPayoutById(Guid id);
     public Task<IActionResult> HandleGetPayoutsByMuseumId(Guid museumId);
     public Task<IActionResult> HandleGetPayoutByStatus(PayoutStatusEnum status);
+    public Task<IActionResult> HandleCreateMuseumWallet(Guid museumId);
 }
 public class WalletService : BaseService, IWalletService
 {
@@ -124,12 +125,12 @@ public class WalletService : BaseService, IWalletService
         }
     }
 
-    public async Task<IActionResult> HandleElevatePayout(Guid payoutId, bool isApproved)
+    public async Task<IActionResult> HandleElevatePayout(Guid payoutId, Guid walletId, bool isApproved)
     {
         try
         {
             var payload = ExtractPayload();
-            if (payload == null || !payload.IsAdmin)
+            if (payload == null)
             {
                 return ErrorResp.Unauthorized("Unauthorized");
             }
@@ -145,7 +146,17 @@ public class WalletService : BaseService, IWalletService
                 return ErrorResp.BadRequest("Payout is not pending");
             }
             //update payout status
-            payout.Status = isApproved ? PayoutStatusEnum.Approved : PayoutStatusEnum.Rejected;
+            payout.ProcessedDate = DateTime.UtcNow;
+            if (isApproved)
+            {
+                await _walletRepository.WithdrawBalance(walletId);
+                payout.Status = PayoutStatusEnum.Approved;
+            }
+            else
+            {
+                await _walletRepository.RejectPayout(walletId);
+                payout.Status = PayoutStatusEnum.Rejected;
+            }
             await _walletRepository.UpdatePayout(payout);
             return SuccessResp.Ok(_mapper.Map<PayoutDto>(payout));
         }
@@ -190,7 +201,7 @@ public class WalletService : BaseService, IWalletService
         try
         {
             var payload = ExtractPayload();
-            if (payload == null || !payload.IsAdmin)
+            if (payload == null)
             {
                 return ErrorResp.Unauthorized("Unauthorized");
             }
@@ -200,6 +211,29 @@ public class WalletService : BaseService, IWalletService
                 return ErrorResp.NotFound("Payouts not found");
             }
             return SuccessResp.Ok(_mapper.Map<List<PayoutDto>>(payouts));
+        }
+        catch (Exception ex)
+        {
+            return ErrorResp.InternalServerError(ex.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleCreateMuseumWallet(Guid museumId)
+    {
+        try
+        {
+            var museum = await _museumRepository.GetByIdAsync(museumId);
+            if (museum == null)
+            {
+                return ErrorResp.NotFound("Museum not found");
+            }
+            var wallet = await _walletRepository.GetWalletByMuseumId(museumId);
+            if (wallet != null)
+            {
+                return ErrorResp.BadRequest("Wallet already exists");
+            }
+            await _walletRepository.InitWallet(museumId);
+            return SuccessResp.Ok("Wallet created successfully");
         }
         catch (Exception ex)
         {

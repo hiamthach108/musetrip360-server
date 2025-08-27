@@ -65,6 +65,7 @@ public class WalletController : ControllerBase
     /// Approve a pending payout request (Admin only)
     /// </summary>
     /// <param name="payoutId">The unique identifier of the payout to approve</param>
+    /// <param name="walletId">The unique identifier of the wallet</param>
     /// <returns>Updated payout information</returns>
     /// <response code="200">Payout approved successfully</response>
     /// <response code="400">Bad request - Payout is not in pending status</response>
@@ -72,16 +73,17 @@ public class WalletController : ControllerBase
     /// <response code="404">Payout not found</response>
     [Protected]
     [HttpPut("payouts/{payoutId}/approve")]
-    public async Task<IActionResult> ApprovePayout(Guid payoutId)
+    public async Task<IActionResult> ApprovePayout(Guid payoutId, Guid walletId)
     {
         _logger.LogInformation("Approve payout request received for payout: {PayoutId}", payoutId);
-        return await _walletService.HandleElevatePayout(payoutId, true);
+        return await _walletService.HandleElevatePayout(payoutId, walletId, true);
     }
 
     /// <summary>
     /// Reject a pending payout request (Admin only)
     /// </summary>
     /// <param name="payoutId">The unique identifier of the payout to reject</param>
+    /// <param name="walletId">The unique identifier of the wallet</param>
     /// <returns>Updated payout information</returns>
     /// <response code="200">Payout rejected successfully</response>
     /// <response code="400">Bad request - Payout is not in pending status</response>
@@ -89,10 +91,10 @@ public class WalletController : ControllerBase
     /// <response code="404">Payout not found</response>
     [Protected]
     [HttpPut("payouts/{payoutId}/reject")]
-    public async Task<IActionResult> RejectPayout(Guid payoutId)
+    public async Task<IActionResult> RejectPayout(Guid payoutId, Guid walletId)
     {
         _logger.LogInformation("Reject payout request received for payout: {PayoutId}", payoutId);
-        return await _walletService.HandleElevatePayout(payoutId, false);
+        return await _walletService.HandleElevatePayout(payoutId, walletId, false);
     }
 
     /// <summary>
@@ -140,5 +142,21 @@ public class WalletController : ControllerBase
     {
         _logger.LogInformation("Get payouts by status request received for status: {Status}", status);
         return await _walletService.HandleGetPayoutByStatus(status);
+    }
+
+    /// <summary>
+    /// Create wallet for museums
+    /// </summary>
+    /// <param name="museumId">The unique identifier of the museum</param>
+    /// <returns>Wallet information including balance details</returns>
+    /// <response code="200">Returns the wallet information</response>
+    /// <response code="401">Unauthorized - User is not authenticated</response>
+    /// <response code="404">Wallet not found for the specified museum</response>
+    [Protected]
+    [HttpPost("museum/{museumId}")]
+    public async Task<IActionResult> CreateMuseumWallet(Guid museumId)
+    {
+        _logger.LogInformation("Create museum wallet request received for museum: {MuseumId}", museumId);
+        return await _walletService.HandleCreateMuseumWallet(museumId);
     }
 }

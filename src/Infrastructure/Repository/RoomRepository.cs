@@ -8,6 +8,8 @@ public interface IRoomRepository
     Task UpdateRoom(string id, Room room);
     Task DeleteRoom(string id);
     Task<IEnumerable<Room>> GetRoomByEventId(Guid id);
+    Task UpdateTourState(string roomId, string state);
+    Task<string?> GetTourStateByRoomId(string roomId);
 }
 
 public class RoomRepository : IRoomRepository
@@ -24,7 +26,7 @@ public class RoomRepository : IRoomRepository
         await _database.StringSetAsync($"room:{room.Id}", JsonSerializer.Serialize(room));
         await _database.SetAddAsync($"room:event:{room.EventId}", room.Id);
         // tour state
-        await _database.StringSetAsync($"room:tour:{room.Id}", "");
+        await _database.StringSetAsync($"room:{room.Id}:tour", "");
     }
 
     public async Task DeleteRoom(string id)
@@ -49,6 +51,14 @@ public class RoomRepository : IRoomRepository
     public async Task UpdateRoom(string id, Room room)
     {
         await _database.StringSetAsync($"room:{id}", JsonSerializer.Serialize(room));
-        await _database.StringSetAsync($"room:tour:{id}", room.Metadata?.ToString() ?? "");
+    }
+    public async Task UpdateTourState(string roomId, string state)
+    {
+        await _database.StringSetAsync($"room:{roomId}:tour", state);
+    }
+
+    public async Task<string?> GetTourStateByRoomId(string roomId)
+    {
+        return await _database.StringGetAsync($"room:{roomId}:tour");
     }
 }

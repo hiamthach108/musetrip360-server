@@ -12,6 +12,6 @@ public class Payout : BaseEntity
   public DateTime ProcessedDate { get; set; }
   public PayoutStatusEnum Status { get; set; }
 
-  public Museum Museum { get; set; } = new();
-  public BankAccount BankAccount { get; set; } = new();
+  public Museum Museum { get; set; } = null!;
+  public BankAccount BankAccount { get; set; } = null!;
 }

@@ -77,7 +77,6 @@ public class SignalingHub : Hub
         }
         //send metadata to room 
         await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("ReceiveRoomState", metadata);
-        await Clients.OthersInGroup(sfu.GetRoomId()).SendAsync("SendTourActionToRoom", sfu.GetRoomId(), metadata);
         var dto = new RoomUpdateMetadataDto
         {
             Metadata = JsonDocument.Parse(metadata)
@@ -120,9 +119,10 @@ public class SignalingHub : Hub
         Clients.OthersInGroup(roomId).SendAsync("ReceiveChatMessage", message);
     }
 
-    public void SendTourActionToRoom(string roomId, string action)
+    public async Task SendTourActionToRoom(string roomId, string action)
     {
-        Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", action);
+        _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
+        await _roomStateManager.HandleUpdateTourState(roomId, action);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

@@ -23,6 +23,13 @@ public class MuseumWallet : BaseEntity
   }
   public void WithdrawBalance()
   {
+    TotalBalance -= PendingBalance;
+    PendingBalance = 0;
+  }
+
+  public void RejectPayout()
+  {
+    AvailableBalance += PendingBalance;
     PendingBalance = 0;
   }
 }

@@ -10,6 +10,7 @@ public interface IWalletRepository
     public Task<MuseumWallet> InitWallet(Guid museumId);
     public Task HoldBalanceRequest(Guid walletId, float amount);
     public Task WithdrawBalance(Guid walletId);
+    public Task RejectPayout(Guid walletId);
     public Task<MuseumWallet?> GetWalletByMuseumId(Guid museumId);
     public Task AddBalance(Guid walletId, float amount);
     //public Task SubtractBalance(Guid museumId, float amount);
@@ -109,6 +110,14 @@ public class WalletRepository : IWalletRepository
         var wallet = await GetById(walletId);
         if (wallet == null) return;
         wallet.WithdrawBalance();
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task RejectPayout(Guid walletId)
+    {
+        var wallet = await GetById(walletId);
+        if (wallet == null) return;
+        wallet.RejectPayout();
         await _dbContext.SaveChangesAsync();
     }
 
