@@ -122,92 +122,158 @@ public class PaymentService : BaseService, IPaymentService
 
   public async Task<IActionResult> HandleCreateOrder(CreateOrderReq req)
   {
-    var payload = ExtractPayload();
-    if (payload == null)
+    using (var transaction = await _dbContext.Database.BeginTransactionAsync())
     {
-      return ErrorResp.Unauthorized("Invalid token");
-    }
-    var listItem = new List<ItemData>();
-    var totalAmount = 0;
-
-    if (req.OrderType == OrderTypeEnum.Event)
-    {
-      var orderEventExists = await _orderRepo.VerifyOrderEventExists(payload.UserId, req.ItemIds);
-      if (orderEventExists)
+      try
       {
-        return ErrorResp.BadRequest("Event already exists in order");
-      }
-      var events = new List<Event>();
-      foreach (var itemId in req.ItemIds)
-      {
-        var ev = await _eventRepo.GetEventById(itemId);
-        if (ev == null)
+        var payload = ExtractPayload();
+        if (payload == null)
         {
-          return ErrorResp.NotFound("Event not found");
+          return ErrorResp.Unauthorized("Invalid token");
         }
-        events.Add(ev);
-      }
+        var listItem = new List<ItemData>();
+        var totalAmount = 0;
 
-      listItem.AddRange(events.Where(e => e != null).Select(e => new ItemData(e!.Id.ToString(), 1, (int)e!.Price)));
-      totalAmount = (int)events.Sum(e => e!.Price);
-    }
-    else if (req.OrderType == OrderTypeEnum.Tour)
-    {
-      var orderTourExists = await _orderRepo.VerifyOrderTourExists(payload.UserId, req.ItemIds);
-      if (orderTourExists)
-      {
-        return ErrorResp.BadRequest("Tour already exists in order");
-      }
-      var tours = new List<TourOnline>();
-      foreach (var itemId in req.ItemIds)
-      {
-        var tour = await _tourRepo.GetByIdAsync(itemId);
-        if (tour == null)
+        if (req.OrderType == OrderTypeEnum.Event)
         {
-          return ErrorResp.NotFound("Tour not found");
+          var freeEventExclude = new List<Guid>();
+          var orderEventExists = await _orderRepo.VerifyOrderEventExists(payload.UserId, req.ItemIds);
+          if (orderEventExists)
+          {
+            return ErrorResp.BadRequest("Event already exists in order");
+          }
+          var events = new List<Event>();
+          foreach (var itemId in req.ItemIds)
+          {
+            var ev = await _eventRepo.GetEventById(itemId);
+            if (ev == null)
+            {
+              return ErrorResp.NotFound("Event not found");
+            }
+            if (ev.AvailableSlots == 0)
+            {
+              return ErrorResp.BadRequest("Event is full");
+            }
+            if (ev.Price == 0)
+            {
+              freeEventExclude.Add(ev.Id);
+              // create order
+              var order = new Order();
+              order.CreatedBy = payload.UserId;
+              order.Status = PaymentStatusEnum.Success;
+              order.OrderType = req.OrderType;
+              order.TotalAmount = 0;
+              order.OrderCode = "free-event";
+              order.OrderEvents = [new OrderEvent { EventId = ev.Id }];
+              await _orderRepo.AddAsync(order);
+              // create payment
+              var payment = new Payment();
+              payment.OrderId = order.Id;
+              payment.Amount = 0;
+              payment.Status = PaymentStatusEnum.Success;
+              payment.PaymentMethod = PaymentMethodEnum.Cash; // free event default is cash 
+              payment.CreatedBy = payload.UserId;
+              await _paymentRepo.AddAsync(payment);
+              // create event participant
+              var eventParticipant = new EventParticipant();
+              eventParticipant.EventId = ev.Id;
+              eventParticipant.UserId = payload.UserId;
+              eventParticipant.JoinedAt = DateTime.UtcNow;
+              eventParticipant.Role = ParticipantRoleEnum.Attendee;
+              eventParticipant.Status = ParticipantStatusEnum.Confirmed;
+              await _eventParticipantRepo.AddAsync(eventParticipant);
+              // decrease the available slots
+              ev.AvailableSlots--;
+              await _eventRepo.UpdateAsync(ev.Id, ev);
+            }
+            else
+            {
+              events.Add(ev);
+            }
+          }
+          // exclude free event from list item
+          if (freeEventExclude.Count > 0)
+          {
+            req.ItemIds = req.ItemIds.Where(id => !freeEventExclude.Contains(id)).ToList();
+          }
+
+          listItem.AddRange(events
+            .Where(e => e != null)
+            .Select(e => new ItemData(e!.Id.ToString(), 1, (int)e!.Price)));
+
+          totalAmount = (int)events.Sum(e => e!.Price);
         }
-        tours.Add(tour);
+        else if (req.OrderType == OrderTypeEnum.Tour)
+        {
+          var orderTourExists = await _orderRepo.VerifyOrderTourExists(payload.UserId, req.ItemIds);
+          if (orderTourExists)
+          {
+            return ErrorResp.BadRequest("Tour already exists in order");
+          }
+          var tours = new List<TourOnline>();
+          foreach (var itemId in req.ItemIds)
+          {
+            var tour = await _tourRepo.GetByIdAsync(itemId);
+            if (tour == null)
+            {
+              return ErrorResp.NotFound("Tour not found");
+            }
+            tours.Add(tour);
+          }
+          listItem.AddRange(tours.Where(t => t != null).Select(t => new ItemData(t!.Id.ToString(), 1, (int)t.Price)));
+          totalAmount = (int)tours.Sum(t => t.Price);
+        }
+        // if the they only buy free event, return message
+        if (totalAmount == 0 && req.ItemIds.Count == 0)
+        {
+          return SuccessResp.Ok("Order is free");
+        }
+        var snowflake = new SnowflakeId(1);
+        var orderCode = snowflake.GenerateOrderId();
+        var paymentData = new PaymentData(
+          orderCode: orderCode,
+          amount: totalAmount,
+          description: $"Payment for {orderCode}",
+          items: listItem,
+          cancelUrl: req.CancelUrl,
+          returnUrl: req.ReturnUrl
+        );
+
+        var paymentResult = await _payOSService.CreatePayment(paymentData);
+
+        var msg = _mapper.Map<CreateOrderMsg>(req);
+        msg.CreatedBy = payload.UserId;
+        msg.OrderCode = paymentResult.orderCode.ToString();
+        msg.TotalAmount = totalAmount;
+        msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
+        msg.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult));
+        await _queuePub.Publish(QueueConst.Order, msg);
+        // commit change
+        await transaction.CommitAsync();
+        return SuccessResp.Ok(new
+        {
+          paymentResult.checkoutUrl,
+          paymentResult.orderCode,
+          paymentResult.expiredAt,
+          paymentResult.paymentLinkId,
+          paymentResult.status,
+          paymentResult.currency,
+          paymentResult.amount,
+          paymentResult.description,
+          paymentResult.bin,
+          paymentResult.accountNumber,
+          paymentResult.qrCode,
+          req.CancelUrl,
+          req.ReturnUrl
+        });
       }
-      listItem.AddRange(tours.Where(t => t != null).Select(t => new ItemData(t!.Id.ToString(), 1, (int)t.Price)));
-      totalAmount = (int)tours.Sum(t => t.Price);
+      catch (System.Exception)
+      {
+        await transaction.RollbackAsync();
+        throw;
+      }
+
     }
-    var snowflake = new SnowflakeId(1);
-    var orderCode = snowflake.GenerateOrderId();
-    var paymentData = new PaymentData(
-      orderCode: orderCode,
-      amount: totalAmount,
-      description: $"Payment for {orderCode}",
-      items: listItem,
-      cancelUrl: req.CancelUrl,
-      returnUrl: req.ReturnUrl
-    );
-
-    var paymentResult = await _payOSService.CreatePayment(paymentData);
-
-    var msg = _mapper.Map<CreateOrderMsg>(req);
-    msg.CreatedBy = payload.UserId;
-    msg.OrderCode = paymentResult.orderCode.ToString();
-    msg.TotalAmount = totalAmount;
-    msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
-    msg.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult));
-    await _queuePub.Publish(QueueConst.Order, msg);
-
-    return SuccessResp.Ok(new
-    {
-      paymentResult.checkoutUrl,
-      paymentResult.orderCode,
-      paymentResult.expiredAt,
-      paymentResult.paymentLinkId,
-      paymentResult.status,
-      paymentResult.currency,
-      paymentResult.amount,
-      paymentResult.description,
-      paymentResult.bin,
-      paymentResult.accountNumber,
-      paymentResult.qrCode,
-      req.CancelUrl,
-      req.ReturnUrl
-    });
   }
 
   public async Task<OrderDto> CreateOrder(CreateOrderMsg msg)
@@ -426,6 +492,10 @@ public class PaymentService : BaseService, IPaymentService
           {
             throw new Exception("Event not found");
           }
+          if (eventItem.AvailableSlots == 0)
+          {
+            throw new Exception("Event is full");
+          }
           // add to museum balance
           var museum = await _museumRepo.GetByIdAsync(eventItem.MuseumId);
           if (museum == null)
@@ -450,6 +520,9 @@ public class PaymentService : BaseService, IPaymentService
           await _transactionRepo.CreateTransaction(transactionItem);
           // add balance after
           await _walletRepo.AddBalance(wallet.Id, eventItem.Price);
+          // decrease event available slots
+          eventItem.AvailableSlots--;
+          await _eventRepo.UpdateAsync(eventItem.Id, eventItem);
         }
       }
       // tou online case
