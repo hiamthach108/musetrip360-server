@@ -359,7 +359,7 @@ public class UserService : BaseService, IUserService
     // check if user is super admin
     var superAdminKey = $"users:{payload.UserId}:superadmin";
     var superAdminCache = await _cacheSvc.Get<bool?>(superAdminKey);
-    if (superAdminCache != null)
+    if (superAdminCache != null && superAdminCache.Value == true)
     {
       return superAdminCache.Value;
     }
@@ -375,7 +375,7 @@ public class UserService : BaseService, IUserService
 
     foreach (var permission in permissions)
     {
-      if (privileges.ContainsKey(permission))
+      if (privileges.ContainsKey($"{museumId}.{permission}"))
       {
         return true;
       }

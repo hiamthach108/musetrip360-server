@@ -5,6 +5,7 @@ using Application.Shared.Type;
 using AutoMapper;
 using Database;
 using Domain.Rolebase;
+using Infrastructure.Cache;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,11 +33,14 @@ public class RolebaseService : BaseService, IRolebaseService
   private readonly IPermissionRepository _permissionRepo;
   private readonly IUserRoleRepository _userRoleRepo;
   private readonly IMapper _mapper;
+  private readonly ICacheService _cacheSvc;
+
 
   public RolebaseService(
     ILogger<RolebaseService> logger,
     IMapper mapper,
     MuseTrip360DbContext dbContext,
+    ICacheService cacheSvc,
     IHttpContextAccessor httpContextAccessor) : base(dbContext, mapper, httpContextAccessor)
   {
     _logger = logger;
@@ -44,6 +48,7 @@ public class RolebaseService : BaseService, IRolebaseService
     _permissionRepo = new PermissionRepository(dbContext);
     _userRoleRepo = new UserRoleRepository(dbContext);
     _mapper = mapper;
+    _cacheSvc = cacheSvc;
   }
 
   // Role Management Methods
@@ -168,6 +173,9 @@ public class RolebaseService : BaseService, IRolebaseService
 
     // Update role permissions
     var result = await _roleRepo.UpdateRolePermissionsAsync(id, dto.AddList, dto.RemoveList);
+
+    // clear cache
+    await _cacheSvc.ClearWithPattern("privileges*");
     return SuccessResp.Ok(_mapper.Map<RoleDto>(result));
   }
 
@@ -233,6 +241,7 @@ public class RolebaseService : BaseService, IRolebaseService
     _mapper.Map(dto, existingPermission);
     // Update the permission
     var result = await _permissionRepo.UpdateAsync(id, existingPermission);
+    await _cacheSvc.ClearWithPattern("privileges*");
     return SuccessResp.Ok(_mapper.Map<PermissionDto>(result));
   }
 
@@ -247,6 +256,7 @@ public class RolebaseService : BaseService, IRolebaseService
     }
 
     var result = await _permissionRepo.DeleteAsync(permission);
+    await _cacheSvc.ClearWithPattern("privileges*");
     return SuccessResp.Ok(_mapper.Map<PermissionDto>(result));
   }
 }

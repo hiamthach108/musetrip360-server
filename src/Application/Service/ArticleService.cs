@@ -8,6 +8,7 @@ using Application.DTOs.Article;
 using Application.Shared.Type;
 using Domain.Museums;
 using Application.Shared.Enum;
+using Application.Shared.Constant;
 
 public interface IArticleService
 {
@@ -23,12 +24,15 @@ public class ArticleService : BaseService, IArticleService
 {
     private readonly IArticleRepository _articleRepository;
     private readonly IMuseumRepository _museumRepository;
+    private readonly IUserService _userSvc;
 
-    public ArticleService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+
+    public ArticleService(MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor, IUserService userSvc)
         : base(dbContext, mapper, httpContextAccessor)
     {
         _articleRepository = new ArticleRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
+        _userSvc = userSvc;
     }
 
     public async Task<IActionResult> HandleGetAll(ArticleQuery query)
@@ -107,6 +111,12 @@ public class ArticleService : BaseService, IArticleService
             if (!_museumRepository.IsMuseumExists(createDto.MuseumId))
                 return ErrorResp.BadRequest("Museum not found");
 
+            var isAllowed = await _userSvc.ValidatePermission(createDto.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
+
             var article = _mapper.Map<Article>(createDto);
             article.CreatedBy = payload.UserId;
             article.Status = createDto.Status == ArticleStatusEnum.Draft ? ArticleStatusEnum.Draft : ArticleStatusEnum.Pending;
@@ -133,6 +143,12 @@ public class ArticleService : BaseService, IArticleService
             var existingArticle = await _articleRepository.GetByIdAsync(id);
             if (existingArticle == null)
                 return ErrorResp.NotFound("Article not found");
+
+            var isAllowed = await _userSvc.ValidatePermission(existingArticle.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             if (updateDto.Status == ArticleStatusEnum.Published && existingArticle.Status != ArticleStatusEnum.Pending)
                 return ErrorResp.BadRequest("Article must be in Pending status to be published");
@@ -170,6 +186,12 @@ public class ArticleService : BaseService, IArticleService
             var article = await _articleRepository.GetByIdAsync(id);
             if (article == null)
                 return ErrorResp.NotFound("Article not found");
+
+            var isAllowed = await _userSvc.ValidatePermission(article.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             await _articleRepository.DeleteAsync(article);
             return SuccessResp.Ok("Article deleted successfully");
