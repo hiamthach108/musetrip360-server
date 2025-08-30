@@ -111,7 +111,7 @@ public class WalletService : BaseService, IWalletService
                 {
                     return ErrorResp.NotFound("Museum not found");
                 }
-                var backAccount = await _bankAccountRepository.GetByMuseumIdAsync(req.MuseumId);
+                var backAccount = await _bankAccountRepository.GetByIdAsync(req.BankAccountId);
                 if (backAccount == null)
                 {
                     return ErrorResp.NotFound("Bank account not found");
