@@ -20,11 +20,13 @@ public interface IWalletService
     public Task<IActionResult> HandleGetPayoutsByMuseumId(Guid museumId);
     public Task<IActionResult> HandleGetPayoutByStatus(PayoutStatusEnum status);
     public Task<IActionResult> HandleCreateMuseumWallet(Guid museumId);
+    public Task<IActionResult> HandleGetPayoutsAdmin(PayoutQuery query);
 }
 public class WalletService : BaseService, IWalletService
 {
     private readonly IWalletRepository _walletRepository;
     private readonly IMuseumRepository _museumRepository;
+    private readonly IBankAccountRepository _bankAccountRepository;
     public WalletService(
         MuseTrip360DbContext dbContext,
         IMapper mapper,
@@ -34,6 +36,7 @@ public class WalletService : BaseService, IWalletService
     {
         _walletRepository = new WalletRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
+        _bankAccountRepository = new BankAccountRepository(dbContext);
     }
 
     public async Task InitWallet(Guid museumId)
@@ -103,6 +106,16 @@ public class WalletService : BaseService, IWalletService
                 if (wallet == null)
                 {
                     return ErrorResp.NotFound("Wallet not found");
+                }
+                var museum = await _museumRepository.GetByIdAsync(req.MuseumId);
+                if (museum == null)
+                {
+                    return ErrorResp.NotFound("Museum not found");
+                }
+                var backAccount = await _bankAccountRepository.GetByIdAsync(req.BankAccountId);
+                if (backAccount == null)
+                {
+                    return ErrorResp.NotFound("Bank account not found");
                 }
                 if (wallet.AvailableBalance < req.Amount)
                 {
@@ -239,6 +252,29 @@ public class WalletService : BaseService, IWalletService
             }
             await _walletRepository.InitWallet(museumId);
             return SuccessResp.Ok("Wallet created successfully");
+        }
+        catch (Exception ex)
+        {
+            return ErrorResp.InternalServerError(ex.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetPayoutsAdmin(PayoutQuery query)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            var payouts = await _walletRepository.GetPayoutsAdmin(query);
+            var payoutDto = _mapper.Map<List<PayoutDto>>(payouts.Payouts);
+            return SuccessResp.Ok(new
+            {
+                Payouts = payoutDto,
+                payouts.Total
+            });
         }
         catch (Exception ex)
         {

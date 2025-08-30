@@ -60,6 +60,7 @@ public class OrderRepository : IOrderRepository
     var orders = await _dbContext.Orders
       .OrderByDescending(o => o.CreatedAt)
       .Include(o => o.CreatedByUser)
+      .OrderByDescending(o => o.CreatedAt)
       .ToListAsync();
     return orders;
   }
@@ -89,7 +90,9 @@ public class OrderRepository : IOrderRepository
       orders = orders.Where(o => o.OrderType == query.OrderType);
     }
 
-    orders = orders.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+    orders = orders
+    .OrderByDescending(o => o.CreatedAt)
+    .Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
 
     return new OrderList
     {
@@ -189,7 +192,9 @@ public class OrderRepository : IOrderRepository
       orders = orders.Where(o => o.OrderType == query.OrderType);
     }
 
-    orders = orders.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
+    orders = orders
+    .OrderByDescending(o => o.CreatedAt)
+    .Skip((query.Page - 1) * query.PageSize).Take(query.PageSize);
 
     return new OrderList
     {

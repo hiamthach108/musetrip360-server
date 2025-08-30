@@ -69,7 +69,11 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 .Include(a => a.Events);
             //return the artifacts and the total
             var total = queryable.Count();
-            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
+            var artifacts = await queryable
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
             return new ArtifactList
             {
                 Artifacts = artifacts,
@@ -85,7 +89,11 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             //return the artifacts and the total
             var total = queryable.Count();
-            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
+            var artifacts = await queryable
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
             return new ArtifactList
             {
                 Artifacts = artifacts,
@@ -115,7 +123,11 @@ namespace MuseTrip360.src.Infrastructure.Repository
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
                 .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
             var total = queryable.Count();
-            var artifacts = await queryable.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToListAsync();
+            var artifacts = await queryable
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
             return new ArtifactList
             {
                 Artifacts = artifacts,
@@ -199,6 +211,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
                      a.Rating <= filterSort.Rating.Value + 0.5f))
                 .Where(a => filterSort.IsActive == null || a.IsActive == filterSort.IsActive)
                 .Where(a => filterSort.MuseumId == null || a.MuseumId == filterSort.MuseumId)
+                .OrderByDescending(a => a.CreatedAt)
                 .OrderBy(sortString);
 
             var total = await queryable.CountAsync();
