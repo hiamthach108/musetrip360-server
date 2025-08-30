@@ -30,11 +30,11 @@ public class EventCreateAdminDto : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (StartTime <= DateTime.Now || EndTime <= DateTime.Now)
+        if (StartTime <= DateTime.UtcNow || EndTime <= DateTime.UtcNow)
         {
             yield return new ValidationResult("Start and end time must be in the future");
         }
-        if (BookingDeadline <= DateTime.Now)
+        if (BookingDeadline <= DateTime.UtcNow)
         {
             yield return new ValidationResult("Booking deadline must be in the future");
         }

@@ -11,6 +11,7 @@ using Infrastructure.Repository;
 using Application.DTOs.UserRole;
 using Application.DTOs.Role;
 using Infrastructure.Cache;
+using Application.Shared.Constant;
 
 public interface IUserService
 {
@@ -264,6 +265,20 @@ public class UserService : BaseService, IUserService
       if (museum == null)
       {
         return ErrorResp.NotFound("Museum not found");
+      }
+
+      var isAllowed = await ValidatePermission(body.MuseumId.ToString(), [PermissionConst.USERS_MANAGEMENT]);
+      if (!isAllowed)
+      {
+        return ErrorResp.Forbidden("You are not allowed to access this resource");
+      }
+    }
+    else
+    {
+      var isAllowed = await ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.USERS_MANAGEMENT]);
+      if (!isAllowed)
+      {
+        return ErrorResp.Forbidden("You are not allowed to access this resource");
       }
     }
 

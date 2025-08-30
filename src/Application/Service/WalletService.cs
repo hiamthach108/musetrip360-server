@@ -7,6 +7,7 @@ using Database;
 using Domain.Payment;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Application.Shared.Constant;
 
 public interface IWalletService
 {
@@ -26,16 +27,19 @@ public class WalletService : BaseService, IWalletService
     private readonly IWalletRepository _walletRepository;
     private readonly IMuseumRepository _museumRepository;
     private readonly IBankAccountRepository _bankAccountRepository;
+    private readonly IUserService _userSvc;
     public WalletService(
         MuseTrip360DbContext dbContext,
         IMapper mapper,
-        IHttpContextAccessor httpContextAccessor
+        IHttpContextAccessor httpContextAccessor,
+        IUserService userService
     )
         : base(dbContext, mapper, httpContextAccessor)
     {
         _walletRepository = new WalletRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
         _bankAccountRepository = new BankAccountRepository(dbContext);
+        _userSvc = userService;
     }
 
     public async Task InitWallet(Guid museumId)
@@ -94,11 +98,10 @@ public class WalletService : BaseService, IWalletService
                 {
                     return ErrorResp.Unauthorized("Unauthorized");
                 }
-                //check if auth of museum
-                var isMuseumOwner = await _museumRepository.ValidateMuseumOwner(req.MuseumId, payload.UserId);
-                if (!isMuseumOwner)
+                var isAllowed = await _userSvc.ValidatePermission(req.MuseumId.ToString(), [PermissionConst.PAYMENT_MANAGEMENT]);
+                if (!isAllowed)
                 {
-                    return ErrorResp.Unauthorized("You are not the owner of this museum");
+                    return ErrorResp.Forbidden("You are not allowed to access this resource");
                 }
                 //check if museum has enough balance
                 var wallet = await _walletRepository.GetWalletByMuseumId(req.MuseumId);
@@ -150,6 +153,11 @@ public class WalletService : BaseService, IWalletService
                 if (payload == null)
                 {
                     return ErrorResp.Unauthorized("Unauthorized");
+                }
+                var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.PAYMENT_MANAGEMENT]);
+                if (!isAllowed)
+                {
+                    return ErrorResp.Forbidden("You are not allowed to access this resource");
                 }
                 //check if payout exists
                 var payout = await _walletRepository.GetPayoutById(payoutId);
@@ -275,6 +283,11 @@ public class WalletService : BaseService, IWalletService
             if (payload == null)
             {
                 return ErrorResp.Unauthorized("Unauthorized");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.PAYMENT_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             var payouts = await _walletRepository.GetPayoutsAdmin(query);
             var payoutDto = _mapper.Map<List<PayoutDto>>(payouts.Payouts);

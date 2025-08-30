@@ -5,10 +5,8 @@ using Application.DTOs.Email;
 using Application.DTOs.Feedback;
 using Application.DTOs.Notification;
 using Application.DTOs.Search;
-using Application.Service;
 using Application.Shared.Constant;
 using Application.Shared.Enum;
-using Application.Shared.Helpers;
 using Application.Shared.Type;
 using AutoMapper;
 using Core.Queue;
@@ -165,12 +163,20 @@ public class EventService(MuseTrip360DbContext context, IConnectionMultiplexer r
 }
 
 // Admin implementation
-public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor, IQueuePublisher queuePublisher) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IAdminEventService
+public class AdminEventService(
+    MuseTrip360DbContext context,
+    IConnectionMultiplexer redisConnection,
+    IMapper mapper,
+    IHttpContextAccessor httpContextAccessor,
+    IQueuePublisher queuePublisher,
+    IUserService userService) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IAdminEventService
 {
     protected readonly IQueuePublisher _queuePublisher = queuePublisher;
     protected readonly IArtifactRepository _artifactRepository = new ArtifactRepository(context);
     protected readonly ITourOnlineRepository _tourOnlineRepository = new TourOnlineRepository(context);
     protected readonly ITourGuideRepository _tourGuideRepository = new TourGuideRepository(context);
+    protected readonly IUserService _userSvc = userService;
+
     public async Task<IActionResult> HandleGetAllAdmin(EventAdminQuery query)
     {
         try
@@ -182,6 +188,12 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
                 {
                     return ErrorResp.NotFound("Museum not found");
                 }
+            }
+
+            var isAllowed = await _userSvc.ValidatePermission(query.MuseumId?.ToString(), [PermissionConst.EVENTS_VIEW]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var events = await _eventRepository.GetAllAdminAsync(query);
@@ -202,6 +214,12 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             // get artifacts that are in the same museum and active
@@ -232,6 +250,12 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             eventItem.Status = isApproved ? EventStatusEnum.Published : EventStatusEnum.Draft;
@@ -282,6 +306,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             var mappedEvent = _mapper.Map(dto, eventItem);
             await _eventRepository.UpdateAsync(id, mappedEvent);
@@ -301,6 +330,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             await _eventRepository.DeleteAsync(id);
             await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
@@ -330,6 +364,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (museum == null)
             {
                 return ErrorResp.NotFound("Museum not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(museumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var eventItem = _mapper.Map<Event>(dto);
@@ -370,6 +409,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             var artifactList = await _artifactRepository.GetArtifactByListIdEventId(artifactIds, eventId);
             if (!artifactList.IsAllFound)
@@ -398,6 +442,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             eventItem.Status = EventStatusEnum.Cancelled;
             await _eventRepository.UpdateAsync(id, eventItem);
             await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
@@ -422,6 +471,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdMuseumIdStatus(tourOnlineIds, eventItem.MuseumId, true);
@@ -453,6 +507,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             var tourOnlineList = await _tourOnlineRepository.GetTourOnlineByListIdEventId(tourOnlineIds, eventId);
             if (!tourOnlineList.IsAllFound)
@@ -481,6 +540,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
@@ -511,6 +575,11 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
             {
                 return ErrorResp.NotFound("Event not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
 
             var tourGuideList = await _tourGuideRepository.GetTourGuideByListIdEventIdStatus(tourGuideIds, eventId, true);
             if (!tourGuideList.IsAllFound)
@@ -539,10 +608,18 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
 }
 
 // Organizer implementation
-public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMultiplexer redisConnection, IMapper mapper, IHttpContextAccessor httpContextAccessor, IQueuePublisher queuePublisher) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IOrganizerEventService
+public class OrganizerEventService(
+    MuseTrip360DbContext context,
+    IConnectionMultiplexer redisConnection,
+    IMapper mapper,
+    IHttpContextAccessor httpContextAccessor,
+    IQueuePublisher queuePublisher,
+    IUserService userService) : BaseEventService(context, redisConnection, mapper, httpContextAccessor), IOrganizerEventService
 {
     protected readonly IQueuePublisher _queuePublisher = queuePublisher;
     protected readonly IUserRepository _userRepository = new UserRepository(context);
+    protected readonly IUserService _userSvc = userService;
+
     public async Task<IActionResult> HandleCreateDraft(Guid museumId, EventCreateDto dto)
     {
         try
@@ -556,6 +633,11 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
             if (!isMuseumExists)
             {
                 return ErrorResp.NotFound("Museum not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(museumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var eventItem = _mapper.Map<Event>(dto);
@@ -583,6 +665,12 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
                 return ErrorResp.NotFound("Event not found");
             }
 
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
+
             eventItem.Status = EventStatusEnum.Pending;
             await _eventRepository.UpdateAsync(id, eventItem);
 
@@ -600,7 +688,7 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
                         ["eventTitle"] = eventItem.Title,
                         ["eventDescription"] = eventItem.Description ?? "",
                         ["eventDate"] = eventItem.StartTime.ToString("dd/MM/yyyy"),
-                        ["submissionDate"] = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
+                        ["submissionDate"] = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm"),
                         ["content"] = $"Một sự kiện mới '{eventItem.Title}' đã được gửi và đang chờ phê duyệt của bạn.",
                         ["eventLink"] = $"https://museum.musetrip360.site/event/edit/{eventItem.Id}"
                     }
@@ -644,6 +732,11 @@ public class OrganizerEventService(MuseTrip360DbContext context, IConnectionMult
             if (eventItem == null)
             {
                 return ErrorResp.NotFound("Event not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(eventItem.MuseumId.ToString(), [PermissionConst.EVENTS_CREATE, PermissionConst.EVENTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
             var mappedEvent = _mapper.Map(dto, eventItem);
