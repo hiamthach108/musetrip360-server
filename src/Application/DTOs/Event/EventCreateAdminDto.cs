@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Application.Shared.Enum;
+using MuseTrip360.Migrations;
 
 public class EventCreateAdminDto : IValidatableObject
 {
@@ -23,6 +24,9 @@ public class EventCreateAdminDto : IValidatableObject
     public JsonDocument? Metadata { get; set; }
     [Required]
     public EventStatusEnum Status { get; set; }
+    [Required]
+    [Range(0, float.MaxValue)]
+    public float Price { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

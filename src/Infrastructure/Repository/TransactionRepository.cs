@@ -30,6 +30,9 @@ public class TransactionRepository : ITransactionRepository
 
     public async Task<List<Transaction>> GetTransactionsByReferenceId(string referenceId, string transactionType)
     {
-        return await _dbContext.Transactions.Where(t => t.ReferenceId == referenceId && t.TransactionType == transactionType).ToListAsync();
+        return await _dbContext.Transactions
+        .Where(t => t.ReferenceId == referenceId && t.TransactionType == transactionType)
+        .OrderByDescending(t => t.CreatedAt)
+        .ToListAsync();
     }
 }

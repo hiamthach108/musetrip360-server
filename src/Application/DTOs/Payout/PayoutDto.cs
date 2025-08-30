@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Application.Shared.Enum;
 using AutoMapper;
 using Domain.Payment;
@@ -10,6 +11,7 @@ public class PayoutDto
     public float Amount { get; set; }
     public DateTime ProcessedDate { get; set; }
     public PayoutStatusEnum Status { get; set; }
+    public JsonDocument? Metadata { get; set; }
 }
 public class PayoutProfile : Profile
 {

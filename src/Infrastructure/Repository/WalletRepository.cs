@@ -20,7 +20,14 @@ public interface IWalletRepository
     public Task<Payout?> GetPayoutById(Guid id);
     public Task<List<Payout>> GetPayoutsByMuseumId(Guid museumId);
     public Task<List<Payout>> GetPayoutsByStatus(PayoutStatusEnum status);
+    public Task<PayoutQueryResp> GetPayoutsAdmin(PayoutQuery query);
 
+}
+
+public class PayoutQueryResp
+{
+    public List<Payout> Payouts { get; set; } = new List<Payout>();
+    public int Total { get; set; }
 }
 
 public class WalletRepository : IWalletRepository
@@ -121,4 +128,39 @@ public class WalletRepository : IWalletRepository
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task<PayoutQueryResp> GetPayoutsAdmin(PayoutQuery req)
+    {
+        var query = _dbContext.Payouts.AsQueryable();
+        if (req.MuseumId != null)
+        {
+            query = query.Where(p => p.MuseumId == req.MuseumId);
+        }
+        if (req.BankAccountId != null)
+        {
+            query = query.Where(p => p.BankAccountId == req.BankAccountId);
+        }
+        if (req.AmountFrom != null && req.AmountTo != null)
+        {
+            query = query.Where(p => p.Amount >= req.AmountFrom && p.Amount <= req.AmountTo);
+        }
+        if (req.CreatedAtFrom != null && req.CreatedAtTo != null)
+        {
+            query = query.Where(p => p.CreatedAt >= req.CreatedAtFrom && p.CreatedAt <= req.CreatedAtTo);
+        }
+        if (req.Status != null)
+        {
+            query = query.Where(p => p.Status == req.Status);
+        }
+        var total = await query.CountAsync();
+        var payoutList = await query.OrderByDescending(p => p.CreatedAt)
+        .Skip((req.Page - 1) * req.PageSize)
+        .Take(req.PageSize)
+        .ToListAsync();
+
+        return new PayoutQueryResp
+        {
+            Payouts = payoutList,
+            Total = total
+        };
+    }
 }

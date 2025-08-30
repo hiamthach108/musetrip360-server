@@ -48,7 +48,10 @@ public class PaymentRepository : IPaymentRepository
 
     public async Task<IEnumerable<Payment>> GetPaymentByUserIdAsync(Guid userId)
     {
-        var payments = await _dbContext.Payments.Where(p => p.CreatedBy == userId).ToListAsync();
+        var payments = await _dbContext.Payments
+        .Where(p => p.CreatedBy == userId)
+        .OrderByDescending(p => p.CreatedAt)
+        .ToListAsync();
         return payments;
     }
 
