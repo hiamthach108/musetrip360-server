@@ -32,6 +32,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         // Other JSON options you might have...
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     }); ;
 builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
