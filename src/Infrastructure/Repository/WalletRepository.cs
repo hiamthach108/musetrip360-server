@@ -105,6 +105,7 @@ public class WalletRepository : IWalletRepository
             UpdatedAt = p.UpdatedAt,
             MuseumId = p.MuseumId,
             BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
             Museum = new Museum
             {
                 Id = p.Museum.Id,
@@ -139,6 +140,9 @@ public class WalletRepository : IWalletRepository
             Amount = p.Amount,
             Status = p.Status,
             CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
             Museum = new Museum
             {
                 Id = p.Museum.Id,
@@ -169,6 +173,9 @@ public class WalletRepository : IWalletRepository
             Amount = p.Amount,
             Status = p.Status,
             CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
             Museum = new Museum
             {
                 Id = p.Museum.Id,
@@ -248,6 +255,9 @@ public class WalletRepository : IWalletRepository
             Amount = p.Amount,
             Status = p.Status,
             CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
             Museum = new Museum
             {
                 Id = p.Museum.Id,
