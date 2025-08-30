@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Application.Shared.Enum;
 using AutoMapper;
+using Domain.Museums;
 using Domain.Payment;
 
 public class PayoutDto
@@ -11,7 +12,11 @@ public class PayoutDto
     public float Amount { get; set; }
     public DateTime ProcessedDate { get; set; }
     public PayoutStatusEnum Status { get; set; }
+    public Museum Museum { get; set; } = null!;
+    public BankAccount BankAccount { get; set; } = null!;
     public JsonDocument? Metadata { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 public class PayoutProfile : Profile
 {

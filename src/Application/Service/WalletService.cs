@@ -7,7 +7,6 @@ using Database;
 using Domain.Payment;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
-using RabbitMQ.Client;
 
 public interface IWalletService
 {
@@ -15,7 +14,7 @@ public interface IWalletService
     public Task AddBalance(Guid walletId, float amount);
     public Task<IActionResult> HandleGetWalletByMuseumId(Guid museumId);
     public Task<IActionResult> HandleCreatePayoutRequest(PayoutReq req);
-    public Task<IActionResult> HandleElevatePayout(Guid payoutId, Guid walletId, bool isApproved);
+    public Task<IActionResult> HandleElevatePayout(Guid payoutId, EvaluatePayoutReq req, bool isApproved);
     public Task<IActionResult> HandleGetPayoutById(Guid id);
     public Task<IActionResult> HandleGetPayoutsByMuseumId(Guid museumId);
     public Task<IActionResult> HandleGetPayoutByStatus(PayoutStatusEnum status);
@@ -86,7 +85,7 @@ public class WalletService : BaseService, IWalletService
 
     public async Task<IActionResult> HandleCreatePayoutRequest(PayoutReq req)
     {
-        using (var transaction = await _dbContext.Database.BeginTransactionAsync())
+        await using (var transaction = await _dbContext.Database.BeginTransactionAsync())
         {
             try
             {
@@ -125,6 +124,7 @@ public class WalletService : BaseService, IWalletService
                 await _walletRepository.HoldBalanceRequest(wallet.Id, req.Amount);
                 //create payout
                 var payout = _mapper.Map<Payout>(req);
+                payout.BankAccountId = backAccount.Id;
                 payout.ProcessedDate = DateTime.UtcNow;
                 payout.Status = PayoutStatusEnum.Pending;
                 await _walletRepository.CreatePayout(payout);
@@ -140,9 +140,9 @@ public class WalletService : BaseService, IWalletService
         }
     }
 
-    public async Task<IActionResult> HandleElevatePayout(Guid payoutId, Guid walletId, bool isApproved)
+    public async Task<IActionResult> HandleElevatePayout(Guid payoutId, EvaluatePayoutReq req, bool isApproved)
     {
-        using (var transaction = await _dbContext.Database.BeginTransactionAsync())
+        await using (var transaction = await _dbContext.Database.BeginTransactionAsync())
         {
             try
             {
@@ -164,18 +164,26 @@ public class WalletService : BaseService, IWalletService
                 }
                 //update payout status
                 payout.ProcessedDate = DateTime.UtcNow;
+                //check if wallet exists
+                var wallet = await _walletRepository.GetWalletByMuseumId(payout.MuseumId);
+                if (wallet == null)
+                {
+                    return ErrorResp.NotFound("Wallet not found");
+                }
                 if (isApproved)
                 {
-                    await _walletRepository.WithdrawBalance(walletId);
+                    await _walletRepository.WithdrawBalance(wallet.Id);
                     payout.Status = PayoutStatusEnum.Approved;
                 }
                 else
                 {
-                    await _walletRepository.RejectPayout(walletId);
+                    await _walletRepository.RejectPayout(wallet.Id);
                     payout.Status = PayoutStatusEnum.Rejected;
                 }
+                payout.Metadata = req.Metadata;
                 await _walletRepository.UpdatePayout(payout);
-                return SuccessResp.Ok(_mapper.Map<PayoutDto>(payout));
+                await transaction.CommitAsync();
+                return SuccessResp.Ok("Payout updated successfully");
             }
             catch (Exception ex)
             {

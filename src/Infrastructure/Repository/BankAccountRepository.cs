@@ -60,7 +60,6 @@ public class BankAccountRepository : IBankAccountRepository
   {
     return await _dbContext.BankAccounts
       .Where(b => b.MuseumId == museumId)
-      .Include(b => b.Museum)
       .ToListAsync();
   }
 

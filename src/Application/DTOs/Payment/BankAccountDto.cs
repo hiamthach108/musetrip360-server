@@ -54,7 +54,8 @@ public class BankAccountProfile : Profile
 {
   public BankAccountProfile()
   {
-    CreateMap<BankAccount, BankAccountDto>();
+    CreateMap<BankAccount, BankAccountDto>()
+      .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
     CreateMap<BankAccountCreateDto, BankAccount>()
       .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));

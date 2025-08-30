@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Application.Shared.Enum;
 using Database;
+using Domain.Museums;
 using Domain.Payment;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,7 +57,9 @@ public class WalletRepository : IWalletRepository
 
     public async Task<MuseumWallet?> GetWalletByMuseumId(Guid museumId)
     {
-        return await _dbContext.MuseumWallets.Where(w => w.MuseumId == museumId).FirstOrDefaultAsync();
+        return await _dbContext.MuseumWallets
+        .Where(w => w.MuseumId == museumId)
+        .FirstOrDefaultAsync();
     }
 
     public async Task AddBalance(Guid walletId, float amount)
@@ -69,7 +73,8 @@ public class WalletRepository : IWalletRepository
 
     public async Task<MuseumWallet?> GetById(Guid walletId)
     {
-        return await _dbContext.MuseumWallets.FindAsync(walletId);
+        return await _dbContext.MuseumWallets
+        .FindAsync(walletId);
     }
     public async Task CreatePayout(Payout payout)
     {
@@ -79,27 +84,116 @@ public class WalletRepository : IWalletRepository
 
     public async Task UpdatePayout(Payout payout)
     {
-        var existingPayout = await GetPayoutById(payout.Id);
+        var existingPayout = await _dbContext.Payouts.FindAsync(payout.Id);
         if (existingPayout == null) return;
         _dbContext.Entry(existingPayout).CurrentValues.SetValues(payout);
         await _dbContext.SaveChangesAsync();
     }
 
+
+
     public async Task<Payout?> GetPayoutById(Guid id)
     {
-        return await _dbContext.Payouts.FindAsync(id);
+        return await _dbContext.Payouts
+        .Where(p => p.Id == id)
+        .Select(p => new Payout
+        {
+            Id = p.Id,
+            Amount = p.Amount,
+            Status = p.Status,
+            CreatedAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
+            Museum = new Museum
+            {
+                Id = p.Museum.Id,
+                Name = p.Museum.Name,
+                Location = p.Museum.Location,
+                ContactEmail = p.Museum.ContactEmail,
+                ContactPhone = p.Museum.ContactPhone,
+
+            },
+            BankAccount = new BankAccount
+            {
+                Id = p.BankAccount.Id,
+                HolderName = p.BankAccount.HolderName,
+                BankName = p.BankAccount.BankName,
+                AccountNumber = p.BankAccount.AccountNumber,
+                QRCode = p.BankAccount.QRCode
+
+            }
+        })
+        .AsNoTracking()
+        .OrderByDescending(p => p.CreatedAt)
+        .FirstOrDefaultAsync();
     }
 
     public async Task<List<Payout>> GetPayoutsByMuseumId(Guid museumId)
     {
         return await _dbContext.Payouts.Where(p => p.MuseumId == museumId)
         .OrderByDescending(p => p.CreatedAt)
+        .Select(p => new Payout
+        {
+            Id = p.Id,
+            Amount = p.Amount,
+            Status = p.Status,
+            CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
+            Museum = new Museum
+            {
+                Id = p.Museum.Id,
+                Name = p.Museum.Name,
+                Location = p.Museum.Location,
+                ContactEmail = p.Museum.ContactEmail,
+                ContactPhone = p.Museum.ContactPhone,
+            },
+            BankAccount = new BankAccount
+            {
+                Id = p.BankAccount.Id,
+                HolderName = p.BankAccount.HolderName,
+                BankName = p.BankAccount.BankName,
+                AccountNumber = p.BankAccount.AccountNumber,
+                QRCode = p.BankAccount.QRCode
+            }
+        })
+        .AsNoTracking()
         .ToListAsync();
     }
 
     public async Task<List<Payout>> GetPayoutsByStatus(PayoutStatusEnum status)
     {
         return await _dbContext.Payouts.Where(p => p.Status == status)
+        .Select(p => new Payout
+        {
+            Id = p.Id,
+            Amount = p.Amount,
+            Status = p.Status,
+            CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
+            Museum = new Museum
+            {
+                Id = p.Museum.Id,
+                Name = p.Museum.Name,
+                Location = p.Museum.Location,
+                ContactEmail = p.Museum.ContactEmail,
+                ContactPhone = p.Museum.ContactPhone,
+            },
+            BankAccount = new BankAccount
+            {
+                Id = p.BankAccount.Id,
+                HolderName = p.BankAccount.HolderName,
+                BankName = p.BankAccount.BankName,
+                AccountNumber = p.BankAccount.AccountNumber,
+                QRCode = p.BankAccount.QRCode
+            }
+        })
+        .AsNoTracking()
         .OrderByDescending(p => p.CreatedAt)
         .ToListAsync();
     }
@@ -155,6 +249,33 @@ public class WalletRepository : IWalletRepository
         var payoutList = await query.OrderByDescending(p => p.CreatedAt)
         .Skip((req.Page - 1) * req.PageSize)
         .Take(req.PageSize)
+        .Select(p => new Payout
+        {
+            Id = p.Id,
+            Amount = p.Amount,
+            Status = p.Status,
+            CreatedAt = p.CreatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
+            Metadata = p.Metadata,
+            Museum = new Museum
+            {
+                Id = p.Museum.Id,
+                Name = p.Museum.Name,
+                Location = p.Museum.Location,
+                ContactEmail = p.Museum.ContactEmail,
+                ContactPhone = p.Museum.ContactPhone,
+            },
+            BankAccount = new BankAccount
+            {
+                Id = p.BankAccount.Id,
+                HolderName = p.BankAccount.HolderName,
+                BankName = p.BankAccount.BankName,
+                AccountNumber = p.BankAccount.AccountNumber,
+                QRCode = p.BankAccount.QRCode
+            }
+        })
+        .AsNoTracking()
         .ToListAsync();
 
         return new PayoutQueryResp
