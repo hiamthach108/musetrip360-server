@@ -7,8 +7,6 @@ using Database;
 using Domain.Payment;
 using Infrastructure.Repository;
 using Microsoft.AspNetCore.Mvc;
-using RabbitMQ.Client;
-using System.Text.Json;
 
 public interface IWalletService
 {
@@ -166,12 +164,6 @@ public class WalletService : BaseService, IWalletService
                 }
                 //update payout status
                 payout.ProcessedDate = DateTime.UtcNow;
-                //check if museum exists
-                var museum = await _museumRepository.GetByIdAsync(payout.MuseumId);
-                if (museum == null)
-                {
-                    return ErrorResp.NotFound("Museum not found");
-                }
                 //check if wallet exists
                 var wallet = await _walletRepository.GetWalletByMuseumId(payout.MuseumId);
                 if (wallet == null)

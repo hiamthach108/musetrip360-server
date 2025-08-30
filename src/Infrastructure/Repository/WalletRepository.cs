@@ -102,6 +102,9 @@ public class WalletRepository : IWalletRepository
             Amount = p.Amount,
             Status = p.Status,
             CreatedAt = p.CreatedAt,
+            UpdatedAt = p.UpdatedAt,
+            MuseumId = p.MuseumId,
+            BankAccountId = p.BankAccountId,
             Museum = new Museum
             {
                 Id = p.Museum.Id,

@@ -15,6 +15,8 @@ public class PayoutDto
     public Museum Museum { get; set; } = null!;
     public BankAccount BankAccount { get; set; } = null!;
     public JsonDocument? Metadata { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 public class PayoutProfile : Profile
 {
