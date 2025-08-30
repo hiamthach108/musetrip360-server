@@ -9,7 +9,7 @@ public interface IBankAccountRepository
 {
   Task<BankAccount?> GetByIdAsync(Guid id);
   Task<IEnumerable<BankAccount>> GetAllAsync();
-  Task<BankAccount?> GetByMuseumIdAsync(Guid museumId);
+  Task<IEnumerable<BankAccount>> GetByMuseumIdAsync(Guid museumId);
   Task<BankAccount> AddAsync(BankAccount bankAccount);
   Task<BankAccount?> UpdateAsync(Guid id, BankAccount bankAccount);
   Task<BankAccount?> DeleteAsync(Guid id);
@@ -56,12 +56,11 @@ public class BankAccountRepository : IBankAccountRepository
       .FirstOrDefaultAsync(b => b.Id == id);
   }
 
-  public async Task<BankAccount?> GetByMuseumIdAsync(Guid museumId)
+  public async Task<IEnumerable<BankAccount>> GetByMuseumIdAsync(Guid museumId)
   {
     return await _dbContext.BankAccounts
       .Where(b => b.MuseumId == museumId)
-      .Include(b => b.Museum)
-      .FirstOrDefaultAsync(b => b.MuseumId == museumId);
+      .ToListAsync();
   }
 
   public async Task<BankAccount?> UpdateAsync(Guid id, BankAccount bankAccount)
