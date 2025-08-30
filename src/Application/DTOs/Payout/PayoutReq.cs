@@ -6,9 +6,7 @@ public class PayoutReq
     [Required]
     public Guid MuseumId { get; set; }
     [Required]
-    public Guid BankAccountId { get; set; }
-    [Required]
-    [Range(0, float.MaxValue)]
+    [Range(1000, float.MaxValue, ErrorMessage = "Amount too small, must be greater than 1000đ")]
     public float Amount { get; set; }
     public JsonDocument? Metadata { get; set; }
 }
