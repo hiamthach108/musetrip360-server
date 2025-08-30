@@ -159,4 +159,19 @@ public class WalletController : ControllerBase
         _logger.LogInformation("Create museum wallet request received for museum: {MuseumId}", museumId);
         return await _walletService.HandleCreateMuseumWallet(museumId);
     }
+    /// <summary>
+    /// Get all payouts (Admin only)
+    /// </summary>
+    /// <param name="query">The query parameters for filtering payouts</param>
+    /// <returns>List of payouts with the specified status</returns>
+    /// <response code="200">Returns the list of payouts</response>
+    /// <response code="401">Unauthorized - User is not authenticated or not an admin</response>
+    /// <response code="404">No payouts found with the specified status</response>
+    [Protected]
+    [HttpGet("payouts/admin")]
+    public async Task<IActionResult> GetPayoutsAdmin([FromQuery] PayoutQuery query)
+    {
+        _logger.LogInformation("Get payouts admin request received for query: {Query}", query);
+        return await _walletService.HandleGetPayoutsAdmin(query);
+    }
 }

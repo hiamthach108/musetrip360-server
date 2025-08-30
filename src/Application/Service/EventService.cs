@@ -259,7 +259,7 @@ public class AdminEventService(MuseTrip360DbContext context, IConnectionMultiple
                 Metadata = JsonDocument.Parse(JsonSerializer.Serialize(new
                 {
                     TargetId = eventItem.Id,
-                    Event = eventItem
+                    Event = _mapper.Map<EventDto>(eventItem)
                 }))
             };
 

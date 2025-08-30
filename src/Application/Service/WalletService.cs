@@ -20,11 +20,13 @@ public interface IWalletService
     public Task<IActionResult> HandleGetPayoutsByMuseumId(Guid museumId);
     public Task<IActionResult> HandleGetPayoutByStatus(PayoutStatusEnum status);
     public Task<IActionResult> HandleCreateMuseumWallet(Guid museumId);
+    public Task<IActionResult> HandleGetPayoutsAdmin(PayoutQuery query);
 }
 public class WalletService : BaseService, IWalletService
 {
     private readonly IWalletRepository _walletRepository;
     private readonly IMuseumRepository _museumRepository;
+    private readonly IBankAccountRepository _bankAccountRepository;
     public WalletService(
         MuseTrip360DbContext dbContext,
         IMapper mapper,
@@ -34,6 +36,7 @@ public class WalletService : BaseService, IWalletService
     {
         _walletRepository = new WalletRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
+        _bankAccountRepository = new BankAccountRepository(dbContext);
     }
 
     public async Task InitWallet(Guid museumId)
@@ -83,86 +86,101 @@ public class WalletService : BaseService, IWalletService
 
     public async Task<IActionResult> HandleCreatePayoutRequest(PayoutReq req)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-        try
+        using (var transaction = await _dbContext.Database.BeginTransactionAsync())
         {
-            var payload = ExtractPayload();
-            if (payload == null)
+            try
             {
-                return ErrorResp.Unauthorized("Unauthorized");
-            }
-            //check if auth of museum
-            var isMuseumOwner = await _museumRepository.ValidateMuseumOwner(req.MuseumId, payload.UserId);
-            if (!isMuseumOwner)
-            {
-                return ErrorResp.Unauthorized("You are not the owner of this museum");
-            }
-            //check if museum has enough balance
-            var wallet = await _walletRepository.GetWalletByMuseumId(req.MuseumId);
-            if (wallet == null)
-            {
-                return ErrorResp.NotFound("Wallet not found");
-            }
-            if (wallet.AvailableBalance < req.Amount)
-            {
-                return ErrorResp.BadRequest("Insufficient balance");
-            }
-            // hold wallet balance for payout
-            await _walletRepository.HoldBalanceRequest(wallet.Id, req.Amount);
-            //create payout
-            var payout = _mapper.Map<Payout>(req);
-            payout.ProcessedDate = DateTime.UtcNow;
-            payout.Status = PayoutStatusEnum.Pending;
-            await _walletRepository.CreatePayout(payout);
+                var payload = ExtractPayload();
+                if (payload == null)
+                {
+                    return ErrorResp.Unauthorized("Unauthorized");
+                }
+                //check if auth of museum
+                var isMuseumOwner = await _museumRepository.ValidateMuseumOwner(req.MuseumId, payload.UserId);
+                if (!isMuseumOwner)
+                {
+                    return ErrorResp.Unauthorized("You are not the owner of this museum");
+                }
+                //check if museum has enough balance
+                var wallet = await _walletRepository.GetWalletByMuseumId(req.MuseumId);
+                if (wallet == null)
+                {
+                    return ErrorResp.NotFound("Wallet not found");
+                }
+                var museum = await _museumRepository.GetByIdAsync(req.MuseumId);
+                if (museum == null)
+                {
+                    return ErrorResp.NotFound("Museum not found");
+                }
+                var backAccount = await _bankAccountRepository.GetByIdAsync(req.BankAccountId);
+                if (backAccount == null)
+                {
+                    return ErrorResp.NotFound("Bank account not found");
+                }
+                if (wallet.AvailableBalance < req.Amount)
+                {
+                    return ErrorResp.BadRequest("Insufficient balance");
+                }
+                // hold wallet balance for payout
+                await _walletRepository.HoldBalanceRequest(wallet.Id, req.Amount);
+                //create payout
+                var payout = _mapper.Map<Payout>(req);
+                payout.ProcessedDate = DateTime.UtcNow;
+                payout.Status = PayoutStatusEnum.Pending;
+                await _walletRepository.CreatePayout(payout);
 
-            await transaction.CommitAsync();
-            return SuccessResp.Created(_mapper.Map<PayoutDto>(payout));
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-            return ErrorResp.InternalServerError(ex.Message);
+                await transaction.CommitAsync();
+                return SuccessResp.Created(_mapper.Map<PayoutDto>(payout));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return ErrorResp.InternalServerError(ex.Message);
+            }
         }
     }
 
     public async Task<IActionResult> HandleElevatePayout(Guid payoutId, Guid walletId, bool isApproved)
     {
-        try
+        using (var transaction = await _dbContext.Database.BeginTransactionAsync())
         {
-            var payload = ExtractPayload();
-            if (payload == null)
+            try
             {
-                return ErrorResp.Unauthorized("Unauthorized");
+                var payload = ExtractPayload();
+                if (payload == null)
+                {
+                    return ErrorResp.Unauthorized("Unauthorized");
+                }
+                //check if payout exists
+                var payout = await _walletRepository.GetPayoutById(payoutId);
+                if (payout == null)
+                {
+                    return ErrorResp.NotFound("Payout not found");
+                }
+                //check if payout is pending
+                if (payout.Status != PayoutStatusEnum.Pending)
+                {
+                    return ErrorResp.BadRequest("Payout is not pending");
+                }
+                //update payout status
+                payout.ProcessedDate = DateTime.UtcNow;
+                if (isApproved)
+                {
+                    await _walletRepository.WithdrawBalance(walletId);
+                    payout.Status = PayoutStatusEnum.Approved;
+                }
+                else
+                {
+                    await _walletRepository.RejectPayout(walletId);
+                    payout.Status = PayoutStatusEnum.Rejected;
+                }
+                await _walletRepository.UpdatePayout(payout);
+                return SuccessResp.Ok(_mapper.Map<PayoutDto>(payout));
             }
-            //check if payout exists
-            var payout = await _walletRepository.GetPayoutById(payoutId);
-            if (payout == null)
+            catch (Exception ex)
             {
-                return ErrorResp.NotFound("Payout not found");
+                return ErrorResp.InternalServerError(ex.Message);
             }
-            //check if payout is pending
-            if (payout.Status != PayoutStatusEnum.Pending)
-            {
-                return ErrorResp.BadRequest("Payout is not pending");
-            }
-            //update payout status
-            payout.ProcessedDate = DateTime.UtcNow;
-            if (isApproved)
-            {
-                await _walletRepository.WithdrawBalance(walletId);
-                payout.Status = PayoutStatusEnum.Approved;
-            }
-            else
-            {
-                await _walletRepository.RejectPayout(walletId);
-                payout.Status = PayoutStatusEnum.Rejected;
-            }
-            await _walletRepository.UpdatePayout(payout);
-            return SuccessResp.Ok(_mapper.Map<PayoutDto>(payout));
-        }
-        catch (Exception ex)
-        {
-            return ErrorResp.InternalServerError(ex.Message);
         }
     }
 
@@ -234,6 +252,29 @@ public class WalletService : BaseService, IWalletService
             }
             await _walletRepository.InitWallet(museumId);
             return SuccessResp.Ok("Wallet created successfully");
+        }
+        catch (Exception ex)
+        {
+            return ErrorResp.InternalServerError(ex.Message);
+        }
+    }
+
+    public async Task<IActionResult> HandleGetPayoutsAdmin(PayoutQuery query)
+    {
+        try
+        {
+            var payload = ExtractPayload();
+            if (payload == null)
+            {
+                return ErrorResp.Unauthorized("Unauthorized");
+            }
+            var payouts = await _walletRepository.GetPayoutsAdmin(query);
+            var payoutDto = _mapper.Map<List<PayoutDto>>(payouts.Payouts);
+            return SuccessResp.Ok(new
+            {
+                Payouts = payoutDto,
+                payouts.Total
+            });
         }
         catch (Exception ex)
         {

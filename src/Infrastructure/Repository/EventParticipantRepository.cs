@@ -362,7 +362,7 @@ public class EventParticipantRepository : IEventParticipantRepository
   {
     var eventParticipant = await _dbContext.EventParticipants
       .Include(ep => ep.Event)
-      .FirstOrDefaultAsync(ep => (ep.UserId == userId && ep.EventId == eventId) || ep.Event.Price == 0);
+      .FirstOrDefaultAsync(ep => ep.UserId == userId && ep.EventId == eventId);
     return eventParticipant != null;
   }
 
