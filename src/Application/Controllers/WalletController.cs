@@ -65,7 +65,7 @@ public class WalletController : ControllerBase
     /// Approve a pending payout request (Admin only)
     /// </summary>
     /// <param name="payoutId">The unique identifier of the payout to approve</param>
-    /// <param name="walletId">The unique identifier of the wallet</param>
+    /// <param name="req">The request body containing the metadata</param>
     /// <returns>Updated payout information</returns>
     /// <response code="200">Payout approved successfully</response>
     /// <response code="400">Bad request - Payout is not in pending status</response>
@@ -73,17 +73,16 @@ public class WalletController : ControllerBase
     /// <response code="404">Payout not found</response>
     [Protected]
     [HttpPut("payouts/{payoutId}/approve")]
-    public async Task<IActionResult> ApprovePayout(Guid payoutId, Guid walletId)
+    public async Task<IActionResult> ApprovePayout(Guid payoutId, [FromBody] EvaluatePayoutReq req)
     {
-        _logger.LogInformation("Approve payout request received for payout: {PayoutId}", payoutId);
-        return await _walletService.HandleElevatePayout(payoutId, walletId, true);
+        return await _walletService.HandleElevatePayout(payoutId, req, true);
     }
 
     /// <summary>
     /// Reject a pending payout request (Admin only)
     /// </summary>
     /// <param name="payoutId">The unique identifier of the payout to reject</param>
-    /// <param name="walletId">The unique identifier of the wallet</param>
+    /// <param name="req">The request body containing the metadata</param>
     /// <returns>Updated payout information</returns>
     /// <response code="200">Payout rejected successfully</response>
     /// <response code="400">Bad request - Payout is not in pending status</response>
@@ -91,10 +90,9 @@ public class WalletController : ControllerBase
     /// <response code="404">Payout not found</response>
     [Protected]
     [HttpPut("payouts/{payoutId}/reject")]
-    public async Task<IActionResult> RejectPayout(Guid payoutId, Guid walletId)
+    public async Task<IActionResult> RejectPayout(Guid payoutId, [FromBody] EvaluatePayoutReq req)
     {
-        _logger.LogInformation("Reject payout request received for payout: {PayoutId}", payoutId);
-        return await _walletService.HandleElevatePayout(payoutId, walletId, false);
+        return await _walletService.HandleElevatePayout(payoutId, req, false);
     }
 
     /// <summary>
