@@ -30,6 +30,7 @@ public interface IPaymentService
   Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query);
   Task<OrderDto> CreateOrder(CreateOrderMsg msg);
   Task<IActionResult> HandleGetOrderByCode(string orderCode);
+  Task<IActionResult> HandleVerifyOrderForItemExist(Guid itemId);
 
   // BankAccount management methods
   Task<IActionResult> HandleGetBankAccountsByMuseum(Guid museumId);
@@ -651,6 +652,24 @@ public class PaymentService : BaseService, IPaymentService
         return ErrorResp.NotFound("Order not found");
       }
       return SuccessResp.Ok(_mapper.Map<OrderDto>(order));
+    }
+    catch (Exception e)
+    {
+      return ErrorResp.InternalServerError(e.Message);
+    }
+  }
+
+  public async Task<IActionResult> HandleVerifyOrderForItemExist(Guid itemId)
+  {
+    try
+    {
+      var payload = ExtractPayload();
+      if (payload == null)
+      {
+        return ErrorResp.Unauthorized("Invalid token");
+      }
+      var orderExists = await _orderRepo.VerifyOrderForItemExist(payload.UserId, itemId);
+      return SuccessResp.Ok(orderExists);
     }
     catch (Exception e)
     {
