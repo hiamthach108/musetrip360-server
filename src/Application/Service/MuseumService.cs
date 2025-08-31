@@ -146,6 +146,13 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
+
     // check if name is exists
     var isMuseumNameExists = _museumRepository.IsMuseumNameExists(dto.Name);
     if (isMuseumNameExists)
@@ -185,6 +192,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public virtual async Task<IActionResult> HandleUpdate(Guid id, MuseumUpdateDto dto)
   {
+    var isAllowed = await _userSvc.ValidatePermission(id.ToString(), [PermissionConst.MUSEUMS_MANAGEMENT, PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var museum = await _museumRepository.GetByIdAsync(id);
     if (museum == null)
     {
@@ -232,6 +245,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleDelete(Guid id)
   {
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var museum = _museumRepository.GetById(id);
     if (museum == null)
     {
@@ -270,6 +289,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleGetAllRequests(MuseumRequestQuery query)
   {
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var requests = _museumRequestRepository.GetAll(query);
     var requestDtos = _mapper.Map<IEnumerable<MuseumRequestDto>>(requests.Requests);
 
@@ -389,6 +414,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleApproveRequest(Guid id)
   {
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUM_REQUESTS_APPROVAL]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
@@ -448,6 +479,12 @@ public class MuseumService : BaseService, IMuseumService
 
   public async Task<IActionResult> HandleRejectRequest(Guid id)
   {
+    var isAllowed = await _userSvc.ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.MUSEUM_REQUESTS_APPROVAL]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var request = _museumRequestRepository.GetById(id);
     if (request == null)
     {
@@ -497,6 +534,12 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.Unauthorized("Invalid token");
     }
 
+    var isAllowed = await _userSvc.ValidatePermission(dto.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT, PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     var museum = _museumRepository.GetById(dto.MuseumId);
     if (museum == null)
     {
@@ -521,6 +564,12 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.NotFound("Museum policy not found");
     }
 
+    var isAllowed = await _userSvc.ValidatePermission(policy.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT, PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     _mapper.Map(dto, policy);
     await _museumPolicyRepository.UpdateAsync(id, policy);
 
@@ -536,6 +585,12 @@ public class MuseumService : BaseService, IMuseumService
       return ErrorResp.NotFound("Museum policy not found");
     }
 
+    var isAllowed = await _userSvc.ValidatePermission(policy.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT, PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
+    }
+
     await _museumPolicyRepository.DeleteAsync(policy);
     return SuccessResp.Ok("Museum policy deleted successfully");
   }
@@ -546,6 +601,12 @@ public class MuseumService : BaseService, IMuseumService
     if (payload == null)
     {
       return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var isAllowed = await _userSvc.ValidatePermission(dto.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT, PermissionConst.MUSEUMS_MANAGEMENT]);
+    if (!isAllowed)
+    {
+      return ErrorResp.Forbidden("You are not allowed to access this resource");
     }
 
     var museum = _museumRepository.GetById(dto.MuseumId);

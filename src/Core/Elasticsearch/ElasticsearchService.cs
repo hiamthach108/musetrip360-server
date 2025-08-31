@@ -16,7 +16,6 @@ public interface IElasticsearchService : IDisposable
   Task<bool> DeleteDocumentAsync(string indexName, string id);
   Task<IEnumerable<T>> SearchAsync<T>(string indexName, string query, int from = 0, int size = 10) where T : class;
   Task<(IEnumerable<T> documents, long totalHits)> SearchWithTotalAsync<T>(string indexName, string query, int from = 0, int size = 10) where T : class;
-  Task<(IEnumerable<T> documents, long totalHits)> SearchWithGeoDistanceAsync<T>(string indexName, string query, double? lat, double? lng, double? radiusKm, int from = 0, int size = 10) where T : class;
   Task<bool> BulkIndexAsync<T>(string indexName, IEnumerable<T> documents) where T : class;
   Task<bool> BulkIndexAsync<T>(string indexName, IEnumerable<T> documents, int batchSize) where T : class;
   Task<bool> UpdateDocumentAsync<T>(string indexName, string id, T document) where T : class;
@@ -38,7 +37,8 @@ public class ElasticsearchService : IElasticsearchService
     var settings = new ElasticsearchClientSettings(new Uri(_config.ConnectionString))
         .Authentication(new BasicAuthentication(_config.Username, _config.Password))
         .DefaultIndex("search_items")
-        .RequestTimeout(TimeSpan.FromMinutes(2)); // Keep only essential settings
+        .RequestTimeout(TimeSpan.FromMinutes(2))
+        .DisableDirectStreaming(); // Keep only essential settings
 
     _client = new ElasticsearchClient(settings);
   }
@@ -175,6 +175,7 @@ public class ElasticsearchService : IElasticsearchService
           .Indices(indexName)
           .From(from)
           .Size(size)
+          .MinScore(0.1)
           .Query(q => q.QueryString(qs => qs.Query(query)))
       );
 
@@ -186,85 +187,6 @@ public class ElasticsearchService : IElasticsearchService
       _logger.LogError(ex, "Error searching in index {IndexName} with query {Query}", indexName, query);
       return (Enumerable.Empty<T>(), 0);
     }
-  }
-
-  public async Task<(IEnumerable<T> documents, long totalHits)> SearchWithGeoDistanceAsync<T>(string indexName, string query, double? lat, double? lng, double? radiusKm, int from = 0, int size = 10) where T : class
-  {
-    try
-    {
-      // For now, we'll implement a simple distance calculation in the application layer
-      // This is a fallback approach until we can properly configure Elasticsearch geo mapping
-      var allResults = await _client.SearchAsync<T>(s => s
-          .Indices(indexName)
-          .From(0)
-          .Size(10000) // Get more results to filter by distance
-          .Query(q => q.QueryString(qs => qs.Query(query)))
-      );
-
-      if (!allResults.IsValidResponse)
-      {
-        return (Enumerable.Empty<T>(), 0);
-      }
-
-      // Filter results by distance if geo parameters are provided
-      var filteredResults = allResults.Documents.AsEnumerable();
-
-      if (lat.HasValue && lng.HasValue && radiusKm.HasValue)
-      {
-        filteredResults = filteredResults.Where(doc =>
-        {
-          // Use reflection to get latitude and longitude from the document
-          var docType = doc.GetType();
-          var latProp = docType.GetProperty("Latitude");
-          var lngProp = docType.GetProperty("Longitude");
-
-          if (latProp != null && lngProp != null)
-          {
-            var docLat = latProp.GetValue(doc) as decimal?;
-            var docLng = lngProp.GetValue(doc) as decimal?;
-
-            if (docLat.HasValue && docLng.HasValue)
-            {
-              var distance = CalculateDistance(lat.Value, lng.Value, (double)docLat.Value, (double)docLng.Value);
-              return distance <= radiusKm.Value;
-            }
-          }
-
-          return false;
-        });
-      }
-
-      var totalFiltered = filteredResults.Count();
-      var pagedResults = filteredResults.Skip(from).Take(size);
-
-      return (pagedResults, totalFiltered);
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error searching in index {IndexName} with query {Query}", indexName, query);
-      return (Enumerable.Empty<T>(), 0);
-    }
-  }
-
-  private double CalculateDistance(double lat1, double lng1, double lat2, double lng2)
-  {
-    const double earthRadius = 6371; // Earth's radius in kilometers
-
-    var dLat = ToRadians(lat2 - lat1);
-    var dLng = ToRadians(lng2 - lng1);
-
-    var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-            Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
-            Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
-
-    var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-    return earthRadius * c;
-  }
-
-  private double ToRadians(double degrees)
-  {
-    return degrees * (Math.PI / 180);
   }
 
   public async Task<bool> BulkIndexAsync<T>(string indexName, IEnumerable<T> documents) where T : class

@@ -35,19 +35,22 @@ public class ArtifactService : BaseService, IArtifactService
     private readonly IArtifactRepository _artifactRepository;
     private readonly IMuseumRepository _museumRepository;
     private readonly IQueuePublisher _queuePub;
+    private readonly IUserService _userSvc;
 
 
     public ArtifactService(
         MuseTrip360DbContext dbContext,
         IMapper mapper,
         IHttpContextAccessor httpContextAccessor,
-        IQueuePublisher queuePub
+        IQueuePublisher queuePub,
+        IUserService userSvc
     )
         : base(dbContext, mapper, httpContextAccessor)
     {
         _artifactRepository = new ArtifactRepository(dbContext);
         _museumRepository = new MuseumRepository(dbContext);
         _queuePub = queuePub;
+        _userSvc = userSvc;
     }
 
     public async Task<IActionResult> HandleCreate(Guid museumId, ArtifactCreateDto dto)
@@ -64,6 +67,11 @@ public class ArtifactService : BaseService, IArtifactService
             if (!isMuseumExists)
             {
                 return ErrorResp.NotFound("Museum not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(museumId.ToString(), [PermissionConst.ARTIFACTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             // map the dto to the artifact
             var artifact = _mapper.Map<Artifact>(dto);
@@ -209,13 +217,18 @@ public class ArtifactService : BaseService, IArtifactService
         try
         {
             // check if the artifact is exists
-            var isArtifactExists = await _artifactRepository.IsArtifactExistsAsync(id);
-            if (!isArtifactExists)
+            var existed = await _artifactRepository.GetByIdAsync(id);
+            if (existed == null)
             {
                 return ErrorResp.NotFound("Artifact not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(existed.MuseumId.ToString(), [PermissionConst.ARTIFACTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             // update the artifact
-            var artifact = _mapper.Map(dto, await _artifactRepository.GetByIdAsync(id));
+            var artifact = _mapper.Map(dto, existed);
 
             await _artifactRepository.UpdateAsync(id, artifact!);
             // publish the artifact updated event
@@ -247,6 +260,15 @@ public class ArtifactService : BaseService, IArtifactService
             }
             // activate the artifact
             var artifact = await _artifactRepository.GetByIdAsync(id);
+            if (artifact == null)
+            {
+                return ErrorResp.NotFound("Artifact not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(artifact.MuseumId.ToString(), [PermissionConst.ARTIFACTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             artifact!.IsActive = true;
             await _artifactRepository.UpdateAsync(id, artifact);
             // publish the artifact activated event
@@ -278,6 +300,15 @@ public class ArtifactService : BaseService, IArtifactService
             }
             // deactivate the artifact
             var artifact = await _artifactRepository.GetByIdAsync(id);
+            if (artifact == null)
+            {
+                return ErrorResp.NotFound("Artifact not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(artifact.MuseumId.ToString(), [PermissionConst.ARTIFACTS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             artifact!.IsActive = false;
             await _artifactRepository.UpdateAsync(id, artifact);
             // publish the artifact deactivated event

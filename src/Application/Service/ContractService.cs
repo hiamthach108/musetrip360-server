@@ -20,14 +20,14 @@ using iText.IO.Font;
 
 public class ContractData
 {
-  public string DateSigned { get; set; } = DateTime.Now.ToString("dd/MM/yyyy");
+  public string DateSigned { get; set; } = DateTime.UtcNow.ToString("dd/MM/yyyy");
   public string MuseumName { get; set; } = string.Empty;
   public string MuseumAddress { get; set; } = string.Empty;
   public string MuseumPhone { get; set; } = string.Empty;
   public string MuseumEmail { get; set; } = string.Empty;
   public string ManagerName { get; set; } = string.Empty;
-  public string StartDate { get; set; } = DateTime.Now.ToString("dd/MM/yyyy");
-  public string EndDate { get; set; } = DateTime.Now.AddYears(1).ToString("dd/MM/yyyy");
+  public string StartDate { get; set; } = DateTime.UtcNow.ToString("dd/MM/yyyy");
+  public string EndDate { get; set; } = DateTime.UtcNow.AddYears(1).ToString("dd/MM/yyyy");
   public string SystemFee { get; set; } = string.Empty;
 }
 
@@ -78,18 +78,18 @@ public class ContractService : BaseService
 
       var pdfBytes = GenerateContract(new ContractData
       {
-        DateSigned = DateTime.Now.ToString("dd/MM/yyyy"),
+        DateSigned = DateTime.UtcNow.ToString("dd/MM/yyyy"),
         MuseumName = museum.Name,
         MuseumAddress = museum.Location,
         MuseumPhone = museum.ContactPhone,
         MuseumEmail = museum.ContactEmail,
         ManagerName = museum.CreatedByUser.FullName,
-        StartDate = DateTime.Now.ToString("dd/MM/yyyy"),
-        EndDate = DateTime.Now.AddYears(1).ToString("dd/MM/yyyy"),
+        StartDate = DateTime.UtcNow.ToString("dd/MM/yyyy"),
+        EndDate = DateTime.UtcNow.AddYears(1).ToString("dd/MM/yyyy"),
         SystemFee = plan.Price.ToString("N0")
       });
 
-      var fileName = $"contract_{museumId}_{planId}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+      var fileName = $"contract_{museumId}_{planId}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf";
       using var memoryStream = new MemoryStream(pdfBytes);
       var formFile = new FormFile(memoryStream, 0, pdfBytes.Length, "file", fileName)
       {

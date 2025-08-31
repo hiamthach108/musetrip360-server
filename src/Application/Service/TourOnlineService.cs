@@ -103,9 +103,10 @@ public class TourOnlineService(MuseTrip360DbContext dbContext, IMapper mapper, I
 {
 }
 
-public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), IAdminTourOnlineService
+public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360DbContext dbContext, IMapper mapper, IHttpContextAccessor httpContextAccessor, IUserService userService) : BaseTourOnlineService(dbContext, mapper, httpContextAccessor), IAdminTourOnlineService
 {
     protected readonly IQueuePublisher _queuePublisher = queuePublisher;
+    protected readonly IUserService _userSvc = userService;
     public async Task<IActionResult> ActivateAsync(Guid id)
     {
         try
@@ -114,6 +115,11 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
             if (tour == null)
             {
                 return ErrorResp.NotFound("Tour not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(tour.MuseumId.ToString(), [PermissionConst.TOURS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             tour.IsActive = true;
             await _tourOnlineRepository.UpdateAsync(tour);
@@ -140,6 +146,11 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
             if (tour == null)
             {
                 return ErrorResp.NotFound("Tour not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(tour.MuseumId.ToString(), [PermissionConst.TOURS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             var tourContentList = await _tourContentRepository.GetTourContentsByListIdTourOnlineIdStatus(tourContentIds, tourOnlineId, true);
             if (!tourContentList.IsAllFound)
@@ -168,6 +179,11 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
             {
                 return ErrorResp.NotFound("Museum not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(museumId.ToString(), [PermissionConst.TOURS_MANAGEMENT, PermissionConst.TOURS_CREATE]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             var tour = _mapper.Map<TourOnline>(tourOnline);
             tour.MuseumId = museumId;
             await _tourOnlineRepository.CreateAsync(tour);
@@ -195,6 +211,11 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
             {
                 return ErrorResp.NotFound("Tour not found");
             }
+            var isAllowed = await _userSvc.ValidatePermission(tour.MuseumId.ToString(), [PermissionConst.TOURS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
+            }
             tour.IsActive = false;
             await _tourOnlineRepository.UpdateAsync(tour);
             await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
@@ -216,10 +237,15 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
     {
         try
         {
-            var isTourOnlineExists = await _tourOnlineRepository.IsTourOnlineExists(id);
-            if (!isTourOnlineExists)
+            var tour = await _tourOnlineRepository.GetByIdAsync(id);
+            if (tour == null)
             {
                 return ErrorResp.NotFound("Tour not found");
+            }
+            var isAllowed = await _userSvc.ValidatePermission(tour.MuseumId.ToString(), [PermissionConst.TOURS_MANAGEMENT]);
+            if (!isAllowed)
+            {
+                return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
             await _tourOnlineRepository.DeleteAsync(id);
             await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage

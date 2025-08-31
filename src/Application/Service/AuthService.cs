@@ -94,9 +94,20 @@ public class AuthService : IAuthService
         };
       }
     }
+    else
+    {
+      if (user.Status != UserStatusEnum.Active)
+      {
+        return new GgAuthResp
+        {
+          Success = false,
+          Message = "User is not active",
+        };
+      }
+    }
 
     var sessionId = Guid.NewGuid();
-    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, UserStatusEnum.NotVerified);
+    var accessTk = GenerateAccessTk(user.Id, sessionId, user.Email, UserStatusEnum.Active);
 
     var redisKey = $"local:state:{state}";
     await _cacheService.Set(redisKey, user, TimeSpan.FromMinutes(15));
@@ -148,6 +159,11 @@ public class AuthService : IAuthService
     if (user == null)
     {
       return ErrorResp.BadRequest("Email is incorrect");
+    }
+
+    if (user.Status != UserStatusEnum.Active)
+    {
+      return ErrorResp.BadRequest("User is not active");
     }
 
     if (user.HashedPassword == null || !_cryptoService.VerifyPassword(req.Password, user.HashedPassword))

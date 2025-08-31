@@ -9,8 +9,8 @@ using Domain.Users;
 using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Repository;
 using Application.DTOs.UserRole;
-using Application.DTOs.Role;
 using Infrastructure.Cache;
+using Application.Shared.Constant;
 
 public interface IUserService
 {
@@ -159,7 +159,7 @@ public class UserService : BaseService, IUserService
       return ErrorResp.NotFound("User not found");
     }
 
-    if (user.HashedPassword != null && !BCrypt.Net.BCrypt.Verify(req.OldPassword, user.HashedPassword))
+    if (!string.IsNullOrEmpty(user.HashedPassword) && !BCrypt.Net.BCrypt.Verify(req.OldPassword, user.HashedPassword))
     {
       return ErrorResp.BadRequest("Old password is incorrect");
     }
@@ -265,6 +265,20 @@ public class UserService : BaseService, IUserService
       {
         return ErrorResp.NotFound("Museum not found");
       }
+
+      var isAllowed = await ValidatePermission(body.MuseumId.ToString(), [PermissionConst.USERS_MANAGEMENT]);
+      if (!isAllowed)
+      {
+        return ErrorResp.Forbidden("You are not allowed to access this resource");
+      }
+    }
+    else
+    {
+      var isAllowed = await ValidatePermission(PermissionConst.SYSTEM_MUSEUM, [PermissionConst.USERS_MANAGEMENT]);
+      if (!isAllowed)
+      {
+        return ErrorResp.Forbidden("You are not allowed to access this resource");
+      }
     }
 
     var userRole = new UserRole
@@ -359,7 +373,7 @@ public class UserService : BaseService, IUserService
     // check if user is super admin
     var superAdminKey = $"users:{payload.UserId}:superadmin";
     var superAdminCache = await _cacheSvc.Get<bool?>(superAdminKey);
-    if (superAdminCache != null)
+    if (superAdminCache != null && superAdminCache.Value == true)
     {
       return superAdminCache.Value;
     }
@@ -375,7 +389,7 @@ public class UserService : BaseService, IUserService
 
     foreach (var permission in permissions)
     {
-      if (privileges.ContainsKey(permission))
+      if (privileges.ContainsKey($"{museumId}.{permission}"))
       {
         return true;
       }
