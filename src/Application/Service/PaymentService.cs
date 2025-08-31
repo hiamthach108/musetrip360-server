@@ -56,6 +56,7 @@ public class PaymentService : BaseService, IPaymentService
   private readonly IMuseumRepository _museumRepo;
   private readonly ISubscriptionRepository _subscriptionRepo;
   private readonly ITransactionRepository _transactionRepo;
+  private readonly ITourViewerRepository _tourViewerRepo;
   public PaymentService(
   IConfiguration configuration,
   ILogger<PaymentService> logger,
@@ -79,6 +80,7 @@ public class PaymentService : BaseService, IPaymentService
     _museumRepo = new MuseumRepository(dbContext);
     _subscriptionRepo = new SubscriptionRepository(dbContext);
     _transactionRepo = new TransactionRepository(dbContext);
+    _tourViewerRepo = new TourViewerRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleAdminGetOrders(OrderAdminQuery query)
@@ -240,6 +242,16 @@ public class PaymentService : BaseService, IPaymentService
               payment.PaymentMethod = PaymentMethodEnum.Cash; // free event default is cash 
               payment.CreatedBy = payload.UserId;
               await _paymentRepo.AddAsync(payment);
+              // add tour viewer
+              var tourViewer = new TourViewer
+              {
+                UserId = payload.UserId,
+                TourId = tour.Id,
+                AccessType = "viewer", // default viewer
+                IsActive = true,
+                LastViewedAt = DateTime.UtcNow
+              };
+              await _tourViewerRepo.AddAsync(tourViewer);
             }
             else
             {
@@ -562,26 +574,39 @@ public class PaymentService : BaseService, IPaymentService
       // tou online case
       if (order.OrderType == OrderTypeEnum.Tour)
       {
+
         var tourIds = order.OrderTours.Select(t => t.TourId).ToList();
         foreach (var t in tourIds)
         {
+          // add tour viewer
+          var tourViewer = new TourViewer
+          {
+            UserId = order.CreatedBy,
+            TourId = t,
+            AccessType = "viewer",
+            IsActive = true,
+            LastViewedAt = DateTime.UtcNow
+          };
+          await _tourViewerRepo.AddAsync(tourViewer);
+          // get tour item
           var tourItem = await _tourRepo.GetByIdAsync(t);
           if (tourItem == null)
           {
             throw new Exception("Tour not found");
           }
-          // add to museum balance
+          // get museum
           var museum = await _museumRepo.GetByIdAsync(tourItem.MuseumId);
           if (museum == null)
           {
             throw new Exception("Museum not found");
           }
+          // get wallet
           var wallet = await _walletRepo.GetWalletByMuseumId(museum.Id);
           if (wallet == null)
           {
             throw new Exception("Wallet not found");
           }
-          // create transaction item
+          // create transaction
           var transactionItem = new Domain.Payment.Transaction
           {
             MuseumId = museum.Id,
@@ -592,13 +617,13 @@ public class PaymentService : BaseService, IPaymentService
             BalanceAfter = (decimal)wallet.TotalBalance + (decimal)tourItem.Price,
           };
           await _transactionRepo.CreateTransaction(transactionItem);
-          // add balance after
+          // add balance
           await _walletRepo.AddBalance(wallet.Id, tourItem.Price);
         }
       }
       if (order.OrderType == OrderTypeEnum.Subscription)
       {
-        // Activate subscription when payment is successful
+        // activate subscription when payment is successful
         var subscription = await _subscriptionRepo.GetByOrderIdAsync(order.Id);
         if (subscription != null)
         {

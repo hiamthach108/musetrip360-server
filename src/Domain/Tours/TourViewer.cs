@@ -11,6 +11,6 @@ public class TourViewer : BaseEntity
   public bool IsActive { get; set; }
   public DateTime? LastViewedAt { get; set; }
 
-  public User User { get; set; } = new();
-  public TourOnline TourOnline { get; set; } = new();
+  public User User { get; set; } = null!;
+  public TourOnline TourOnline { get; set; } = null!;
 }
