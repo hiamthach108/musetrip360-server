@@ -9,7 +9,6 @@ using Domain.Users;
 using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Repository;
 using Application.DTOs.UserRole;
-using Application.DTOs.Role;
 using Infrastructure.Cache;
 using Application.Shared.Constant;
 
@@ -160,7 +159,7 @@ public class UserService : BaseService, IUserService
       return ErrorResp.NotFound("User not found");
     }
 
-    if (user.HashedPassword != null && !BCrypt.Net.BCrypt.Verify(req.OldPassword, user.HashedPassword))
+    if (!string.IsNullOrEmpty(user.HashedPassword) && !BCrypt.Net.BCrypt.Verify(req.OldPassword, user.HashedPassword))
     {
       return ErrorResp.BadRequest("Old password is incorrect");
     }
