@@ -8,6 +8,7 @@ public class TourOnlineDto
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
     public bool IsActive { get; set; }
+    public float Price { get; set; }
     public Guid MuseumId { get; set; }
     public JsonDocument? Metadata { get; set; }
     public DateTime CreatedAt { get; set; }
