@@ -95,11 +95,19 @@ public class OrderController : ControllerBase
         return await _service.HandlePayosWebhook(data);
     }
 
+    [Protected]
     [HttpGet("code/{orderCode}")]
     public async Task<IActionResult> GetOrderByCode(string orderCode)
     {
-        _logger.LogInformation("Callback request received");
-
         return await _service.HandleGetOrderByCode(orderCode);
+    }
+
+    [Protected]
+    [HttpPost("verify-order-for-item-exist")]
+    public async Task<IActionResult> VerifyOrderForItemExist([FromBody] Guid itemId)
+    {
+        _logger.LogInformation("Verify order for item exist request received");
+
+        return await _service.HandleVerifyOrderForItemExist(itemId);
     }
 }

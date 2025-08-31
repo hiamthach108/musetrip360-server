@@ -23,6 +23,7 @@ public interface IOrderRepository
   Task<Order> GetByOrderCodeAsync(long orderCode);
   Task<bool> VerifyOrderEventExists(Guid userId, List<Guid> eventIds);
   Task<bool> VerifyOrderTourExists(Guid userId, List<Guid> tourIds);
+  Task<bool> VerifyOrderForItemExist(Guid userId, Guid itemId);
 }
 
 public class OrderList
@@ -204,5 +205,14 @@ public class OrderRepository : IOrderRepository
       PageSize = query.PageSize,
       TotalPages = (int)Math.Ceiling((double)await orders.CountAsync() / query.PageSize)
     };
+  }
+
+  public async Task<bool> VerifyOrderForItemExist(Guid userId, Guid itemId)
+  {
+    var order = await _dbContext.Orders
+      .Include(o => o.OrderEvents)
+      .Include(o => o.OrderTours)
+      .FirstOrDefaultAsync(o => o.CreatedBy == userId && (o.OrderEvents.Any(oe => oe.EventId == itemId) || o.OrderTours.Any(ot => ot.TourId == itemId)));
+    return order != null;
   }
 }

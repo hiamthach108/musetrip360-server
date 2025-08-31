@@ -3,6 +3,7 @@ namespace Infrastructure.Repository;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Application.Shared.Enum;
 using Database;
 using Domain.Events;
 using Microsoft.AspNetCore.DataProtection;
@@ -362,7 +363,7 @@ public class EventParticipantRepository : IEventParticipantRepository
   {
     var eventParticipant = await _dbContext.EventParticipants
       .Include(ep => ep.Event)
-      .FirstOrDefaultAsync(ep => ep.UserId == userId && ep.EventId == eventId);
+      .FirstOrDefaultAsync(ep => ep.UserId == userId && ep.EventId == eventId && ep.Status == ParticipantStatusEnum.Confirmed);
     return eventParticipant != null;
   }
 
