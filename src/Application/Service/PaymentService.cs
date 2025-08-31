@@ -133,7 +133,7 @@ public class PaymentService : BaseService, IPaymentService
         }
         var listItem = new List<ItemData>();
         var totalAmount = 0;
-
+        // case event
         if (req.OrderType == OrderTypeEnum.Event)
         {
           var freeEventExclude = new List<Guid>();
@@ -203,8 +203,10 @@ public class PaymentService : BaseService, IPaymentService
 
           totalAmount = (int)events.Sum(e => e!.Price);
         }
+        // case tour
         else if (req.OrderType == OrderTypeEnum.Tour)
         {
+          var freeTourExclude = new List<Guid>();
           var orderTourExists = await _orderRepo.VerifyOrderTourExists(payload.UserId, req.ItemIds);
           if (orderTourExists)
           {
@@ -218,11 +220,46 @@ public class PaymentService : BaseService, IPaymentService
             {
               return ErrorResp.NotFound("Tour not found");
             }
-            tours.Add(tour);
+            if (tour.Price == 0)
+            {
+              freeTourExclude.Add(tour.Id);
+              // create order
+              var order = new Order();
+              order.CreatedBy = payload.UserId;
+              order.Status = PaymentStatusEnum.Success;
+              order.OrderType = req.OrderType;
+              order.TotalAmount = 0;
+              order.OrderCode = "free-tour";
+              order.OrderTours = [new OrderTour { TourId = tour.Id }];
+              await _orderRepo.AddAsync(order);
+              // create payment
+              var payment = new Payment();
+              payment.OrderId = order.Id;
+              payment.Amount = 0;
+              payment.Status = PaymentStatusEnum.Success;
+              payment.PaymentMethod = PaymentMethodEnum.Cash; // free event default is cash 
+              payment.CreatedBy = payload.UserId;
+              await _paymentRepo.AddAsync(payment);
+            }
+            else
+            {
+              tours.Add(tour);
+            }
           }
-          listItem.AddRange(tours.Where(t => t != null).Select(t => new ItemData(t!.Id.ToString(), 1, (int)t.Price)));
-          totalAmount = (int)tours.Sum(t => t.Price);
+          // exclude free event from list item
+          if (freeTourExclude.Count > 0)
+          {
+            req.ItemIds = req.ItemIds.Where(id => !freeTourExclude.Contains(id)).ToList();
+          }
+          listItem.AddRange(tours
+          .Where(t => t != null)
+          .Select(t => new ItemData(t!.Id.ToString(), 1, (int)t!.Price)));
+
+          totalAmount = (int)tours.Sum(t => t!.Price);
+
         }
+        // commit change
+        await transaction.CommitAsync();
         // if the they only buy free event, return message
         if (totalAmount == 0 && req.ItemIds.Count == 0)
         {
@@ -248,8 +285,6 @@ public class PaymentService : BaseService, IPaymentService
         msg.ExpiredAt = paymentResult.expiredAt.HasValue ? DateTime.UnixEpoch.AddSeconds(paymentResult.expiredAt.Value) : DateTime.UtcNow.AddDays(1);
         msg.Metadata = JsonDocument.Parse(JsonSerializer.Serialize(paymentResult));
         await _queuePub.Publish(QueueConst.Order, msg);
-        // commit change
-        await transaction.CommitAsync();
         return SuccessResp.Ok(new
         {
           paymentResult.checkoutUrl,
@@ -496,7 +531,6 @@ public class PaymentService : BaseService, IPaymentService
           {
             throw new Exception("Event is full");
           }
-          // add to museum balance
           var museum = await _museumRepo.GetByIdAsync(eventItem.MuseumId);
           if (museum == null)
           {
