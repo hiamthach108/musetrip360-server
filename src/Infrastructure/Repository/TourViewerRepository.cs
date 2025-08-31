@@ -5,14 +5,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Database;
 using Domain.Tours;
+using Microsoft.EntityFrameworkCore;
 
 public interface ITourViewerRepository
 {
-  Task<TourViewer> GetByIdAsync(Guid id);
+  Task<TourViewer?> GetByIdAsync(Guid id);
   Task<IEnumerable<TourViewer>> GetAllAsync();
   Task<IEnumerable<TourViewer>> GetByTourIdAsync(Guid tourId);
   Task<IEnumerable<TourViewer>> GetByUserIdAsync(Guid userId);
-  Task<TourViewer> GetByTourIdAndUserIdAsync(Guid tourId, Guid userId);
+  Task<TourViewer?> GetByTourIdAndUserIdAsync(Guid tourId, Guid userId);
   Task<IEnumerable<TourViewer>> GetActiveTourViewersAsync(Guid tourId);
   Task<TourViewer> AddAsync(TourViewer tourViewer);
   Task<TourViewer> UpdateAsync(Guid tourViewerId, TourViewer tourViewer);
@@ -28,7 +29,7 @@ public class TourViewerRepository : ITourViewerRepository
     _dbContext = dbContext;
   }
 
-  public async Task<TourViewer> GetByIdAsync(Guid id)
+  public async Task<TourViewer?> GetByIdAsync(Guid id)
   {
     var tourViewer = await _dbContext.TourViewers.FindAsync(id);
     return tourViewer;
@@ -36,41 +37,41 @@ public class TourViewerRepository : ITourViewerRepository
 
   public async Task<IEnumerable<TourViewer>> GetAllAsync()
   {
-    var tourViewers = _dbContext.TourViewers.AsEnumerable();
+    var tourViewers = await _dbContext.TourViewers.ToListAsync();
     return tourViewers;
   }
 
   public async Task<IEnumerable<TourViewer>> GetByTourIdAsync(Guid tourId)
   {
-    var tourViewers = _dbContext.TourViewers
+    var tourViewers = await _dbContext.TourViewers
       .Where(tv => tv.TourId == tourId)
       .OrderByDescending(tv => tv.LastViewedAt)
-      .AsEnumerable();
+      .ToListAsync();
     return tourViewers;
   }
 
   public async Task<IEnumerable<TourViewer>> GetByUserIdAsync(Guid userId)
   {
-    var tourViewers = _dbContext.TourViewers
+    var tourViewers = await _dbContext.TourViewers
       .Where(tv => tv.UserId == userId)
       .OrderByDescending(tv => tv.LastViewedAt)
-      .AsEnumerable();
+      .ToListAsync();
     return tourViewers;
   }
 
-  public async Task<TourViewer> GetByTourIdAndUserIdAsync(Guid tourId, Guid userId)
+  public async Task<TourViewer?> GetByTourIdAndUserIdAsync(Guid tourId, Guid userId)
   {
-    var tourViewer = _dbContext.TourViewers
-      .FirstOrDefault(tv => tv.TourId == tourId && tv.UserId == userId);
+    var tourViewer = await _dbContext.TourViewers
+      .FirstOrDefaultAsync(tv => tv.TourId == tourId && tv.UserId == userId);
     return tourViewer;
   }
 
   public async Task<IEnumerable<TourViewer>> GetActiveTourViewersAsync(Guid tourId)
   {
-    var tourViewers = _dbContext.TourViewers
+    var tourViewers = await _dbContext.TourViewers
       .Where(tv => tv.TourId == tourId && tv.IsActive)
       .OrderByDescending(tv => tv.LastViewedAt)
-      .AsEnumerable();
+      .ToListAsync();
     return tourViewers;
   }
 
