@@ -64,73 +64,34 @@ public class SearchItemService : BaseService, ISearchItemService
       var searchQuery = BuildSearchQuery(query);
       var from = (query.Page - 1) * query.PageSize;
 
-      // Check if this is a geo distance search
-      if (query.Latitude.HasValue && query.Longitude.HasValue && query.RadiusKm.HasValue)
-      {
-        var (searchResults, totalHits) = await _elasticsearchService.SearchWithGeoDistanceAsync<SearchItemIndexDto>(
-          _searchIndex,
-          searchQuery,
-          query.Latitude.Value,
-          query.Longitude.Value,
-          query.RadiusKm.Value,
-          from,
-          query.PageSize
-        );
-
-        var items = searchResults.Select(item => _mapper.Map<SearchItem>(item)).ToList();
-
-        var typeAggregations = searchResults.GroupBy(x => x.Type)
-          .ToDictionary(g => g.Key, g => g.Count());
-
-        var locationAggregations = searchResults
-          .Where(x => !string.IsNullOrEmpty(x.Location))
-          .GroupBy(x => x.Location!)
-          .ToDictionary(g => g.Key, g => g.Count());
-
-        var response = new SearchResultDto
-        {
-          Items = items,
-          Total = (int)totalHits,
-          Page = query.Page,
-          PageSize = query.PageSize,
-          TypeAggregations = typeAggregations,
-          LocationAggregations = locationAggregations
-        };
-
-        return SuccessResp.Ok(response);
-      }
-      else
-      {
-        // Regular search without geo distance
-        var (searchResults, totalHits) = await _elasticsearchService.SearchWithTotalAsync<SearchItemIndexDto>(
+      var (searchResults, totalHits) = await _elasticsearchService.SearchWithTotalAsync<SearchItemIndexDto>(
           _searchIndex,
           searchQuery,
           from,
           query.PageSize
         );
 
-        var items = searchResults.Select(item => _mapper.Map<SearchItem>(item)).ToList();
+      var items = searchResults.Select(item => _mapper.Map<SearchItem>(item)).ToList();
 
-        var typeAggregations = searchResults.GroupBy(x => x.Type)
-          .ToDictionary(g => g.Key, g => g.Count());
+      var typeAggregations = searchResults.GroupBy(x => x.Type)
+        .ToDictionary(g => g.Key, g => g.Count());
 
-        var locationAggregations = searchResults
-          .Where(x => !string.IsNullOrEmpty(x.Location))
-          .GroupBy(x => x.Location!)
-          .ToDictionary(g => g.Key, g => g.Count());
+      var locationAggregations = searchResults
+        .Where(x => !string.IsNullOrEmpty(x.Location))
+        .GroupBy(x => x.Location!)
+        .ToDictionary(g => g.Key, g => g.Count());
 
-        var response = new SearchResultDto
-        {
-          Items = items,
-          Total = (int)totalHits,
-          Page = query.Page,
-          PageSize = query.PageSize,
-          TypeAggregations = typeAggregations,
-          LocationAggregations = locationAggregations
-        };
+      var response = new SearchResultDto
+      {
+        Items = items,
+        Total = (int)totalHits,
+        Page = query.Page,
+        PageSize = query.PageSize,
+        TypeAggregations = typeAggregations,
+        LocationAggregations = locationAggregations
+      };
 
-        return SuccessResp.Ok(response);
-      }
+      return SuccessResp.Ok(response);
     }
     catch
     {
@@ -429,12 +390,17 @@ public class SearchItemService : BaseService, ISearchItemService
     if (!string.IsNullOrEmpty(query.Search))
     {
       var searchTerm = query.Search.Trim();
-      queryParts.Add($"(title:\"{searchTerm}\"^3 OR title:*{searchTerm}*^2 OR searchText:\"{searchTerm}\" OR searchText:*{searchTerm}*)");
+      queryParts.Add($"(title:\"{searchTerm}\"^20 OR description:\"{searchTerm}\" OR description:*{searchTerm}*)");
     }
 
     if (!string.IsNullOrEmpty(query.Type))
     {
       queryParts.Add($"type:{query.Type}");
+    }
+    else
+    {
+      // Boost Museum type when no specific type is requested
+      queryParts.Add($"(type:Museum^10 OR type:*)");
     }
 
     if (!string.IsNullOrEmpty(query.Location))
@@ -448,14 +414,9 @@ public class SearchItemService : BaseService, ISearchItemService
       queryParts.Add($"status:{query.Status}");
     }
 
-    // Note: Geo distance queries need to be handled differently in Elasticsearch
-    // The current Lucene query string syntax doesn't support geo distance queries
-    // We need to use the Elasticsearch .NET client's geo distance query instead
-
-    // If no query parts, return match all query
     if (!queryParts.Any())
     {
-      return "*:*";
+      return "type:Museum^10 OR *:*"; // Boost museums even in match-all queries
     }
 
     return string.Join(" AND ", queryParts);
