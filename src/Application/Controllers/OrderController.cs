@@ -103,8 +103,8 @@ public class OrderController : ControllerBase
     }
 
     [Protected]
-    [HttpPost("verify-order-for-item-exist")]
-    public async Task<IActionResult> VerifyOrderForItemExist([FromBody] Guid itemId)
+    [HttpPost("item/{itemId}/verify-order-for-item-exist")]
+    public async Task<IActionResult> VerifyOrderForItemExist([FromRoute] Guid itemId)
     {
         _logger.LogInformation("Verify order for item exist request received");
 
