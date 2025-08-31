@@ -444,7 +444,8 @@ public class MuseumService : BaseService, IMuseumService
       ContactPhone = request.ContactPhone,
       Status = MuseumStatusEnum.Active,
       CreatedBy = request.CreatedBy,
-      Categories = request.Categories
+      Categories = request.Categories,
+      Metadata = request.Metadata
     };
 
     museum = await _museumRepository.AddAsync(museum);
