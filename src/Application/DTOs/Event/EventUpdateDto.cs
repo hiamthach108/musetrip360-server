@@ -9,8 +9,6 @@ public class EventUpdateDto : IValidatableObject
     [MaxLength(1000)]
     public string? Description { get; set; }
     public EventTypeEnum? EventType { get; set; }
-    public DateTime? StartTime { get; set; }
-    public DateTime? EndTime { get; set; }
     [MaxLength(100)]
     public string? Location { get; set; }
     [Range(0, int.MaxValue)]
@@ -24,25 +22,10 @@ public class EventUpdateDto : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (StartTime <= DateTime.UtcNow || EndTime <= DateTime.UtcNow)
-        {
-            yield return new ValidationResult("Start and end time must be in the future");
-        }
-        if (BookingDeadline <= DateTime.UtcNow)
-        {
-            yield return new ValidationResult("Booking deadline must be in the future");
-        }
-        if (StartTime >= EndTime)
-        {
-            yield return new ValidationResult("Start time must be before end time");
-        }
-        if (AvailableSlots > Capacity)
+        // Validate AvailableSlots against Capacity
+        if (AvailableSlots.HasValue && Capacity.HasValue && AvailableSlots.Value > Capacity.Value)
         {
             yield return new ValidationResult("Available slots cannot be greater than capacity");
-        }
-        if (BookingDeadline >= EndTime)
-        {
-            yield return new ValidationResult("Booking deadline must be before end time");
         }
     }
 }
