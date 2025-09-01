@@ -189,12 +189,6 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
             var tour = _mapper.Map<TourOnline>(tourOnline);
             tour.MuseumId = museumId;
             await _tourOnlineRepository.CreateAsync(tour);
-            await _queuePublisher.Publish(QueueConst.Indexing, new IndexMessage
-            {
-                Id = tour.Id,
-                Type = IndexConst.TOUR_ONLINE_TYPE,
-                Action = IndexConst.CREATE_ACTION
-            });
 
             var museumManagerEmails = await _userRepository.GetMuseumManagerEmailsByMuseumId(museumId.ToString());
 
