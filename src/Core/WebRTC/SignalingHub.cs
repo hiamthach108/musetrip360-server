@@ -121,6 +121,7 @@ public class SignalingHub : Hub
 
     public async Task SendTourActionToRoom(string roomId, string action)
     {
+        _logger.LogInformation($"Sending tour action: {action}");
         _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
         await _roomStateManager.HandleUpdateTourState(roomId, action);
     }
