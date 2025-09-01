@@ -176,6 +176,8 @@ public class SignalingHub : Hub
                 // get room state and send to peer
                 var roomState = await _roomStateManager.GetRoomState(roomId);
                 await Clients.Caller.SendAsync("ReceiveRoomState", JsonSerializer.Serialize(roomState));
+                var action = await _roomStateManager.HandleGetTourStateByRoomId(roomId) ?? "";
+                _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
             }
         }
         catch (Exception ex)

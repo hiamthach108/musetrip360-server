@@ -89,6 +89,7 @@ namespace Infrastructure.Repository
         {
             // fetch all events that match the query
             var queryable = _context.Events
+            .Where(e => e.Status == EventStatusEnum.Published)
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
             .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
             .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
