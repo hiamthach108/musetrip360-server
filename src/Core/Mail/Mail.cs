@@ -27,7 +27,7 @@ public class MailService : IMailService
   public async Task SendEmailAsync(string email, string subject, string message)
   {
     var mimeMessage = new MimeMessage();
-    mimeMessage.From.Add(new MailboxAddress("Rescue & 360 Furniture", _smtpUsername));
+    mimeMessage.From.Add(new MailboxAddress("MuseTrip360", _smtpUsername));
     mimeMessage.To.Add(new MailboxAddress("Receiver Name", email));
 
     mimeMessage.Subject = subject;
