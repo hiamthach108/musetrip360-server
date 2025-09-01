@@ -122,8 +122,7 @@ public class SignalingHub : Hub
     public async Task SendTourActionToRoom(string roomId, string action)
     {
         _logger.LogInformation($"Sending tour action: {action}");
-        _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
-        await _roomStateManager.HandleUpdateTourState(roomId, action);
+        await Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -176,8 +175,6 @@ public class SignalingHub : Hub
                 // get room state and send to peer
                 var roomState = await _roomStateManager.GetRoomState(roomId);
                 await Clients.Caller.SendAsync("ReceiveRoomState", JsonSerializer.Serialize(roomState));
-                var action = await _roomStateManager.HandleGetTourStateByRoomId(roomId) ?? "";
-                _ = Clients.OthersInGroup(roomId).SendAsync("ReceiveTourAction", roomId, action);
             }
         }
         catch (Exception ex)
