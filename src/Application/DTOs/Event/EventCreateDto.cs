@@ -23,9 +23,6 @@ public class EventCreateDto : IValidatableObject
     [Range(0, int.MaxValue)]
     public int Capacity { get; set; }
     [Required]
-    [Range(0, int.MaxValue)]
-    public int AvailableSlots { get; set; }
-    [Required]
     public DateTime BookingDeadline { get; set; }
     [Required]
     [Range(0, float.MaxValue)]
@@ -45,10 +42,6 @@ public class EventCreateDto : IValidatableObject
         if (StartTime >= EndTime)
         {
             yield return new ValidationResult("Start time must be before end time");
-        }
-        if (AvailableSlots > Capacity)
-        {
-            yield return new ValidationResult("Available slots cannot be greater than capacity");
         }
         if (BookingDeadline >= StartTime)
         {
