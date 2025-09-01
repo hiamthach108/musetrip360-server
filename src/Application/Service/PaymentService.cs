@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Application.DTOs.Order;
 using Application.DTOs.Payment;
+using Application.DTOs.Notification;
 using Application.Shared.Constant;
 using Application.Shared.Enum;
 using Application.Shared.Helpers;
@@ -632,7 +633,20 @@ public class PaymentService : BaseService, IPaymentService
           await _subscriptionRepo.UpdateAsync(subscription.Id, subscription);
         }
       }
+
       await transaction.CommitAsync();
+
+      var notification = new CreateNotificationDto
+      {
+        Title = "Thanh Toán Thành Công",
+        Message = $"Đơn hàng #{webhookData.orderCode} đã được thanh toán thành công với số tiền {webhookData.amount:N0} VND vào ngày {DateTime.UtcNow.AddHours(7):dd/MM/yyyy HH:mm}.",
+        Type = "Payment",
+        UserId = order.CreatedBy,
+        Target = NotificationTargetEnum.User,
+      };
+
+      await _queuePub.Publish(QueueConst.Notification, notification);
+
       return SuccessResp.Ok(new { success = true });
     }
     catch (Exception e)

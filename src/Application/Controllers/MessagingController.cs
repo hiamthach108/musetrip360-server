@@ -114,6 +114,14 @@ public class MessagingController : ControllerBase
   }
 
   [Protected]
+  [HttpDelete("notifications/{notificationId}")]
+  public async Task<IActionResult> DeleteNotification(Guid notificationId)
+  {
+    _logger.LogInformation("Delete notification request received");
+    return await _service.HandleDeleteNotification(notificationId);
+  }
+
+  [Protected]
   [HttpPut("conversations/{conversationId}")]
   public async Task<IActionResult> UpdateConversation(Guid conversationId, [FromBody] UpdateConversation req)
   {

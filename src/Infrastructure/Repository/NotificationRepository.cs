@@ -11,6 +11,7 @@ public interface INotificationRepository
   NotificationList GetUserNotifications(NotificationQuery query, Guid userId);
   Task<Notification> CreateNotification(Notification notification);
   Task<Notification> UpdateReadStatus(Guid notificationId, bool isRead);
+  Task<bool> DeleteNotification(Guid notificationId);
 }
 
 public class NotificationList
@@ -81,5 +82,18 @@ public class NotificationRepository : INotificationRepository
     notification.IsRead = isRead;
     await _context.SaveChangesAsync();
     return notification;
+  }
+
+  public async Task<bool> DeleteNotification(Guid notificationId)
+  {
+    var notification = await _context.Notifications.FindAsync(notificationId);
+    if (notification == null)
+    {
+      return false;
+    }
+
+    _context.Notifications.Remove(notification);
+    await _context.SaveChangesAsync();
+    return true;
   }
 }
