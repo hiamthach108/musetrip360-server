@@ -19,6 +19,7 @@ public interface IUserRepository
   Task<User> DeleteAsync(User user);
   Task<User> GetUserByEmail(string email);
   Task<List<string>> GetMuseumManagerEmailsByMuseumId(string museumId);
+  Task<List<string>> GetSuperAdminEmail();
 }
 
 public class UserList
@@ -123,6 +124,18 @@ public class UserRepository : IUserRepository
       .Include(ur => ur.User)
       .Include(ur => ur.Role)
       .Where(ur => ur.MuseumId == museumId && ur.Role.Name == UserConst.ROLE_MUSEUM_MANAGER)
+      .Select(ur => ur.User.Email)
+      .ToListAsync();
+
+    return emails;
+  }
+
+  public async Task<List<string>> GetSuperAdminEmail()
+  {
+    var emails = await _dbContext.UserRoles
+      .Include(ur => ur.User)
+      .Include(ur => ur.Role)
+      .Where(ur => ur.Role.Name == UserConst.ROLE_SUPERADMIN && string.IsNullOrEmpty(ur.MuseumId))
       .Select(ur => ur.User.Email)
       .ToListAsync();
 

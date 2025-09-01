@@ -34,6 +34,7 @@ public interface IMessagingService
   Task<IActionResult> HandleCreateSystemNotification(CreateNotificationDto req);
   Task<QueueOperationResult> PushNewNotification(CreateNotificationDto notification);
   Task<NotificationDto> HandleCreateNotification(CreateNotificationDto req);
+  Task<IActionResult> HandleDeleteNotification(Guid notificationId);
 }
 
 public class MessagingService : BaseService, IMessagingService
@@ -382,5 +383,22 @@ public class MessagingService : BaseService, IMessagingService
     }
 
     return SuccessResp.Ok(new { message = "Conversation deleted successfully" });
+  }
+
+  public async Task<IActionResult> HandleDeleteNotification(Guid notificationId)
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var deleted = await _notificationRepo.DeleteNotification(notificationId);
+    if (!deleted)
+    {
+      return ErrorResp.NotFound("Notification not found");
+    }
+
+    return SuccessResp.Ok(new { message = "Notification deleted successfully" });
   }
 }

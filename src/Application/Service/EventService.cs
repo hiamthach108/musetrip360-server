@@ -682,13 +682,13 @@ public class OrganizerEventService(
                 {
                     Type = "event-submission",
                     Recipients = museumManagerEmails,
-                    Subject = "Sự Kiện Mới Cần Được Xem Xét - MuseTrip360",
+                    Subject = $"Sự Kiện Mới Cần Được Xét Duyệt - {eventItem.Title}",
                     TemplateData = new Dictionary<string, object>
                     {
                         ["eventTitle"] = eventItem.Title,
                         ["eventDescription"] = eventItem.Description ?? "",
-                        ["eventDate"] = eventItem.StartTime.ToString("dd/MM/yyyy"),
-                        ["submissionDate"] = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm"),
+                        ["eventDate"] = eventItem.StartTime.AddHours(7).ToString("dd/MM/yyyy"),
+                        ["submissionDate"] = DateTime.UtcNow.AddHours(7).ToString("dd/MM/yyyy HH:mm"),
                         ["content"] = $"Một sự kiện mới '{eventItem.Title}' đã được gửi và đang chờ phê duyệt của bạn.",
                         ["eventLink"] = $"https://museum.musetrip360.site/event/edit/{eventItem.Id}"
                     }

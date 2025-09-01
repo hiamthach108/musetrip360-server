@@ -19,6 +19,8 @@ using Domain.Users;
 using Core.Queue;
 using Application.DTOs.Search;
 using Application.DTOs.Feedback;
+using Application.DTOs.Email;
+using MuseTrip360.src.Infrastructure.Repository;
 
 public interface IMuseumService
 {
@@ -62,6 +64,7 @@ public class MuseumService : BaseService, IMuseumService
   private readonly ICategoryRepository _categoryRepository;
   private readonly IUserService _userSvc;
   private readonly IQueuePublisher _queuePub;
+  private readonly IUserRepository _userRepository;
 
   public MuseumService(
     MuseTrip360DbContext dbContext,
@@ -80,6 +83,7 @@ public class MuseumService : BaseService, IMuseumService
     _categoryRepository = new CategoryRepository(dbContext);
     _userSvc = userSvc;
     _queuePub = queuePublisher;
+    _userRepository = new UserRepository(dbContext);
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -365,6 +369,31 @@ public class MuseumService : BaseService, IMuseumService
 
     await _museumRequestRepository.AddAsync(request);
 
+    var superAdminEmails = await _userRepository.GetSuperAdminEmail();
+
+    if (superAdminEmails.Count > 0)
+    {
+      var emailRequest = new SendEmailDto
+      {
+        Type = "museum-request-creation",
+        Recipients = superAdminEmails,
+        Subject = $"Yêu Cầu Tạo Bảo Tàng Mới - {request.MuseumName}",
+        TemplateData = new Dictionary<string, object>
+        {
+          ["museumName"] = request.MuseumName,
+          ["museumDescription"] = request.MuseumDescription ?? "",
+          ["contactEmail"] = request.ContactEmail ?? "",
+          ["contactPhone"] = request.ContactPhone ?? "",
+          ["location"] = request.Location ?? "",
+          ["submissionDate"] = DateTime.UtcNow.AddHours(7).ToString("dd/MM/yyyy HH:mm"),
+          ["status"] = "Đang chờ xử lý",
+          ["requestLink"] = $"https://admin.musetrip360.site/museums/requests/{request.Id}"
+        }
+      };
+
+      await _queuePub.Publish(QueueConst.Email, emailRequest);
+    }
+
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Created(requestDto);
   }
@@ -473,6 +502,30 @@ public class MuseumService : BaseService, IMuseumService
       Type = IndexConst.MUSEUM_TYPE,
       Action = IndexConst.CREATE_ACTION
     });
+
+    // Send approval notification email to the user
+    var user = await _userRepository.GetByIdAsync(request.CreatedBy);
+    if (user != null && !string.IsNullOrEmpty(user.Email))
+    {
+      var emailRequest = new SendEmailDto
+      {
+        Type = "museum-request-approval",
+        Recipients = [user.Email],
+        Subject = $"Chúc Mừng! Yêu Cầu Bảo Tàng '{request.MuseumName}' Đã Được Phê Duyệt",
+        TemplateData = new Dictionary<string, object>
+        {
+          ["requesterName"] = user.FullName ?? "Bạn",
+          ["museumName"] = museum.Name,
+          ["museumDescription"] = museum.Description ?? "",
+          ["location"] = museum.Location ?? "",
+          ["contactEmail"] = museum.ContactEmail ?? "",
+          ["approvalDate"] = DateTime.UtcNow.AddHours(7).ToString("dd/MM/yyyy HH:mm"),
+          ["museumDashboardLink"] = $"https://museum.musetrip360.site"
+        }
+      };
+
+      await _queuePub.Publish(QueueConst.Email, emailRequest);
+    }
 
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);

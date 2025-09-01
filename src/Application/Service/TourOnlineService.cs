@@ -1,3 +1,4 @@
+using Application.DTOs.Email;
 using Application.DTOs.Feedback;
 using Application.DTOs.Search;
 using Application.Service;
@@ -107,6 +108,7 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
 {
     protected readonly IQueuePublisher _queuePublisher = queuePublisher;
     protected readonly IUserService _userSvc = userService;
+    protected readonly IUserRepository _userRepository = new UserRepository(dbContext);
     public async Task<IActionResult> ActivateAsync(Guid id)
     {
         try
@@ -193,6 +195,29 @@ public class TourOnlineAdminService(IQueuePublisher queuePublisher, MuseTrip360D
                 Type = IndexConst.TOUR_ONLINE_TYPE,
                 Action = IndexConst.CREATE_ACTION
             });
+
+            var museumManagerEmails = await _userRepository.GetMuseumManagerEmailsByMuseumId(museumId.ToString());
+
+            if (museumManagerEmails.Count > 0)
+            {
+                var emailRequest = new SendEmailDto
+                {
+                    Type = "tour-creation",
+                    Recipients = museumManagerEmails,
+                    Subject = $"Tour Online Mới Được Tạo - {tour.Name}",
+                    TemplateData = new Dictionary<string, object>
+                    {
+                        ["tourTitle"] = tour.Name,
+                        ["tourDescription"] = tour.Description ?? "",
+                        ["creationDate"] = DateTime.UtcNow.AddHours(7).ToString("dd/MM/yyyy HH:mm"),
+                        ["tourStatus"] = tour.IsActive ? "Hoạt động" : "Không hoạt động",
+                        ["tourLink"] = $"https://museum.musetrip360.site/virtual-tour/studio/{tour.Id}"
+                    }
+                };
+
+                await _queuePublisher.Publish(QueueConst.Email, emailRequest);
+            }
+
             var tourDto = _mapper.Map<TourOnlineDto>(tour);
             return SuccessResp.Created(tourDto);
         }

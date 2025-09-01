@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Thông Báo Gửi Sự Kiện</title>
+    <title>Thông Báo Yêu Cầu Tạo Bảo Tàng</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,20 +25,20 @@
             border-radius: 0 0 8px 8px;
             border: 1px solid #dee2e6;
         }
-        .event-details {
+        .request-details {
             background: white;
             padding: 20px;
             border-radius: 6px;
             margin: 20px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .event-title {
+        .museum-title {
             color: #495057;
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .event-info {
+        .request-info {
             margin: 10px 0;
         }
         .label {
@@ -63,42 +63,62 @@
             color: #6c757d;
             font-size: 12px;
         }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #ffc107;
+            color: #212529;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📅 Sự Kiện Mới Được Gửi</h1>
-        <p>Có một sự kiện cần được xem xét và phê duyệt</p>
+        <h1>🏛️ Yêu Cầu Tạo Bảo Tàng Mới</h1>
+        <p>Có một yêu cầu tạo bảo tàng mới cần được xem xét</p>
     </div>
     
     <div class="content">
-        <p>Xin chào Quản lý Bảo tàng,</p>
+        <p>Xin chào Quản trị viên hệ thống,</p>
         
-        <p>Một sự kiện mới đã được gửi đến bảo tàng của bạn và đang chờ phê duyệt.</p>
+        <p>Một yêu cầu tạo bảo tàng mới đã được gửi đến hệ thống và đang chờ phê duyệt của bạn.</p>
         
-        <div class="event-details">
-            <div class="event-title">{{eventTitle}}</div>
+        <div class="request-details">
+            <div class="museum-title">{{museumName}}</div>
             
-            <div class="event-info">
-                <span class="label">Ngày sự kiện:</span> {{eventDate}}
+            <div class="request-info">
+                <span class="label">Email liên hệ:</span> {{contactEmail}}
             </div>
             
-            <div class="event-info">
-                <span class="label">Ngày gửi:</span> {{submissionDate}}
+            <div class="request-info">
+                <span class="label">Số điện thoại:</span> {{contactPhone}}
             </div>
             
-            <div class="event-info">
+            <div class="request-info">
+                <span class="label">Địa chỉ:</span> {{location}}
+            </div>
+            
+            <div class="request-info">
+                <span class="label">Ngày gửi yêu cầu:</span> {{submissionDate}}
+            </div>
+            
+            <div class="request-info">
+                <span class="label">Trạng thái:</span> <span class="status-badge">{{status}}</span>
+            </div>
+            
+            <div class="request-info">
                 <span class="label">Mô tả:</span>
-                <p style="margin: 10px 0; color: #495057;">{{eventDescription}}</p>
+                <p style="margin: 10px 0; color: #495057;">{{museumDescription}}</p>
             </div>
         </div>
         
-
         <div style="text-align: center;">
-            <a href="{{eventLink}}" class="cta-button">Xem Xét Sự Kiện</a>
+            <a href="{{requestLink}}" class="cta-button">Xem Xét Yêu Cầu</a>
         </div>
         
-        <p><strong>Lưu ý:</strong> Các sự kiện phải được xem xét trong vòng 48 giờ kể từ khi gửi để duy trì tiêu chuẩn chất lượng.</p>
+        <p><strong>Lưu ý:</strong> Các yêu cầu tạo bảo tàng nên được xem xét và phê duyệt trong thời gian sớm nhất để đảm bảo chất lượng dịch vụ.</p>
     </div>
     
     <div class="footer">

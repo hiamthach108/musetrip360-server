@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Thông Báo Gửi Sự Kiện</title>
+    <title>Thông Báo Tạo Tour Online</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,20 +25,20 @@
             border-radius: 0 0 8px 8px;
             border: 1px solid #dee2e6;
         }
-        .event-details {
+        .tour-details {
             background: white;
             padding: 20px;
             border-radius: 6px;
             margin: 20px 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .event-title {
+        .tour-title {
             color: #495057;
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .event-info {
+        .tour-info {
             margin: 10px 0;
         }
         .label {
@@ -67,38 +67,37 @@
 </head>
 <body>
     <div class="header">
-        <h1>📅 Sự Kiện Mới Được Gửi</h1>
-        <p>Có một sự kiện cần được xem xét và phê duyệt</p>
+        <h1>🎯 Tour Online Mới Được Tạo</h1>
+        <p>Có một tour online mới vừa được thêm vào bảo tàng</p>
     </div>
     
     <div class="content">
         <p>Xin chào Quản lý Bảo tàng,</p>
         
-        <p>Một sự kiện mới đã được gửi đến bảo tàng của bạn và đang chờ phê duyệt.</p>
+        <p>Một tour online mới đã được tạo cho bảo tàng của bạn.</p>
         
-        <div class="event-details">
-            <div class="event-title">{{eventTitle}}</div>
+        <div class="tour-details">
+            <div class="tour-title">{{tourTitle}}</div>
             
-            <div class="event-info">
-                <span class="label">Ngày sự kiện:</span> {{eventDate}}
+            <div class="tour-info">
+                <span class="label">Ngày tạo:</span> {{creationDate}}
             </div>
             
-            <div class="event-info">
-                <span class="label">Ngày gửi:</span> {{submissionDate}}
+            <div class="tour-info">
+                <span class="label">Trạng thái:</span> {{tourStatus}}
             </div>
             
-            <div class="event-info">
+            <div class="tour-info">
                 <span class="label">Mô tả:</span>
-                <p style="margin: 10px 0; color: #495057;">{{eventDescription}}</p>
+                <p style="margin: 10px 0; color: #495057;">{{tourDescription}}</p>
             </div>
         </div>
         
-
         <div style="text-align: center;">
-            <a href="{{eventLink}}" class="cta-button">Xem Xét Sự Kiện</a>
+            <a href="{{tourLink}}" class="cta-button">Xem Tour Online</a>
         </div>
         
-        <p><strong>Lưu ý:</strong> Các sự kiện phải được xem xét trong vòng 48 giờ kể từ khi gửi để duy trì tiêu chuẩn chất lượng.</p>
+        <p><strong>Lưu ý:</strong> Tour online đã được tạo và có thể được quản lý thông qua hệ thống quản trị.</p>
     </div>
     
     <div class="footer">
