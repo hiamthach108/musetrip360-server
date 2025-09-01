@@ -42,7 +42,7 @@ public class EmailWorker : BackgroundService
         }
 
         var htmlContent = await LoadEmailTemplate(emailRequest.Type, emailRequest.TemplateData);
-        
+
         foreach (var recipient in emailRequest.Recipients)
         {
           await mailService.SendEmailAsync(recipient, emailRequest.Subject, htmlContent);
@@ -68,7 +68,7 @@ public class EmailWorker : BackgroundService
     try
     {
       var templatePath = Path.Combine("templates", $"{type}.html");
-      
+
       if (!File.Exists(templatePath))
       {
         _logger.LogWarning("Template file not found: {TemplatePath}. Using default template.", templatePath);
@@ -76,7 +76,7 @@ public class EmailWorker : BackgroundService
       }
 
       var template = await File.ReadAllTextAsync(templatePath);
-      
+
       foreach (var data in templateData)
       {
         template = template.Replace($"{{{{{data.Key}}}}}", data.Value?.ToString() ?? string.Empty);
@@ -94,7 +94,7 @@ public class EmailWorker : BackgroundService
   private string GetDefaultTemplate(Dictionary<string, object> templateData)
   {
     var content = templateData.ContainsKey("content") ? templateData["content"]?.ToString() : "Email notification";
-    
+
     return $@"
     <!DOCTYPE html>
     <html>

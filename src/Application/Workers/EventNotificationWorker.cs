@@ -136,14 +136,14 @@ public class EventNotificationWorker : BackgroundService
       {
         Type = "event-reminder",
         Recipients = participantEmails,
-        Subject = "Nhắc Nhở Sự Kiện - MuseTrip360",
+        Subject = $"Nhắc Nhở Sự Kiện - {eventItem.Title}",
         TemplateData = new Dictionary<string, object>
         {
           ["eventId"] = eventItem.Id.ToString(),
           ["participantName"] = "Người Tham Gia",
           ["eventTitle"] = eventItem.Title ?? "Sự Kiện",
-          ["eventDate"] = eventItem.StartTime.ToString("MMMM dd, yyyy"),
-          ["eventTime"] = eventItem.StartTime.ToString("HH:mm"),
+          ["eventDate"] = eventItem.StartTime.AddHours(7).ToString("MMMM dd, yyyy"),
+          ["eventTime"] = eventItem.StartTime.AddHours(7).ToString("HH:mm"),
           ["eventLocation"] = eventItem.Location ?? "Trực Tuyến",
           ["eventDuration"] = CalculateEventDuration(eventItem.StartTime, eventItem.EndTime),
           ["timeUntilEvent"] = "30 phút",

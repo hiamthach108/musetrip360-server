@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Yêu Cầu Bảo Tàng Được Phê Duyệt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffc107);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #dee2e6;
+        }
+        .museum-details {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .museum-title {
+            color: #495057;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .museum-info {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .success-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .congratulations {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Chúc Mừng!</h1>
+        <p>Yêu cầu tạo bảo tàng của bạn đã được phê duyệt</p>
+    </div>
+    
+    <div class="content">
+        <p>Xin chào {{requesterName}},</p>
+        
+        <div class="congratulations">
+            <strong>🎊 Tin tuyệt vời!</strong> Yêu cầu tạo bảo tàng của bạn đã được phê duyệt thành công và bảo tàng đã được kích hoạt trên hệ thống MuseTrip360.
+        </div>
+        
+        <div class="museum-details">
+            <div class="museum-title">{{museumName}}</div>
+            
+            <div class="museum-info">
+                <span class="label">Trạng thái:</span> <span class="success-badge">Đã Phê Duyệt & Kích Hoạt</span>
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Ngày phê duyệt:</span> {{approvalDate}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Địa chỉ:</span> {{location}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Email liên hệ:</span> {{contactEmail}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Vai trò của bạn:</span> <strong>Quản lý Bảo tàng</strong>
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Mô tả:</span>
+                <p style="margin: 10px 0; color: #495057;">{{museumDescription}}</p>
+            </div>
+        </div>
+        
+        <p><strong>Bước tiếp theo:</strong></p>
+        <ul>
+            <li>Bạn đã được cấp quyền <strong>Quản lý Bảo tàng</strong> và có thể bắt đầu quản lý bảo tàng của mình</li>
+            <li>Truy cập vào hệ thống quản lý để thêm nội dung, tạo sự kiện, và quản lý tour ảo</li>
+            <li>Cập nhật thông tin chi tiết và hình ảnh cho bảo tàng của bạn</li>
+        </ul>
+
+        <div style="text-align: center;">
+            <a href="{{museumDashboardLink}}" class="cta-button">Truy Cập Bảng Điều Khiển</a>
+        </div>
+        
+        <p><strong>Lưu ý:</strong> Nếu bạn có bất kỳ câu hỏi nào về việc quản lý bảo tàng, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>
+    </div>
+    
+    <div class="footer">
+        <p>Cảm ơn bạn đã tham gia cộng đồng MuseTrip360!</p>
+        <p>Đây là tin nhắn tự động từ MuseTrip360. Vui lòng không trả lời email này.</p>
+        <p>© 2024 MuseTrip360. Tất cả quyền được bảo lưu.</p>
+    </div>
+</body>
+</html>
