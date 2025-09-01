@@ -118,4 +118,13 @@ public class UserController : ControllerBase
 
     return await _service.HandleGetMuseumUser(query, museumId);
   }
+
+  [Protected]
+  [HttpGet("super-admin")]
+  public async Task<IActionResult> IsSuperAdmin()
+  {
+    _logger.LogInformation("Check if user is super admin request received");
+
+    return await _service.HandleIsSuperAdmin();
+  }
 }

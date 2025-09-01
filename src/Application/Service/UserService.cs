@@ -29,6 +29,7 @@ public interface IUserService
   Task<IActionResult> HandleAddUserRole(UserRoleFormDto body);
   Task<IActionResult> HandleDeleteUserRole(UserRoleFormDto body);
   Task<IActionResult> HandleGetMuseumUser(UserRoleQuery query, string museumId);
+  Task<IActionResult> HandleIsSuperAdmin();
 
 
   Task<Dictionary<string, bool>> GetUserPrivileges(Guid userId);
@@ -422,5 +423,25 @@ public class UserService : BaseService, IUserService
     };
 
     return SuccessResp.Ok(result);
+  }
+
+  public async Task<IActionResult> HandleIsSuperAdmin()
+  {
+    var payload = ExtractPayload();
+    if (payload == null)
+    {
+      return ErrorResp.Unauthorized("Invalid token");
+    }
+
+    var superAdminKey = $"users:{payload.UserId}:superadmin";
+    var superAdminCache = await _cacheSvc.Get<bool?>(superAdminKey);
+    if (superAdminCache != null && superAdminCache.Value == true)
+    {
+      return SuccessResp.Ok(true);
+    }
+
+    var isSuperAdmin = _userRoleRepo.IsSuperAdmin(payload.UserId);
+    await _cacheSvc.Set(superAdminKey, isSuperAdmin, TimeSpan.FromMinutes(15));
+    return SuccessResp.Ok(isSuperAdmin);
   }
 }
