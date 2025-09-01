@@ -644,6 +644,7 @@ public class OrganizerEventService(
             eventItem.CreatedBy = payload.UserId;
             eventItem.MuseumId = museumId;
             eventItem.Status = EventStatusEnum.Draft;
+            eventItem.AvailableSlots = dto.Capacity;
 
             await _eventRepository.AddAsync(eventItem);
             var eventDto = _mapper.Map<EventDto>(eventItem);
