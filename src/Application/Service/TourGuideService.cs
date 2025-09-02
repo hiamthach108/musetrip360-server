@@ -156,7 +156,6 @@ public class AdminTourGuideService(MuseTrip360DbContext context, IMapper mapper,
         return ErrorResp.Unauthorized("Unauthorized");
       }
       var tourGuide = _mapper.Map<TourGuide>(tourGuideCreateDto);
-      tourGuide.UserId = payload.UserId;
       var museum = _museumRepository.GetById(museumId);
       if (museum == null)
       {
