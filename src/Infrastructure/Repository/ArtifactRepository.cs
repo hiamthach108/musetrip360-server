@@ -63,9 +63,10 @@ namespace MuseTrip360.src.Infrastructure.Repository
 
         public async Task<ArtifactList> GetAllAsync(ArtifactQuery query)
         {
+
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
-                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search))
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.ToLower().Contains(query.Search.ToLower()) || a.Description.ToLower().Contains(query.Search.ToLower()) || a.HistoricalPeriod.ToLower().Contains(query.Search.ToLower()))
                 .Include(a => a.Events);
             //return the artifacts and the total
             var total = queryable.Count();
@@ -86,7 +87,7 @@ namespace MuseTrip360.src.Infrastructure.Repository
             //get all artifacts with constraints and pagination
             var queryable = _context.Artifacts
                 .Where(a => query.IsActive == null || a.IsActive == query.IsActive)
-                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.Contains(query.Search) || a.Description.Contains(query.Search) || a.HistoricalPeriod.Contains(query.Search));
+                .Where(a => string.IsNullOrEmpty(query.Search) || a.Name.ToLower().Contains(query.Search.ToLower()) || a.Description.ToLower().Contains(query.Search.ToLower()) || a.HistoricalPeriod.ToLower().Contains(query.Search.ToLower()));
             //return the artifacts and the total
             var total = queryable.Count();
             var artifacts = await queryable

@@ -104,7 +104,8 @@ public class MuseumRepository : IMuseumRepository
 
     if (!string.IsNullOrEmpty(query.Search))
     {
-      queryable = queryable.Where(m => m.Name.Contains(query.Search) || m.Description.Contains(query.Search));
+      var searchLower = query.Search.ToLower();
+      queryable = queryable.Where(m => m.Name.ToLower().Contains(searchLower) || m.Description.ToLower().Contains(searchLower));
     }
 
     var total = queryable.Count();
@@ -135,7 +136,8 @@ public class MuseumRepository : IMuseumRepository
 
     if (!string.IsNullOrEmpty(query.Search))
     {
-      queryable = queryable.Where(m => m.Name.Contains(query.Search));
+      var searchLower = query.Search.ToLower();
+      queryable = queryable.Where(m => m.Name.ToLower().Contains(searchLower));
     }
 
     if (query.Status != null && query.Status.Count > 0)

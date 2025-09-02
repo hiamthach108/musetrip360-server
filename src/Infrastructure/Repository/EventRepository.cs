@@ -59,8 +59,8 @@ namespace Infrastructure.Repository
             // fetch all events that match the query
             var queryable = _context.Events
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
-            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.ToLower().Contains(query.Search.ToLower()) || e.Description.ToLower().Contains(query.Search.ToLower()))
+            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.ToLower().Contains(query.Location.ToLower()))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Status == null || e.Status == query.Status)
             .Where(e => query.Ids == null || query.Ids.Contains(e.Id))
@@ -91,8 +91,8 @@ namespace Infrastructure.Repository
             var queryable = _context.Events
             .Where(e => e.Status == EventStatusEnum.Published)
             .Where(e => query.MuseumId == null || e.MuseumId == query.MuseumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
-            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.ToLower().Contains(query.Search.ToLower()) || e.Description.ToLower().Contains(query.Search.ToLower()))
+            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.ToLower().Contains(query.Location.ToLower()))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Ids == null || query.Ids.Contains(e.Id))
             // time range available is e.Start before query end or query Start before e.End is available
@@ -146,8 +146,8 @@ namespace Infrastructure.Repository
             // fetch all events that match the query
             var queryable = _context.Events
             .Where(e => e.MuseumId == museumId)
-            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.Contains(query.Search) || e.Description.Contains(query.Search))
-            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.Contains(query.Location))
+            .Where(e => string.IsNullOrEmpty(query.Search) || e.Title.ToLower().Contains(query.Search.ToLower()) || e.Description.ToLower().Contains(query.Search.ToLower()))
+            .Where(e => string.IsNullOrEmpty(query.Location) || e.Location.ToLower().Contains(query.Location.ToLower()))
             .Where(e => query.EventType == null || e.EventType == query.EventType)
             .Where(e => query.Status == null || e.Status == query.Status)
             // time range available is e.Start before query end or query Start before e.End is available
