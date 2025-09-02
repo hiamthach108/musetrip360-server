@@ -559,6 +559,30 @@ public class MuseumService : BaseService, IMuseumService
     request.Status = RequestStatusEnum.Rejected;
     await _museumRequestRepository.UpdateAsync(id, request);
 
+    // Send rejection notification email to the user
+    var user = await _userRepository.GetByIdAsync(request.CreatedBy);
+    if (user != null && !string.IsNullOrEmpty(user.Email))
+    {
+      var emailRequest = new SendEmailDto
+      {
+        Type = "museum-request-rejection",
+        Recipients = [user.Email],
+        Subject = $"Thông Báo Về Yêu Cầu Bảo Tàng '{request.MuseumName}'",
+        TemplateData = new Dictionary<string, object>
+        {
+          ["requesterName"] = user.FullName ?? "Bạn",
+          ["museumName"] = request.MuseumName,
+          ["museumDescription"] = request.MuseumDescription ?? "",
+          ["location"] = request.Location ?? "",
+          ["contactEmail"] = request.ContactEmail ?? "",
+          ["rejectionDate"] = DateTime.UtcNow.AddHours(7).ToString("dd/MM/yyyy HH:mm"),
+          ["createNewRequestLink"] = "https://museum.musetrip360.site/museums/request"
+        }
+      };
+
+      await _queuePub.Publish(QueueConst.Email, emailRequest);
+    }
+
     var requestDto = _mapper.Map<MuseumRequestDto>(request);
     return SuccessResp.Ok(requestDto);
   }

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Yêu Cầu Bảo Tàng Bị Từ Chối</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #dee2e6;
+        }
+        .museum-details {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .museum-title {
+            color: #495057;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .museum-info {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .rejection-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .rejection-notice {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #721c24;
+        }
+        .next-steps {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 Thông Báo Quan Trọng</h1>
+        <p>Về yêu cầu tạo bảo tàng của bạn</p>
+    </div>
+    
+    <div class="content">
+        <p>Xin chào {{requesterName}},</p>
+        
+        <div class="rejection-notice">
+            <strong>📋 Thông báo:</strong> Rất tiếc, yêu cầu tạo bảo tàng của bạn chưa được phê duyệt tại thời điểm này.
+        </div>
+        
+        <div class="museum-details">
+            <div class="museum-title">{{museumName}}</div>
+            
+            <div class="museum-info">
+                <span class="label">Trạng thái:</span> <span class="rejection-badge">Chưa Được Phê Duyệt</span>
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Ngày xử lý:</span> {{rejectionDate}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Địa chỉ:</span> {{location}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Email liên hệ:</span> {{contactEmail}}
+            </div>
+            
+            <div class="museum-info">
+                <span class="label">Mô tả:</span>
+                <p style="margin: 10px 0; color: #495057;">{{museumDescription}}</p>
+            </div>
+            
+            
+            <div class="museum-info">
+                <span class="label">Lý do:</span>
+                <p style="margin: 10px 0; color: #721c24; font-style: italic;">Nội dung không phù hợp</p>
+            </div>
+        </div>
+        
+        <div class="next-steps">
+            <p><strong>📌 Bước tiếp theo:</strong></p>
+            <ul>
+                <li>Xem lại thông tin bảo tàng và đảm bảo tính chính xác, đầy đủ</li>
+                <li>Kiểm tra lại các tài liệu, hình ảnh minh chứng</li>
+                <li>Bạn có thể tạo yêu cầu mới với thông tin đã được cập nhật</li>
+                <li>Liên hệ với đội ngũ hỗ trợ nếu cần tư vấn thêm</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="{{createNewRequestLink}}" class="cta-button">Tạo Yêu Cầu Mới</a>
+        </div>
+        
+        <p><strong>Lưu ý:</strong> Chúng tôi khuyến khích bạn gửi lại yêu cầu sau khi đã xem xét và cập nhật thông tin. Đội ngũ MuseTrip360 luôn sẵn sàng hỗ trợ bạn trong quá trình này.</p>
+        
+        <p>Nếu bạn có bất kỳ câu hỏi nào về quyết định này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi qua email hoặc số điện thoại hỗ trợ.</p>
+    </div>
+    
+    <div class="footer">
+        <p>Cảm ơn bạn đã quan tâm đến MuseTrip360!</p>
+        <p>Đây là tin nhắn tự động từ MuseTrip360. Vui lòng không trả lời email này.</p>
+        <p>© 2024 MuseTrip360. Tất cả quyền được bảo lưu.</p>
+    </div>
+</body>
+</html>
