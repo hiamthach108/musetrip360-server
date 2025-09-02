@@ -150,8 +150,9 @@ public class ArticleService : BaseService, IArticleService
                 return ErrorResp.Forbidden("You are not allowed to access this resource");
             }
 
-            if (updateDto.Status == ArticleStatusEnum.Published && existingArticle.Status != ArticleStatusEnum.Pending)
-                return ErrorResp.BadRequest("Article must be in Pending status to be published");
+            if (updateDto.Status == ArticleStatusEnum.Published && existingArticle.Status != ArticleStatusEnum.Pending && existingArticle.Status != ArticleStatusEnum.Archived)
+                return ErrorResp.BadRequest("Article must be in Pending or Archived status to be published");
+
             if (updateDto.Status == ArticleStatusEnum.Rejected && existingArticle.Status != ArticleStatusEnum.Pending)
                 return ErrorResp.BadRequest("Article must be in Pending status to be rejected");
 

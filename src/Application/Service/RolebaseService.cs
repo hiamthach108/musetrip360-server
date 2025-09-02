@@ -175,7 +175,7 @@ public class RolebaseService : BaseService, IRolebaseService
     var result = await _roleRepo.UpdateRolePermissionsAsync(id, dto.AddList, dto.RemoveList);
 
     // clear cache
-    await _cacheSvc.ClearWithPattern("privileges*");
+    await _cacheSvc.ClearWithPattern("privileges:*");
     return SuccessResp.Ok(_mapper.Map<RoleDto>(result));
   }
 
@@ -241,7 +241,7 @@ public class RolebaseService : BaseService, IRolebaseService
     _mapper.Map(dto, existingPermission);
     // Update the permission
     var result = await _permissionRepo.UpdateAsync(id, existingPermission);
-    await _cacheSvc.ClearWithPattern("privileges*");
+    await _cacheSvc.ClearWithPattern("privileges:*");
     return SuccessResp.Ok(_mapper.Map<PermissionDto>(result));
   }
 
@@ -256,7 +256,7 @@ public class RolebaseService : BaseService, IRolebaseService
     }
 
     var result = await _permissionRepo.DeleteAsync(permission);
-    await _cacheSvc.ClearWithPattern("privileges*");
+    await _cacheSvc.ClearWithPattern("privileges:*");
     return SuccessResp.Ok(_mapper.Map<PermissionDto>(result));
   }
 }
