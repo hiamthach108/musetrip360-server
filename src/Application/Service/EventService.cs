@@ -313,6 +313,16 @@ public class AdminEventService(
             }
 
             var mappedEvent = _mapper.Map(dto, eventItem);
+            // update available slot
+            if (dto.Capacity < mappedEvent.AvailableSlots)
+            {
+                return ErrorResp.BadRequest("Capacity cannot be less than the current available slots");
+            }
+            if (dto.Capacity != null)
+            {
+                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.AvailableSlots);
+            }
+
             await _eventRepository.UpdateAsync(id, mappedEvent);
             return SuccessResp.Ok("Event updated successfully");
         }
@@ -741,6 +751,15 @@ public class OrganizerEventService(
             }
 
             var mappedEvent = _mapper.Map(dto, eventItem);
+            // update available slot
+            if (dto.Capacity < mappedEvent.AvailableSlots)
+            {
+                return ErrorResp.BadRequest("Capacity cannot be less than the current available slots");
+            }
+            if (dto.Capacity != null)
+            {
+                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.AvailableSlots);
+            }
             await _eventRepository.UpdateAsync(id, mappedEvent);
             return SuccessResp.Ok("Event updated successfully");
         }
