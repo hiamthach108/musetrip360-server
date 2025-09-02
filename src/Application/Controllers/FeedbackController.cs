@@ -44,7 +44,7 @@ public class FeedbackController : ControllerBase
             case DataEntityType.Museum:
                 return await _museumService.HandleFeedback(dto.TargetId, dto.Rating, dto.Comment);
             case DataEntityType.Event:
-                return await _eventService.HandleFeedback(dto.TargetId, dto.Comment);
+                return await _eventService.HandleFeedback(dto.TargetId, dto.Comment, dto.Rating);
             case DataEntityType.TourOnline:
                 return await _tourOnlineService.HandleFeedback(dto.TargetId, dto.Comment);
             default:

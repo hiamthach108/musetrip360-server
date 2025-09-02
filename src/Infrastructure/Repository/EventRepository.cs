@@ -19,7 +19,7 @@ namespace Infrastructure.Repository
         Task<EventList> GetEventsByMuseumIdAsync(Guid museumId, EventAdminQuery query);
         Task<IEnumerable<Event>> GetAllEventByOrganizerAsync(Guid userId, EventStatusEnum? status);
         Task<bool> IsOwner(Guid userId, Guid eventId);
-        Task FeedbackEvents(Guid eventId, Guid userId, string comment);
+        Task FeedbackEvents(Guid eventId, Guid userId, string comment, int rating = 0);
         Task<IEnumerable<Event>> GetEventCreatedByUser(Guid userId);
         Task<IEnumerable<Feedback?>> GetFeedbackByEventIdAsync(Guid id);
     }
@@ -182,7 +182,7 @@ namespace Infrastructure.Repository
             return await _context.Events.AnyAsync(e => e.CreatedBy == userId && e.Id == eventId);
         }
 
-        public async Task FeedbackEvents(Guid eventId, Guid userId, string comment)
+        public async Task FeedbackEvents(Guid eventId, Guid userId, string comment, int rating = 0)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -205,7 +205,7 @@ namespace Infrastructure.Repository
                     {
                         TargetId = eventId,
                         Type = DataEntityType.Event,
-                        Rating = 0,
+                        Rating = rating,
                         Comment = comment,
                         CreatedBy = userId
                     };

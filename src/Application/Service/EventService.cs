@@ -24,7 +24,7 @@ public interface IEventService
     Task<IActionResult> HandleGetAll(EventQuery query);
     Task<IActionResult> HandleGetEventsByMuseumId(Guid museumId, EventAdminQuery query);
     Task<bool> IsOwner(Guid userId, Guid eventId);
-    Task<IActionResult> HandleFeedback(Guid id, string comment);
+    Task<IActionResult> HandleFeedback(Guid id, string comment, int rating);
     Task<IActionResult> HandleGetFeedbackByEventId(Guid id);
 }
 
@@ -114,7 +114,7 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IConnection
         return await _eventRepository.IsOwner(userId, eventId);
     }
 
-    public async Task<IActionResult> HandleFeedback(Guid id, string comment)
+    public async Task<IActionResult> HandleFeedback(Guid id, string comment, int rating)
     {
         try
         {
@@ -130,7 +130,7 @@ public abstract class BaseEventService(MuseTrip360DbContext context, IConnection
                 return ErrorResp.NotFound("Event not found");
             }
             // rate the event
-            await _eventRepository.FeedbackEvents(id, payload.UserId, comment);
+            await _eventRepository.FeedbackEvents(id, payload.UserId, comment, rating);
             return SuccessResp.Ok("Event rated successfully");
         }
         catch (Exception e)
