@@ -360,7 +360,12 @@ public class UserService : BaseService, IUserService
       var scope = role.MuseumId ?? "system";
       foreach (var permission in role.Role.Permissions)
       {
-        privileges.Add($"{scope}.{permission.Name}", true);
+        var permissionKey = $"{scope}.{permission.Name}";
+        if (privileges.ContainsKey(permissionKey))
+        {
+          continue;
+        }
+        privileges.Add(permissionKey, true);
       }
     }
 
