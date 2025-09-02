@@ -21,6 +21,7 @@ using Application.DTOs.Search;
 using Application.DTOs.Feedback;
 using Application.DTOs.Email;
 using MuseTrip360.src.Infrastructure.Repository;
+using Infrastructure.Cache;
 
 public interface IMuseumService
 {
@@ -65,13 +66,15 @@ public class MuseumService : BaseService, IMuseumService
   private readonly IUserService _userSvc;
   private readonly IQueuePublisher _queuePub;
   private readonly IUserRepository _userRepository;
+  private readonly ICacheService _cacheSvc;
 
   public MuseumService(
     MuseTrip360DbContext dbContext,
     IMapper mapper,
     IHttpContextAccessor httpCtx,
     IUserService userSvc,
-    IQueuePublisher queuePublisher
+    IQueuePublisher queuePublisher,
+    ICacheService cacheService
   )
     : base(dbContext, mapper, httpCtx)
   {
@@ -84,6 +87,7 @@ public class MuseumService : BaseService, IMuseumService
     _userSvc = userSvc;
     _queuePub = queuePublisher;
     _userRepository = new UserRepository(dbContext);
+    _cacheSvc = cacheService;
   }
 
   public async Task<IActionResult> HandleGetAll(MuseumQuery query)
@@ -491,6 +495,8 @@ public class MuseumService : BaseService, IMuseumService
         MuseumId = museum.Id.ToString()
       };
       await _userRoleRepository.AddAsync(userRole);
+      // clear cache
+      await _cacheSvc.Remove($"users:{request.CreatedBy}:privileges");
     }
 
     // Index in Elasticsearch
