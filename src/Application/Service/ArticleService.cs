@@ -111,7 +111,7 @@ public class ArticleService : BaseService, IArticleService
             if (!_museumRepository.IsMuseumExists(createDto.MuseumId))
                 return ErrorResp.BadRequest("Museum not found");
 
-            var isAllowed = await _userSvc.ValidatePermission(createDto.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            var isAllowed = await _userSvc.ValidatePermission(createDto.MuseumId.ToString(), [PermissionConst.CONTENT_MANAGEMENT]);
             if (!isAllowed)
             {
                 return ErrorResp.Forbidden("You are not allowed to access this resource");
@@ -144,7 +144,7 @@ public class ArticleService : BaseService, IArticleService
             if (existingArticle == null)
                 return ErrorResp.NotFound("Article not found");
 
-            var isAllowed = await _userSvc.ValidatePermission(existingArticle.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            var isAllowed = await _userSvc.ValidatePermission(existingArticle.MuseumId.ToString(), [PermissionConst.CONTENT_MANAGEMENT]);
             if (!isAllowed)
             {
                 return ErrorResp.Forbidden("You are not allowed to access this resource");
@@ -188,7 +188,7 @@ public class ArticleService : BaseService, IArticleService
             if (article == null)
                 return ErrorResp.NotFound("Article not found");
 
-            var isAllowed = await _userSvc.ValidatePermission(article.MuseumId.ToString(), [PermissionConst.MUSEUMS_DETAIL_MANAGEMENT]);
+            var isAllowed = await _userSvc.ValidatePermission(article.MuseumId.ToString(), [PermissionConst.CONTENT_MANAGEMENT]);
             if (!isAllowed)
             {
                 return ErrorResp.Forbidden("You are not allowed to access this resource");
