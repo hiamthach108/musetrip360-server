@@ -198,6 +198,7 @@ namespace Infrastructure.Repository
                 {
                     // update feedback
                     userFeedback.Comment = comment;
+                    userFeedback.Rating = rating;
                 }
                 else
                 {
