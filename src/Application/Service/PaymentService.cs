@@ -606,7 +606,7 @@ public class PaymentService : BaseService, IPaymentService
           var wallet = await _walletRepo.GetWalletByMuseumId(museum.Id);
           if (wallet == null)
           {
-            throw new Exception("Wallet not found");
+            wallet = await _walletRepo.InitWallet(museum.Id);
           }
           // create transaction
           var transactionItem = new Domain.Payment.Transaction
