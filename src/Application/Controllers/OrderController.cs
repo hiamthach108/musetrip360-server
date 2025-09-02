@@ -95,7 +95,6 @@ public class OrderController : ControllerBase
         return await _service.HandlePayosWebhook(data);
     }
 
-    [Protected]
     [HttpGet("code/{orderCode}")]
     public async Task<IActionResult> GetOrderByCode(string orderCode)
     {
