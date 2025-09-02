@@ -298,6 +298,9 @@ public class UserService : BaseService, IUserService
 
     await _userRoleRepo.AddAsync(userRole);
 
+    // clear cache
+    await _cacheSvc.Remove($"users:{user.Id}:privileges");
+
     return SuccessResp.Ok("User role added successfully");
   }
 
@@ -331,6 +334,9 @@ public class UserService : BaseService, IUserService
     }
 
     await _userRoleRepo.DeleteAsync(userRole);
+
+    // clear cache
+    await _cacheSvc.Remove($"users:{user.Id}:privileges");
 
     return SuccessResp.Ok("User role deleted successfully");
   }
