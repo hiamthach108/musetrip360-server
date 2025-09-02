@@ -320,7 +320,7 @@ public class AdminEventService(
             }
             if (dto.Capacity != null)
             {
-                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.AvailableSlots);
+                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.Capacity);
             }
 
             await _eventRepository.UpdateAsync(id, mappedEvent);
@@ -758,7 +758,7 @@ public class OrganizerEventService(
             }
             if (dto.Capacity != null)
             {
-                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.AvailableSlots);
+                mappedEvent.AvailableSlots += (int)(dto.Capacity - mappedEvent.Capacity);
             }
             await _eventRepository.UpdateAsync(id, mappedEvent);
             return SuccessResp.Ok("Event updated successfully");
