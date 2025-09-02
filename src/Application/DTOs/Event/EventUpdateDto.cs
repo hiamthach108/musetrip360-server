@@ -13,7 +13,6 @@ public class EventUpdateDto
     public string? Location { get; set; }
     [Range(0, int.MaxValue)]
     public int? Capacity { get; set; }
-    [Range(0, int.MaxValue)]
     public DateTime? BookingDeadline { get; set; }
     [Range(0, float.MaxValue)]
     public float? Price { get; set; }
