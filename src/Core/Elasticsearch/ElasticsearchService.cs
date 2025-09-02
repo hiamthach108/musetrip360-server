@@ -155,7 +155,12 @@ public class ElasticsearchService : IElasticsearchService
           .Indices(indexName)
           .From(from)
           .Size(size)
-          .Query(q => q.QueryString(qs => qs.Query(query)))
+          .Query(q => q.MultiMatch(mm => mm
+              .Query(query)
+              .Fuzziness(new Fuzziness("AUTO"))
+              .Fields("*")
+              .Type(Elastic.Clients.Elasticsearch.QueryDsl.TextQueryType.BestFields)
+          ))
       );
 
       return response.IsValidResponse ? response.Documents : Enumerable.Empty<T>();
@@ -176,7 +181,12 @@ public class ElasticsearchService : IElasticsearchService
           .From(from)
           .Size(size)
           .MinScore(0.1)
-          .Query(q => q.QueryString(qs => qs.Query(query)))
+          .Query(q => q.MultiMatch(mm => mm
+              .Query(query)
+              .Fuzziness(new Fuzziness("AUTO"))
+              .Fields("*")
+              .Type(Elastic.Clients.Elasticsearch.QueryDsl.TextQueryType.BestFields)
+          ))
       );
 
       var totalHits = response.IsValidResponse ? response.Total : 0;

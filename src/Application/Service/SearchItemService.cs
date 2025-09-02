@@ -400,7 +400,7 @@ public class SearchItemService : BaseService, ISearchItemService
     else
     {
       // Boost Museum type when no specific type is requested
-      queryParts.Add($"(type:Museum^10 OR type:*)");
+      queryParts.Add($"(type:Museum^20 OR type:*)");
     }
 
     if (!string.IsNullOrEmpty(query.Location))
