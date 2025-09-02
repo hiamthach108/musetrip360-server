@@ -44,7 +44,14 @@ public class EventDto
             CreateMap<EventCreateDto, Event>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<EventUpdateDto, Event>()
-            .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+            .ForMember(dest => dest.Price, opt => opt.Condition((src, dest, srcMember) => src.Price.HasValue))
+            .ForMember(dest => dest.BookingDeadline, opt => opt.Condition((src, dest, srcMember) => src.BookingDeadline.HasValue))
+            .ForMember(dest => dest.Title, opt => opt.Condition((src, dest, srcMember) => src.Title != null))
+            .ForMember(dest => dest.Description, opt => opt.Condition((src, dest, srcMember) => src.Description != null))
+            .ForMember(dest => dest.EventType, opt => opt.Condition((src, dest, srcMember) => src.EventType.HasValue))
+            .ForMember(dest => dest.Location, opt => opt.Condition((src, dest, srcMember) => src.Location != null))
+            .ForMember(dest => dest.Capacity, opt => opt.Condition((src, dest, srcMember) => src.Capacity.HasValue))
+            .ForMember(dest => dest.Metadata, opt => opt.Condition((src, dest, srcMember) => src.Metadata != null));
             CreateMap<EventCreateAdminDto, Event>()
             .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
         }
